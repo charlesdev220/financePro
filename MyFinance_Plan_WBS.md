@@ -41,43 +41,55 @@ El proyecto se estructura en 6 fases evolutivas que van desde la configuración 
 
 **2. Stack Tecnológico y Decisiones de Arquitectura**
 
-**2.1 Stack Principal**
+**2.1 Stack Principal** *(versiones reales instaladas — Abril 2026)*
 
-  -----------------------------------------------------------------------
-  **Capa**             **Tecnología**            **Versión objetivo**
-  -------------------- ------------------------- ------------------------
-  Framework móvil      Ionic Framework           v7.x
+  ---------------------------------------------------------------------------------
+  **Capa**             **Tecnología**                    **Versión real**
+  -------------------- --------------------------------- --------------------------
+  Framework móvil      Ionic Framework                   **v8.x**
 
-  Framework web        Angular                   v17.x (standalone APIs)
+  Framework web        Angular                           **v20.x** (standalone)
 
-  Lenguaje             TypeScript                v5.x (strict mode)
+  Lenguaje             TypeScript                        v5.x (strict mode)
 
-  Backend/BBDD         Google Sheets API v4      REST + OAuth2
+  API Server           Node.js + Express                 v4.x (server/)
 
-  Lógica de servidor   Google Apps Script        V8 runtime
+  Backend/BBDD         Google Sheets API v4              REST + Service Account JWT
 
-  Gráficas             Chart.js                  v4.x
+  Auth Sheets          Google Service Account            `googleapis` npm — JWT
 
-  Nativo               Capacitor                 v5.x
+  Spreadsheet          Google Sheets                     ID: 1euG0ltec2DIX-dRTaB2Y9Lvs0Jk1FHgSDyKoeCKWRXs
 
-  Control de versiones Git + GitHub              ---
+  Gráficas             Chart.js                          v4.x
 
-  Calidad de código    ESLint + Prettier         ---
+  Nativo               Capacitor                         **v8.x**
 
-  Testing              Jasmine + Karma / Cypress  ---
-  -----------------------------------------------------------------------
+  Estado global        NgRx                              **v21.x**
+
+  Control de versiones Git + GitHub                      ---
+
+  Calidad de código    ESLint + Prettier                 ---
+
+  Testing              Jasmine + Karma                   ---
+  ---------------------------------------------------------------------------------
+
+> **Decisión ADR-001 — Sin Google Apps Script:**
+> La capa de datos usa un servidor Express local (`server/`) con `googleapis` + service account.
+> Patrón tomado de proyectoSalomon2 (`/Users/charles/Documents/apps/proyectoSalomon2`).
+> La private key vive en `server/.env` (gitignored). El frontend nunca toca credenciales.
+> Para mobile (Capacitor): el servidor Express deberá desplegarse en un host externo (Fase 6).
 
 **2.2 Principios Arquitectónicos Inamovibles**
 
--   **Separación total de plantillas**: los archivos `.ts` nunca contienen HTML. Cada componente tiene su propio `.html`. Esta regla no admite excepciones, ni siquiera para componentes pequeños o de prueba.
+-   **Separación total de plantillas**: los archivos `.ts` nunca contienen HTML. Cada componente tiene su propio `.html`. Esta regla no admite excepciones.
 
 -   **Feature-First**: la estructura de carpetas se organiza por dominio funcional (transacciones, presupuestos, carteras…), no por tipo de fichero.
 
--   **Capa de abstracción de datos**: toda comunicación con Google Sheets pasa por `SheetsApiService`. Ningún componente o feature service llama directamente a la API de Google.
+-   **Capa de abstracción de datos**: toda comunicación con Google Sheets pasa por `SheetsApiService` → `server/` → `googleapis`. Ningún componente llama al servidor directamente.
 
--   **Estado reactivo**: se usa NgRx para colecciones grandes (transacciones, categorías) y servicios con `BehaviorSubject` para configuración y preferencias del usuario.
+-   **Estado reactivo**: NgRx para colecciones grandes; `BehaviorSubject` para preferencias y sesión.
 
--   **Lazy loading obligatorio**: cada módulo de feature se carga bajo demanda para minimizar el tiempo de arranque en móvil.
+-   **Lazy loading obligatorio**: cada feature se carga bajo demanda (`loadComponent()`).
 
 **2.3 Decisión: Google Sheets API vs Apps Script**
 

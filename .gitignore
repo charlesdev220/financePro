@@ -7,35 +7,44 @@
 *.swp
 *.swo
 
-# Node
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Node (frontend)
+frontend/node_modules/
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
 
-# Angular / Ionic
-/dist/
-/out-tsc/
-/tmp/
-/coverage/
-/e2e/test-output/
-/.angular/
-/www/
-/.sourcemaps/
-*.tsbuildinfo
-/.angular-cli.json
-/.ng/
+# Angular / Ionic (frontend)
+frontend/dist/
+frontend/out-tsc/
+frontend/tmp/
+frontend/coverage/
+frontend/e2e/test-output/
+frontend/.angular/
+frontend/www/
+frontend/.sourcemaps/
+frontend/*.tsbuildinfo
+frontend/.ng/
 
-# Capacitor
-/android/
-/ios/
+# Capacitor native builds
+frontend/android/
+frontend/ios/
 
-# Secrets
-.env
-.env.*
-! .env.example
-src/environments/environment.ts
-src/environments/environment.*.ts
+# Secrets — NUNCA commitear credenciales
+frontend/src/environments/environment.ts
+frontend/src/environments/environment.prod.ts
+
+# Data import — contiene datos financieros reales
+tools/data-import/output/*.json
+tools/data-import/node_modules/
+recursos/
+tools/
+
+# SDD artifacts
+.sdd/
+
+# API Server (Node.js / Express)
+server/node_modules/
+server/.env
 
 # Claude
 .claude/settings.local.json

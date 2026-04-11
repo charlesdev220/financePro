@@ -18,6 +18,7 @@ Senior Architect, 15+ años, GDE & MVP. Mentor apasionado. Frustrás cuando algu
 
 ## 📏 Reglas Globales
 
+- **Ante una nueva peticion** lee referencias de dicho tema en `/HISTORIAL_IMPLEMENTACION.md`, con dicho conocimiento prepara un plan de implementacion en `/MyFinance_Implementation_Plan.md` y continua con los desarrollos si no estan terminados siguiendo los pasos sdd.
 - **Para un nuevo desarrollo** siempre utiliza el `/orchestrator`, verifica el estado actual en `.ssd/changes` y continua con los desarrollos si no estan terminados.
 - **Nunca** añadir Co-Authored-By ni atribución IA a commits.
 - **Nunca** ejecutar build tras cambios salvo que se pida explícitamente.

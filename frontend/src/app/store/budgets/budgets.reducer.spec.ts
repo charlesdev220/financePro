@@ -1,0 +1,68 @@
+import { budgetsReducer, BudgetsState } from './budgets.reducer';
+import { BudgetsActions } from './budgets.actions';
+import { MOCK_BUDGETS } from '../../testing/fixtures';
+
+describe('budgetsReducer', () => {
+  const initialState: BudgetsState = {
+    items: [],
+    loading: false,
+    error: null,
+  };
+
+  it('returns the initial state for an unknown action', () => {
+    const state = budgetsReducer(undefined, { type: '@@INIT' } as any);
+    expect(state).toEqual(initialState);
+  });
+
+  describe('loadBudgets', () => {
+    it('sets loading to true and clears previous error', () => {
+      const prev: BudgetsState = { items: [], loading: false, error: 'previous error' };
+      const state = budgetsReducer(prev, BudgetsActions.loadBudgets());
+      expect(state.loading).toBeTrue();
+      expect(state.error).toBeNull();
+    });
+  });
+
+  describe('loadBudgetsSuccess', () => {
+    it('stores budgets and sets loading to false', () => {
+      const prev: BudgetsState = { items: [], loading: true, error: null };
+      const state = budgetsReducer(
+        prev,
+        BudgetsActions.loadBudgetsSuccess({ budgets: MOCK_BUDGETS })
+      );
+      expect(state.items).toEqual(MOCK_BUDGETS);
+      expect(state.loading).toBeFalse();
+    });
+
+    it('contains budgets with valid status values from fixture', () => {
+      const state = budgetsReducer(
+        initialState,
+        BudgetsActions.loadBudgetsSuccess({ budgets: MOCK_BUDGETS })
+      );
+      state.items.forEach(b => {
+        expect(['ok', 'warning', 'exceeded']).toContain(b.status);
+      });
+    });
+  });
+
+  describe('loadBudgetsFailure', () => {
+    it('sets error and sets loading to false', () => {
+      const prev: BudgetsState = { items: [], loading: true, error: null };
+      const state = budgetsReducer(
+        prev,
+        BudgetsActions.loadBudgetsFailure({ error: 'Unauthorized' })
+      );
+      expect(state.error).toBe('Unauthorized');
+      expect(state.loading).toBeFalse();
+    });
+
+    it('preserves existing budgets on failure', () => {
+      const prev: BudgetsState = { items: MOCK_BUDGETS, loading: true, error: null };
+      const state = budgetsReducer(
+        prev,
+        BudgetsActions.loadBudgetsFailure({ error: 'Network error' })
+      );
+      expect(state.items).toEqual(MOCK_BUDGETS);
+    });
+  });
+});

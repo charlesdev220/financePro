@@ -126,7 +126,31 @@ results = toSignal(
 );
 ```
 
+## Separación de Plantillas — REGLA INAMOVIBLE
+
+**Los archivos `.ts` nunca contienen HTML.** Esta es la regla más importante del proyecto MyFinance.
+
+```typescript
+// ✅ CORRECTO — fichero separado
+@Component({
+  selector: 'app-ui-component',
+  standalone: true,
+  templateUrl: './ui-component.component.html',
+  styleUrls: ['./ui-component.component.scss']
+})
+export class UiComponent { }
+
+// ❌ PROHIBIDO — inline template
+@Component({
+  selector: 'app-ui-component',
+  standalone: true,
+  template: `<div>...</div>` // JAMÁS USAR ESTO
+})
+export class UiComponent { }
+```
+
 ## Reglas
-- Prohibido `NgModule`. Prohibido `*ngIf`/`*ngFor`. Prohibido `@Autowired`.
+- Prohibido `NgModule`. Prohibido `*ngIf`/`*ngFor`.
+- **Prohibido cualquier rastro de HTML en archivos `.ts`.**
 - `ChangeDetectionStrategy.OnPush` en todos los componentes nuevos.
 - Registrar providers singleton SOLO en `app.config.ts`, nunca en componentes.
