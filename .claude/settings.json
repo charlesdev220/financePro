@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status)",
+      "Bash(git log*)",
+      "Bash(git diff*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git branch*)",
+      "Bash(mvn compile)",
+      "Bash(mvn test)",
+      "Bash(mvn clean*)",
+      "Bash(npm run*)",
+      "Bash(npx @openapitools*)",
+      "Bash(mkdir -p .sdd*)",
+      "Bash(docker*)",
+      "Bash(docker-compose*)",
+      "Bash(gh pr*)",
+      "Bash(gh issue*)",
+      "Bash(gh run*)"
+    ]
+  }
+}
