@@ -1,0 +1,61 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="cancel()" color="medium">Cancelar</ion-button>
+    </ion-buttons>
+    <ion-title>{{ isEditMode ? 'Editar cartera' : 'Nueva cartera' }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="save()" [disabled]="form.invalid" color="primary" strong="true">
+        Guardar
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <form [formGroup]="form">
+    <ion-list inset="true">
+
+      <ion-item>
+        <ion-label position="stacked">Nombre</ion-label>
+        <ion-input formControlName="name" placeholder="Ej: Cuenta corriente"></ion-input>
+        @if (form.get('name')?.invalid && form.get('name')?.touched) {
+          <ion-note color="danger" slot="error">El nombre es requerido</ion-note>
+        }
+      </ion-item>
+
+      <ion-item>
+        <ion-label>Divisa</ion-label>
+        <ion-select formControlName="currency" interface="action-sheet">
+          @for (c of currencies; track c) {
+            <ion-select-option [value]="c">{{ c }}</ion-select-option>
+          }
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>Icono</ion-label>
+        <ion-select formControlName="icon" interface="action-sheet">
+          @for (icon of icons; track icon) {
+            <ion-select-option [value]="icon">{{ icon }}</ion-select-option>
+          }
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>Color</ion-label>
+        <ion-select formControlName="color" interface="action-sheet">
+          @for (color of colors; track color) {
+            <ion-select-option [value]="color">{{ color }}</ion-select-option>
+          }
+        </ion-select>
+      </ion-item>
+
+      <ion-item>
+        <ion-label>Cartera principal</ion-label>
+        <ion-toggle formControlName="isDefault" slot="end"></ion-toggle>
+      </ion-item>
+
+    </ion-list>
+  </form>
+</ion-content>

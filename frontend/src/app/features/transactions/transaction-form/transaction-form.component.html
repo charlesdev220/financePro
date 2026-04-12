@@ -1,0 +1,132 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="cancel()" color="medium">Cancelar</ion-button>
+    </ion-buttons>
+    <ion-title>{{ isEditMode() ? 'Editar transacción' : 'Nueva transacción' }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button
+        (click)="save()"
+        [disabled]="form.invalid"
+        color="primary"
+        strong="true"
+      >
+        Guardar
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <form [formGroup]="form">
+    <ion-list inset="true">
+
+      <!-- Tipo -->
+      <ion-item>
+        <ion-label>Tipo</ion-label>
+        <ion-select formControlName="type" interface="action-sheet">
+          <ion-select-option value="expense">Gasto</ion-select-option>
+          <ion-select-option value="income">Ingreso</ion-select-option>
+        </ion-select>
+      </ion-item>
+
+      <!-- Monto y divisa -->
+      <ion-item>
+        <ion-label position="stacked">Monto</ion-label>
+        <ion-input
+          formControlName="amount"
+          type="number"
+          placeholder="0.00"
+          inputmode="decimal"
+        ></ion-input>
+        @if (form.get('amount')?.invalid && form.get('amount')?.touched) {
+          <ion-note color="danger" slot="error">Ingresá un monto mayor a 0</ion-note>
+        }
+      </ion-item>
+
+      <ion-item>
+        <ion-label>Divisa</ion-label>
+        <ion-select formControlName="currency" interface="action-sheet">
+          @for (c of currencies; track c) {
+            <ion-select-option [value]="c">{{ c }}</ion-select-option>
+          }
+        </ion-select>
+      </ion-item>
+
+      <!-- Cartera -->
+      <ion-item>
+        <ion-label>Cartera</ion-label>
+        <ion-select formControlName="walletId" interface="action-sheet" placeholder="Seleccioná una cartera">
+          @for (wallet of wallets(); track wallet.walletId) {
+            <ion-select-option [value]="wallet.walletId">{{ wallet.icon }} {{ wallet.name }}</ion-select-option>
+          }
+        </ion-select>
+        @if (form.get('walletId')?.invalid && form.get('walletId')?.touched) {
+          <ion-note color="danger" slot="error">Seleccioná una cartera</ion-note>
+        }
+      </ion-item>
+
+      <!-- Categoría (filtrada por tipo) -->
+      <ion-item>
+        <ion-label>Categoría</ion-label>
+        <ion-select formControlName="categoryId" interface="action-sheet" placeholder="Seleccioná una categoría">
+          @for (cat of filteredCategories(); track cat.categoryId) {
+            <ion-select-option [value]="cat.categoryId">{{ cat.icon }} {{ cat.name }}</ion-select-option>
+          }
+        </ion-select>
+        @if (form.get('categoryId')?.invalid && form.get('categoryId')?.touched) {
+          <ion-note color="danger" slot="error">Seleccioná una categoría</ion-note>
+        }
+      </ion-item>
+
+      <!-- Concepto con autocompletado -->
+      <ion-item>
+        <ion-label position="stacked">Concepto (opcional)</ion-label>
+        <app-autocomplete-input
+          [suggestions$]="suggestions$"
+          [value]="form.get('concept')?.value ?? ''"
+          placeholder="Ej: Supermercado"
+          (inputChange)="onConceptInput($event)"
+          (selected)="onConceptSelected($event)"
+        ></app-autocomplete-input>
+      </ion-item>
+
+      <!-- Fecha -->
+      <ion-item>
+        <ion-label position="stacked">Fecha</ion-label>
+        <ion-input
+          formControlName="date"
+          type="date"
+        ></ion-input>
+      </ion-item>
+
+      <!-- Recurrencia -->
+      <ion-item>
+        <ion-label>Recurrente</ion-label>
+        <ion-toggle formControlName="isRecurring" slot="end"></ion-toggle>
+      </ion-item>
+
+      @if (form.get('isRecurring')?.value) {
+        <ion-item>
+          <ion-label>Frecuencia</ion-label>
+          <ion-select formControlName="recurrenceRule" interface="action-sheet">
+            <ion-select-option value="daily">Diario</ion-select-option>
+            <ion-select-option value="weekly">Semanal</ion-select-option>
+            <ion-select-option value="monthly">Mensual</ion-select-option>
+          </ion-select>
+        </ion-item>
+      }
+
+      <!-- Notas -->
+      <ion-item>
+        <ion-label position="stacked">Notas (opcional)</ion-label>
+        <ion-textarea
+          formControlName="notes"
+          placeholder="Notas adicionales..."
+          rows="2"
+        ></ion-textarea>
+      </ion-item>
+
+    </ion-list>
+  </form>
+</ion-content>

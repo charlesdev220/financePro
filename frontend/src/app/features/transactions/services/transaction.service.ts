@@ -1,0 +1,185 @@
+import { Injectable, inject } from '@angular/core';
+import { Observable, map } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
+import { SheetsApiService } from '../../../core/services/sheets-api.service';
+import { CurrencyApiService } from '../../../core/services/currency-api.service';
+import { ITransaction } from '../../../models/transaction.model';
+import { TransactionDraft } from '../../../store/transactions/transactions.actions';
+
+// TRANSACTIONS schema (A:O — 15 columnas)
+// A: tx_id | B: user_id | C: wallet_id | D: category_id | E: amount
+// F: currency | G: amount_base | H: concept | I: date | J: type
+// K: is_recurring | L: recurrence_rule | M: notes | N: created_at | O: updated_at
+
+export function rowToTransaction(row: unknown[]): ITransaction {
+  return {
+    txId:           String(row[0] ?? ''),
+    userId:         String(row[1] ?? ''),
+    walletId:       String(row[2] ?? ''),
+    categoryId:     String(row[3] ?? ''),
+    amount:         Number(row[4] ?? 0),
+    currency:       String(row[5] ?? 'EUR'),
+    amountBase:     Number(row[6] ?? 0),
+    concept:        String(row[7] ?? ''),
+    date:           String(row[8] ?? ''),
+    type:           (String(row[9] ?? 'expense') as 'income' | 'expense'),
+    isRecurring:    String(row[10] ?? 'false') === 'true' || row[10] === true,
+    recurrenceRule: row[11] ? String(row[11]) : null,
+    notes:          row[12] ? String(row[12]) : null,
+    createdAt:      String(row[13] ?? new Date().toISOString()),
+    updatedAt:      String(row[14] ?? new Date().toISOString()),
+  };
+}
+
+export function transactionToRow(tx: ITransaction): unknown[] {
+  return [
+    tx.txId,
+    tx.userId,
+    tx.walletId,
+    tx.categoryId,
+    tx.amount,
+    tx.currency,
+    tx.amountBase,
+    tx.concept,
+    tx.date,
+    tx.type,
+    tx.isRecurring,
+    tx.recurrenceRule ?? '',
+    tx.notes ?? '',
+    tx.createdAt,
+    tx.updatedAt,
+  ];
+}
+
+@Injectable({ providedIn: 'root' })
+export class TransactionService {
+  private readonly sheetsApi = inject(SheetsApiService);
+  private readonly currencyApi = inject(CurrencyApiService);
+
+  loadTransactions(): Observable<{ transactions: ITransaction[]; rowMap: Record<string, number> }> {
+    return this.sheetsApi.getRange('TRANSACTIONS!A:O').pipe(
+      map(response => {
+        if (!response?.values || response.values.length < 2) {
+          return { transactions: [], rowMap: {} };
+        }
+        const allRows = response.values.slice(1);
+        const rowMap: Record<string, number> = {};
+        allRows.forEach((row, i) => {
+          const id = String(row[0] ?? '');
+          if (id) rowMap[id] = i + 2;
+        });
+        const transactions = allRows
+          .filter(row => row[0])
+          .map(rowToTransaction);
+        return { transactions, rowMap };
+      }),
+    );
+  }
+
+  /**
+   * Construye un ITransaction completo a partir de un draft del formulario.
+   * Calcula amount_base usando la tasa de cambio vigente.
+   * El tx_id se genera fuera (en el Effect) para el patrón optimista.
+   */
+  async createTransaction(
+    draft: TransactionDraft,
+    txId: string,
+    userBaseCurrency: string,
+  ): Promise<ITransaction> {
+    const rate = await firstValueFrom(this.currencyApi.getRate(draft.currency, userBaseCurrency));
+    const now = new Date().toISOString();
+    return {
+      ...draft,
+      txId,
+      amountBase: draft.amount * rate,
+      createdAt: now,
+      updatedAt: now,
+    };
+  }
+
+  saveTransaction(tx: ITransaction): Observable<unknown> {
+    return this.sheetsApi.appendRow('TRANSACTIONS!A1', [transactionToRow(tx)]);
+  }
+
+  updateTransaction(tx: ITransaction, rowNumber: number): Observable<unknown> {
+    return this.sheetsApi.updateRow(
+      `TRANSACTIONS!A${rowNumber}:O${rowNumber}`,
+      [transactionToRow(tx)],
+    );
+  }
+
+  deleteTransaction(rowNumber: number): Observable<unknown> {
+    return this.sheetsApi.deleteRow(`TRANSACTIONS!A${rowNumber}:O${rowNumber}`);
+  }
+
+  /**
+   * Detecta transacciones recurrentes vencidas y genera las nuevas ocurrencias.
+   * Se ejecuta al arranque de la app (en el Effect loadTransactions$).
+   */
+  processRecurring(transactions: ITransaction[]): ITransaction[] {
+    const now = new Date();
+    const newTxs: ITransaction[] = [];
+
+    const recurring = transactions.filter(t => t.isRecurring && t.recurrenceRule);
+    for (const tx of recurring) {
+      const nextDate = this._nextOccurrence(tx.date, tx.recurrenceRule!);
+      if (!nextDate || nextDate > now) continue;
+
+      const alreadyExists = transactions.some(
+        t =>
+          t.walletId === tx.walletId &&
+          t.categoryId === tx.categoryId &&
+          t.concept === tx.concept &&
+          t.isRecurring &&
+          this._sameOccurrencePeriod(t.date, nextDate, tx.recurrenceRule!),
+      );
+
+      if (!alreadyExists) {
+        const isoDate = nextDate.toISOString().split('T')[0];
+        const isoNow = new Date().toISOString();
+        newTxs.push({
+          ...tx,
+          txId: crypto.randomUUID(),
+          date: isoDate,
+          createdAt: isoNow,
+          updatedAt: isoNow,
+        });
+      }
+    }
+
+    return newTxs;
+  }
+
+  private _nextOccurrence(lastDate: string, rule: string): Date | null {
+    const d = new Date(`${lastDate}T00:00:00`);
+    if (isNaN(d.getTime())) return null;
+    switch (rule) {
+      case 'daily':   d.setDate(d.getDate() + 1); break;
+      case 'weekly':  d.setDate(d.getDate() + 7); break;
+      case 'monthly': d.setMonth(d.getMonth() + 1); break;
+      default:        return null;
+    }
+    return d;
+  }
+
+  private _sameOccurrencePeriod(date: string, target: Date, rule: string): boolean {
+    const d = new Date(`${date}T00:00:00`);
+    switch (rule) {
+      case 'daily':
+        return d.toDateString() === target.toDateString();
+      case 'weekly': {
+        const weekOf = (dt: Date) => {
+          const tmp = new Date(dt);
+          tmp.setHours(0, 0, 0, 0);
+          tmp.setDate(tmp.getDate() - tmp.getDay());
+          return tmp.getTime();
+        };
+        return weekOf(d) === weekOf(target);
+      }
+      case 'monthly':
+        return d.getFullYear() === target.getFullYear() && d.getMonth() === target.getMonth();
+      default:
+        return false;
+    }
+  }
+}

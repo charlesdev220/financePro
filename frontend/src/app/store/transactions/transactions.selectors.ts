@@ -6,15 +6,40 @@ export const selectTransactionsState =
 
 export const selectAllTransactions = createSelector(
   selectTransactionsState,
-  state => state.items
+  state => state.items,
+);
+
+export const selectTransactionsRowMap = createSelector(
+  selectTransactionsState,
+  state => state.rowMap,
 );
 
 export const selectTransactionsLoading = createSelector(
   selectTransactionsState,
-  state => state.loading
+  state => state.loading,
 );
 
 export const selectTransactionsError = createSelector(
   selectTransactionsState,
-  state => state.error
+  state => state.error,
 );
+
+export const selectByUser = (userId: string) =>
+  createSelector(selectAllTransactions, txs =>
+    txs.filter(t => t.userId === userId),
+  );
+
+export const selectByWallet = (walletId: string) =>
+  createSelector(selectAllTransactions, txs =>
+    txs.filter(t => t.walletId === walletId),
+  );
+
+export const selectByCategory = (categoryId: string) =>
+  createSelector(selectAllTransactions, txs =>
+    txs.filter(t => t.categoryId === categoryId),
+  );
+
+export const selectByDateRange = (from: string, to: string) =>
+  createSelector(selectAllTransactions, txs =>
+    txs.filter(t => t.date >= from && t.date <= to),
+  );

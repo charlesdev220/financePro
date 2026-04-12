@@ -13,77 +13,103 @@ describe('CryptoService', () => {
     expect(service).toBeTruthy();
   });
 
-  // REQ-07: derivación determinista
+  // REQ-07: derivación determinista — misma userId → misma clave (mismos resultados de cifrado)
   describe('deriveKey()', () => {
-    it('produces equivalent keys for the same userId (same encrypt output)', async () => {
-      const key1 = await service.deriveKey('google-sub-12345');
-      const key2 = await service.deriveKey('google-sub-12345');
+    it('initializes the service so encrypt/decrypt work', async () => {
+      await service.deriveKey('google-sub-12345');
+      expect(service.isReady()).toBeTrue();
+    });
+
+    it('produces the same round-trip result when derived twice with the same userId', async () => {
       const plaintext = 'test@example.com';
 
-      // Las dos claves producen el mismo descifrado sobre el mismo ciphertext
-      const cipher = await service.encrypt(plaintext, key1);
-      const decrypted = await service.decrypt(cipher, key2);
+      await service.deriveKey('google-sub-12345');
+      const cipher = await service.encrypt(plaintext);
+
+      await service.deriveKey('google-sub-12345');
+      const decrypted = await service.decrypt(cipher);
 
       expect(decrypted).toBe(plaintext);
     });
 
-    it('produces different results for different userIds', async () => {
-      const keyA = await service.deriveKey('sub-A');
-      const keyB = await service.deriveKey('sub-B');
-      const plaintext = 'test@example.com';
+    it('fails to decrypt with a different userId', async () => {
+      await service.deriveKey('sub-A');
+      const cipher = await service.encrypt('test@example.com');
 
-      const cipherA = await service.encrypt(plaintext, keyA);
+      await service.deriveKey('sub-B');
+      const result = await service.decrypt(cipher);
 
-      await expectAsync(service.decrypt(cipherA, keyB)).toBeRejected();
+      // decrypt devuelve '[DATA_ERROR]' cuando la clave no coincide
+      expect(result).toBe('[DATA_ERROR]');
     });
   });
 
   // REQ-08: cifrado AES-GCM
   describe('encrypt()', () => {
     it('produces different Base64 output each call (random IV)', async () => {
-      const key = await service.deriveKey('sub-test');
+      await service.deriveKey('sub-test');
       const plaintext = 'test@example.com';
 
-      const cipher1 = await service.encrypt(plaintext, key);
-      const cipher2 = await service.encrypt(plaintext, key);
+      const cipher1 = await service.encrypt(plaintext);
+      const cipher2 = await service.encrypt(plaintext);
 
       expect(cipher1).not.toBe(cipher2);
     });
 
-    it('returns a valid Base64 string', async () => {
-      const key = await service.deriveKey('sub-test');
-      const result = await service.encrypt('test@example.com', key);
+    it('returns a "ivBase64.cipherBase64" formatted string', async () => {
+      await service.deriveKey('sub-test');
+      const result = await service.encrypt('test@example.com');
 
-      expect(() => atob(result)).not.toThrow();
+      expect(result).toContain('.');
+      const [ivPart, cipherPart] = result.split('.');
+      expect(() => atob(ivPart)).not.toThrow();
+      expect(() => atob(cipherPart)).not.toThrow();
     });
   });
 
   // REQ-09: descifrado AES-GCM
   describe('decrypt()', () => {
     it('round-trip: encrypt → decrypt returns the original string', async () => {
-      const key = await service.deriveKey('sub-roundtrip');
+      await service.deriveKey('sub-roundtrip');
       const original = 'usuario@gmail.com';
 
-      const cipher = await service.encrypt(original, key);
-      const decrypted = await service.decrypt(cipher, key);
+      const cipher = await service.encrypt(original);
+      const decrypted = await service.decrypt(cipher);
 
       expect(decrypted).toBe(original);
     });
 
-    it('fails when decrypting with a key from a different userId', async () => {
-      const keyA = await service.deriveKey('sub-A');
-      const keyB = await service.deriveKey('sub-B');
+    it('returns [DATA_ERROR] when ciphertext is corrupted', async () => {
+      await service.deriveKey('sub-test');
+      const result = await service.decrypt('invalid.data');
+      expect(result).toBe('[DATA_ERROR]');
+    });
+  });
 
-      const cipher = await service.encrypt('secreto@gmail.com', keyA);
-
-      await expectAsync(service.decrypt(cipher, keyB)).toBeRejected();
+  // hashPassword y hashEmail son independientes de deriveKey
+  describe('hashPassword()', () => {
+    it('returns a hex SHA-256 string', async () => {
+      const hash = await service.hashPassword('user@example.com', 'secret123');
+      expect(hash).toMatch(/^[0-9a-f]{64}$/);
     });
 
-    it('fails when ciphertext is corrupted', async () => {
-      const key = await service.deriveKey('sub-test');
-      const corruptedBase64 = btoa('esto-no-es-un-ciphertext-valido-xxxxxxxxx');
+    it('is deterministic', async () => {
+      const h1 = await service.hashPassword('user@example.com', 'secret123');
+      const h2 = await service.hashPassword('user@example.com', 'secret123');
+      expect(h1).toBe(h2);
+    });
+  });
 
-      await expectAsync(service.decrypt(corruptedBase64, key)).toBeRejected();
+  describe('hashEmail()', () => {
+    it('returns a hex SHA-256 string', async () => {
+      const hash = await service.hashEmail('User@Example.COM');
+      expect(hash).toMatch(/^[0-9a-f]{64}$/);
+    });
+
+    it('is case-insensitive (normalizes to lowercase)', async () => {
+      const h1 = await service.hashEmail('User@Example.COM');
+      const h2 = await service.hashEmail('user@example.com');
+      expect(h1).toBe(h2);
     });
   });
 });

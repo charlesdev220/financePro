@@ -4,6 +4,57 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Fase 2 — Core Transacciones, Categorías y Carteras):
+*Fase actual:* Fase 2: NgRx + Feature Services + UI + Tests
+*Estado actual:* Completado ✅ | Archivado: 2026-04-12
+- ✔️ **IConcept model + ICategory.createdAt:** Modelo de conceptos creado; `createdAt` añadido a ICategory.
+- ✔️ **CurrencyApiService:** `getRate(from,to)` con caché in-memory TTL 1h, fallback 1:1 si API falla, cortocircuito si from===to. REQ-01/02.
+- ✔️ **Pipes shared:** `currencyFormatPipe` (Intl.NumberFormat) y `relativeDatePipe` (Hoy/Ayer/Hace N días). Pure, standalone.
+- ✔️ **NgRx currency/ slice:** actions, reducer, selectors, effects (loadRate → CurrencyApiService).
+- ✔️ **NgRx categories/ slice:** CRUD completo con `rowMap: Record<string,number>` para tracking de filas en Sheets. Patrón optimista + rollback en todos los writes.
+- ✔️ **NgRx transactions/ actualizado:** `TransactionDraft`, CRUD actions, `rowMap`, `selectByUser/Wallet/Category/DateRange`. Effects reales con processRecurring al cargar.
+- ✔️ **NgRx wallets/ actualizado:** CRUD actions, `rowMap`, `selectBalanceForWallet` (income − expense, usa `amount` nativo, no `amountBase`).
+- ✔️ **TransactionService:** `createTransaction(draft, txId, baseCurrency)` calcula `amount_base` vía tasa real; `processRecurring()` detecta vencidas y genera nuevas. Mappers `rowToTransaction/transactionToRow` exportados.
+- ✔️ **ConceptsService:** `upsertConcept(tx)` busca por `(userId,categoryId,text.lower())` — update si existe, append si nuevo. `getSuggestions()` método puro ordenado por `usageCount DESC`.
+- ✔️ **CategoryService + WalletService:** CRUD + softDelete (categorías). `walletToRow()` escribe balance=0 (calculado en NgRx, no persistido). `rowMap` construido durante load.
+- ✔️ **autocomplete-input.component:** Standalone, agnóstico al dominio. `@Input suggestions$`, `@Output selected`. Signal interno para dropdown reactivo. @if/@for.
+- ✔️ **UI Transaction List:** Filtros por cartera y categoría via signals. Estado vacío. Swipe-to-delete. Abre modal `transaction-form`. Toast de error en fallo de operación (REQ-06 sc2).
+- ✔️ **UI Transaction Form:** Modal reactive form. Validaciones (amount>0, walletId/categoryId required). Categorías filtradas por tipo. Autocompletado de concepto. Modo edición.
+- ✔️ **UI Category List/Form + Wallet List/Form:** Standalone, lazy-loaded. Soft-delete categorías. Balance de cartera calculado desde store.
+- ✔️ **Wiring:** `app.config.ts` y `app.routes.ts` actualizados. Rutas `/transactions`, `/categories`, `/wallets` apuntan a las nuevas list pages.
+- ✔️ **Tests:** `currency-api.service.spec`, `transaction.service.spec`, `concepts.service.spec`, `transactions.reducer.spec`, `wallets.selectors.spec`, pipes specs.
+- ✔️ **Fix CRITICAL REQ-05:** `updateTransaction$` effect recalcula `amountBase` con tasa vigente via `currencyApi.getRate()` antes de persistir.
+- ✔️ **Fix CRITICAL REQ-06 sc2:** `transaction-list.page.ts` suscribe a `selectTransactionsError` en `ngOnInit` y muestra toast de error tras rollback.
+*Próximos pasos:* Fase 3 — Dashboard + Gráficas (Chart.js), filtro de fecha en transaction-list UI, filtro userId en capa de servicio.
+*(Qué se aprendió):* `rowMap: Record<string,number>` resuelve tracking de filas en Sheets sin IDs secuenciales. Optimistic update (dispatch Success antes de Sheets, rollback en fallo) requiere snapshot `prevItems` via `withLatestFrom` antes del concatMap. `@Input()` no está disponible en inicialización de campos de clase — asignar en `ngOnInit()`. `[(ngModel)]` incompatible con Angular signals — usar `[value]/(ionChange)`.
+
+---
+
+### Qué hemos completado hasta ahora (Fase 2 — Core Transacciones, Categorías y Carteras):
+*Fase actual:* Fase 2: NgRx + Feature Services + UI + Tests
+*Estado actual:* En proceso — sdd-apply completo, pendiente sdd-verify
+- ✔️ **IConcept model + ICategory.createdAt:** Modelo de conceptos creado; `createdAt` añadido a ICategory.
+- ✔️ **CurrencyApiService:** `getRate(from,to)` con caché in-memory TTL 1h, fallback 1:1 si API falla, cortocircuito si from===to. REQ-01/02.
+- ✔️ **Pipes shared:** `currencyFormatPipe` (Intl.NumberFormat) y `relativeDatePipe` (Hoy/Ayer/Hace N días). Pure, standalone.
+- ✔️ **NgRx currency/ slice:** actions, reducer, selectors, effects (loadRate → CurrencyApiService).
+- ✔️ **NgRx categories/ slice:** CRUD completo con `rowMap: Record<string,number>` para tracking de filas en Sheets. Patrón optimista + rollback en todos los writes.
+- ✔️ **NgRx transactions/ actualizado:** `TransactionDraft`, CRUD actions, `rowMap`, `selectByUser/Wallet/Category/DateRange`. Effects reales con processRecurring al cargar.
+- ✔️ **NgRx wallets/ actualizado:** CRUD actions, `rowMap`, `selectBalanceForWallet` (income − expense, usa `amount` nativo, no `amountBase`).
+- ✔️ **TransactionService:** `createTransaction(draft, txId, baseCurrency)` calcula `amount_base` vía tasa real; `processRecurring()` detecta vencidas y genera nuevas. Mappers `rowToTransaction/transactionToRow` exportados.
+- ✔️ **ConceptsService:** `upsertConcept(tx)` busca por `(userId,categoryId,text.lower())` — update si existe, append si nuevo. `getSuggestions()` método puro ordenado por `usageCount DESC`.
+- ✔️ **CategoryService + WalletService:** CRUD + softDelete (categorías). `walletToRow()` escribe balance=0 (calculado en NgRx, no persistido). `rowMap` construido durante loadCategories/loadWallets.
+- ✔️ **autocomplete-input.component:** Standalone, agnóstico al dominio. `@Input suggestions$`, `@Output selected`. Signal interno para dropdown reactivo. @if/@for.
+- ✔️ **UI Transaction List:** Filtros por cartera y categoría via signals. Estado vacío. Swipe-to-delete. Abre modal `transaction-form`. `toSignal()` sobre selectores NgRx.
+- ✔️ **UI Transaction Form:** Modal reactive form. Validaciones (amount>0, walletId/categoryId required). Categorías filtradas por tipo. Autocompletado de concepto. Modo edición con `@Input() transaction`.
+- ✔️ **UI Category List/Form:** Lista con badge de presupuesto. Form con emoji picker + paleta de colores + tipo income/expense.
+- ✔️ **UI Wallet List/Form:** Tarjetas con balance calculado de store. Form con divisa, icono, color, is_default.
+- ✔️ **Wiring:** `app.config.ts` y `app.routes.ts` actualizados. Rutas `/transactions`, `/categories`, `/wallets` apuntan a las nuevas list pages (lazy loadComponent).
+- ✔️ **Tests:** `currency-api.service.spec` (5 casos), `transaction.service.spec` (4 casos + round-trip), `concepts.service.spec` (5 casos), `transactions.reducer.spec` (7 casos), `wallets.selectors.spec` (3 casos REQ-13), pipes specs.
+*Próximos pasos:* sdd-verify (compliance matrix contra spec.md), luego sdd-archive.
+*(Qué se aprendió):* `rowMap: Record<string,number>` resuelve el tracking de filas en Sheets sin necesidad de IDs secuenciales ni leer el máximo. El patrón optimista (dispatch Success antes de Sheets, rollback en fallo) requiere snapshot de `prevItems` via `withLatestFrom` antes del concatMap.
+
+---
+
 ### Qué hemos completado hasta ahora (Fase 1.4 — Hardening Seguridad + USERS Schema v2):
 *Fase actual:* Fase 1.4: Secretos en .env · UUID como user_id · PII cifrada · Login real contra Sheets
 *Estado actual:* Completado ✅ | Archivado: 2026-04-12

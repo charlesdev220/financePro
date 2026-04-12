@@ -10,11 +10,14 @@ describe('Transactions Selectors', () => {
   const state: AppState = {
     transactions: {
       items: MOCK_TRANSACTIONS,
+      rowMap: {},
       loading: false,
       error: null,
     },
-    wallets: { items: [], loading: false, error: null },
+    wallets: { items: [], rowMap: {}, loading: false, error: null },
     budgets: { items: [], loading: false, error: null },
+    categories: { items: [], rowMap: {}, loading: false, error: null },
+    currency: { rates: {}, loading: false, error: null },
   };
 
   it('selectAllTransactions returns items array', () => {

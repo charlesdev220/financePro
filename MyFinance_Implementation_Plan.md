@@ -140,7 +140,7 @@ src/app/
 |---|---|---|
 | 2.0.1 | `sheets-api.service.ts`: `getRange()`, `appendRow()`, `updateRow()`, `deleteRow()` con Bearer token | `core/services/sheets-api.service.ts` |
 | 2.0.2 | Mapeo Sheets → interfaces TypeScript; campos PII pasan por `crypto.service.ts` | Métodos de mapeo en el servicio |
-| 2.0.3 | Caché ETag por rango: `If-None-Match` → 304 usa store, 200 actualiza | Dentro de `sheets-api.service.ts` |
+| 2.0.3 | Caché ETag por rango: `If-None-Match` → 304 usa sistore, 200 actualiza | Dentro de `sheets-api.service.ts` |
 | 2.0.4 | `currency-api.service.ts`: consulta ExchangeRate-API, caché de tasas en NgRx | `core/services/currency-api.service.ts` |
 
 **Sprint 2.2 — Transacciones y Categorías (Semanas 2–3)**

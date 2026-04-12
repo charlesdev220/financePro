@@ -17,19 +17,25 @@ export const routes: Routes = [
     path: 'transactions',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/transactions/transactions.page').then(m => m.TransactionsPage),
+      import('./features/transactions/transaction-list/transaction-list.page').then(
+        m => m.TransactionListPage,
+      ),
   },
   {
     path: 'categories',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/categories/categories.page').then(m => m.CategoriesPage),
+      import('./features/categories/category-list/category-list.page').then(
+        m => m.CategoryListPage,
+      ),
   },
   {
     path: 'wallets',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/wallets/wallets.page').then(m => m.WalletsPage),
+      import('./features/wallets/wallet-list/wallet-list.page').then(
+        m => m.WalletListPage,
+      ),
   },
   {
     path: 'budgets',

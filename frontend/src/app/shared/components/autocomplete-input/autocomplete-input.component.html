@@ -1,0 +1,21 @@
+<ion-input
+  [value]="value"
+  [placeholder]="placeholder"
+  (ionInput)="onInput($event)"
+  (ionBlur)="onBlur()"
+  fill="outline"
+></ion-input>
+
+@if (showDropdown() && currentSuggestions().length > 0) {
+  <ion-list class="autocomplete-dropdown">
+    @for (suggestion of currentSuggestions(); track suggestion) {
+      <ion-item
+        button
+        detail="false"
+        (click)="selectSuggestion(suggestion)"
+      >
+        <ion-label>{{ suggestion }}</ion-label>
+      </ion-item>
+    }
+  </ion-list>
+}

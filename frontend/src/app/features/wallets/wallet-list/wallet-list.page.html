@@ -1,0 +1,51 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Carteras</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  @if (wallets().length > 0) {
+    <ion-list>
+      @for (wallet of wallets(); track wallet.walletId) {
+        <ion-item>
+          <ion-label>
+            <h3>{{ wallet.icon }} {{ wallet.name }}</h3>
+            <p>{{ wallet.currency }}</p>
+            @if (wallet.isDefault) {
+              <ion-note color="primary">Cartera principal</ion-note>
+            }
+          </ion-label>
+          <div slot="end" style="display:flex; align-items:center; gap:8px">
+            <span [style.color]="getBalance(wallet.walletId) >= 0 ? 'var(--ion-color-success)' : 'var(--ion-color-danger)'"
+                  style="font-weight:600">
+              {{ getBalance(wallet.walletId) | currencyFormat:wallet.currency }}
+            </span>
+            <ion-buttons>
+              <ion-button fill="clear" (click)="openEditModal(wallet)">
+                <ion-icon name="create-outline" color="medium"></ion-icon>
+              </ion-button>
+              <ion-button fill="clear" (click)="deleteWallet(wallet)">
+                <ion-icon name="trash-outline" color="danger"></ion-icon>
+              </ion-button>
+            </ion-buttons>
+          </div>
+        </ion-item>
+      }
+    </ion-list>
+  } @else {
+    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:60vh; gap:16px; color:var(--ion-color-medium)">
+      <p>No hay carteras creadas</p>
+      <ion-button fill="outline" (click)="openAddModal()">
+        <ion-icon slot="start" name="add-outline"></ion-icon>
+        Nueva cartera
+      </ion-button>
+    </div>
+  }
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="openAddModal()" color="primary">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>

@@ -5,6 +5,7 @@ import { MOCK_TRANSACTIONS } from '../../fixtures';
 describe('transactionsReducer', () => {
   const initialState: TransactionsState = {
     items: [],
+    rowMap: {},
     loading: false,
     error: null,
   };
@@ -16,7 +17,7 @@ describe('transactionsReducer', () => {
 
   describe('loadTransactions', () => {
     it('sets loading to true and clears previous error', () => {
-      const prev: TransactionsState = { items: [], loading: false, error: 'previous error' };
+      const prev: TransactionsState = { items: [], rowMap: {}, loading: false, error: 'previous error' };
       const state = transactionsReducer(prev, TransactionsActions.loadTransactions());
       expect(state.loading).toBeTrue();
       expect(state.error).toBeNull();
@@ -25,10 +26,10 @@ describe('transactionsReducer', () => {
 
   describe('loadTransactionsSuccess', () => {
     it('stores items and sets loading to false', () => {
-      const prev: TransactionsState = { items: [], loading: true, error: null };
+      const prev: TransactionsState = { items: [], rowMap: {}, loading: true, error: null };
       const state = transactionsReducer(
         prev,
-        TransactionsActions.loadTransactionsSuccess({ transactions: MOCK_TRANSACTIONS })
+        TransactionsActions.loadTransactionsSuccess({ transactions: MOCK_TRANSACTIONS, rowMap: {} })
       );
       expect(state.items).toEqual(MOCK_TRANSACTIONS);
       expect(state.loading).toBeFalse();
@@ -38,11 +39,11 @@ describe('transactionsReducer', () => {
     it('replaces items on subsequent loads', () => {
       const firstLoad = transactionsReducer(
         initialState,
-        TransactionsActions.loadTransactionsSuccess({ transactions: [MOCK_TRANSACTIONS[0]] })
+        TransactionsActions.loadTransactionsSuccess({ transactions: [MOCK_TRANSACTIONS[0]], rowMap: {} })
       );
       const secondLoad = transactionsReducer(
         firstLoad,
-        TransactionsActions.loadTransactionsSuccess({ transactions: MOCK_TRANSACTIONS })
+        TransactionsActions.loadTransactionsSuccess({ transactions: MOCK_TRANSACTIONS, rowMap: {} })
       );
       expect(secondLoad.items.length).toBe(MOCK_TRANSACTIONS.length);
     });
@@ -50,7 +51,7 @@ describe('transactionsReducer', () => {
 
   describe('loadTransactionsFailure', () => {
     it('sets error message and sets loading to false', () => {
-      const prev: TransactionsState = { items: [], loading: true, error: null };
+      const prev: TransactionsState = { items: [], rowMap: {}, loading: true, error: null };
       const state = transactionsReducer(
         prev,
         TransactionsActions.loadTransactionsFailure({ error: 'Sheets API quota exceeded' })
@@ -60,7 +61,7 @@ describe('transactionsReducer', () => {
     });
 
     it('preserves existing items on failure', () => {
-      const prev: TransactionsState = { items: MOCK_TRANSACTIONS, loading: true, error: null };
+      const prev: TransactionsState = { items: MOCK_TRANSACTIONS, rowMap: {}, loading: true, error: null };
       const state = transactionsReducer(
         prev,
         TransactionsActions.loadTransactionsFailure({ error: 'Network error' })

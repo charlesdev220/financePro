@@ -18,6 +18,7 @@ export const MOCK_CATEGORIES: ICategory[] = [
     budgetAmount: null,
     budgetPeriod: 'monthly',
     isActive: true,
+    createdAt: '2026-04-11T19:42:51.027Z',
   },
   {
     categoryId: '10000000-0000-0000-0000-00000000000f',
@@ -29,6 +30,7 @@ export const MOCK_CATEGORIES: ICategory[] = [
     budgetAmount: null,
     budgetPeriod: 'monthly',
     isActive: true,
+    createdAt: '2026-04-11T19:42:51.027Z',
   },
 ];
 
