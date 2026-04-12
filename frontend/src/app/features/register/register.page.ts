@@ -11,62 +11,69 @@ import {
   ToastController 
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { mailOutline, lockClosedOutline, walletOutline } from 'ionicons/icons';
+import { mailOutline, lockClosedOutline, personOutline, walletOutline, arrowBackOutline } from 'ionicons/icons';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-register',
   standalone: true,
   imports: [IonContent, IonItem, IonInput, IonIcon, IonButton, FormsModule, RouterLink],
-  templateUrl: './login.page.html',
-  styleUrls: ['./login.page.scss'],
+  templateUrl: './register.page.html',
+  styleUrls: ['./register.page.scss'],
 })
-export class LoginPage {
+export class RegisterPage {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly loadingCtrl = inject(LoadingController);
   private readonly toastCtrl = inject(ToastController);
 
+  name = '';
   email = '';
   password = '';
 
   constructor() {
-    addIcons({ mailOutline, lockClosedOutline, walletOutline });
+    addIcons({ mailOutline, lockClosedOutline, personOutline, walletOutline, arrowBackOutline });
   }
 
-  async handleLogin(): Promise<void> {
-    if (!this.email || !this.password) {
+  async handleRegister(): Promise<void> {
+    if (!this.name || !this.email || !this.password) {
       this.showToast('Por favor, rellena todos los campos');
       return;
     }
 
     const loading = await this.loadingCtrl.create({
-      message: 'Iniciando sesión...',
+      message: 'Creando cuenta...',
       spinner: 'crescent'
     });
     await loading.present();
 
     try {
-      const success = await this.authService.login(this.email, this.password);
+      const success = await this.authService.register({
+        name: this.name,
+        email: this.email,
+        password: this.password
+      });
+
       if (success) {
+        this.showToast('¡Cuenta creada con éxito!', 'success');
         this.router.navigate(['/dashboard']);
       } else {
-        this.showToast('Credenciales incorrectas');
+        this.showToast('Error al crear la cuenta. Inténtalo de nuevo.');
       }
     } catch (error) {
-      console.error('[LoginPage] Error login:', error);
-      this.showToast('Error al conectar con el servidor');
+      console.error('[RegisterPage] Error register:', error);
+      this.showToast('Error de conexión con el servidor');
     } finally {
       loading.dismiss();
     }
   }
 
-  private async showToast(message: string): Promise<void> {
+  private async showToast(message: string, color: string = 'danger'): Promise<void> {
     const toast = await this.toastCtrl.create({
       message,
       duration: 3000,
       position: 'bottom',
-      color: 'danger'
+      color
     });
     await toast.present();
   }

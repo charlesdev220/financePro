@@ -1,9 +1,16 @@
-import { inject } from '@angular/core';
+import { inject, Injector } from '@angular/core';
 import { HttpInterceptorFn } from '@angular/common/http';
 import { AuthService } from '../services/auth.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const authService = inject(AuthService);
+  const injector = inject(Injector);
+  
+  // No interceptamos peticiones de autenticación para evitar bucles
+  if (req.url.includes('google.com/token')) {
+    return next(req);
+  }
+
+  const authService = injector.get(AuthService);
   const token = authService.getAccessToken();
 
   if (!token) {

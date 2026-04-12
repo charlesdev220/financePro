@@ -24,6 +24,7 @@ frontend/www/
 frontend/.sourcemaps/
 frontend/*.tsbuildinfo
 frontend/.ng/
+frontend/.env
 
 # Capacitor native builds
 frontend/android/
@@ -42,9 +43,8 @@ tools/
 # SDD artifacts
 .sdd/
 
-# API Server (Node.js / Express)
-server/node_modules/
-server/.env
+# Environment variables
+.env 
 
 # Claude
 .claude/settings.local.json

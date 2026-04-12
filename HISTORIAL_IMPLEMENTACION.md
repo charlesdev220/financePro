@@ -4,6 +4,39 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Fase 1.4 — Hardening Seguridad + USERS Schema v2):
+*Fase actual:* Fase 1.4: Secretos en .env · UUID como user_id · PII cifrada · Login real contra Sheets
+*Estado actual:* Completado ✅ | Archivado: 2026-04-12
+- ✔️ **Secretos a .env:** Clave privada y credenciales de Service Account extraídas de `environment.ts` a `frontend/.env` (gitignoreado). Script `scripts/set-env.js` genera `environment.ts` en tiempo de build. `prestart` y `prebuild` lo ejecutan automáticamente. Zero secrets en el repositorio.
+- ✔️ **UUID como user_id:** `register()` genera un UUID v4 (`crypto.randomUUID()`) como `user_id` real, FK de todas las tablas. El email nunca se usa como identificador.
+- ✔️ **Schema USERS v2 (A:H):** Nueva columna `email_hash` (SHA-256 del email, solo para lookup) entre `user_id` y `email_enc`. Schema completo: `user_id | email_hash | email_enc | display_name_enc | password_hash | default_currency | period_start_day | created_at`.
+- ✔️ **PII cifrada en register():** `email` y `display_name` se cifran con AES-GCM (clave derivada del UUID) antes de escribir a Sheets. La clave deriva del UUID, no del email.
+- ✔️ **Password hasheada:** Almacenada como `SHA-256(email:password)` vía `CryptoService.hashPassword()`. Nunca en claro.
+- ✔️ **Login real contra USERS:** `login()` consulta `USERS!A:H`, busca por `email_hash` + `password_hash`, extrae el UUID, deriva la clave criptográfica del UUID y descifra `display_name`. Cero autenticación ficticia.
+- ✔️ **CryptoService hardening:** Salt de PBKDF2 ahora dinámico (`userId` bytes en lugar de string estático). Nuevos métodos: `hashPassword(email, password)` y `hashEmail(email)`. Método `_sha256()` privado reutilizable.
+- ✔️ **Fix appendRow range:** Cambiado de `USERS!A:H` a `USERS!A1` para evitar el bug de la Sheets API donde el ancho del rango mayor al ancho de headers existentes dejaba columnas vacías intercaladas.
+- ✔️ **Sign-out operativo:** Botón de logout en el header del Dashboard (ícono + confirm alert). Settings page implementada con info del usuario y acción de cierre de sesión.
+- ✔️ **Specs reescritos:** `auth.service.spec.ts` reescrito completo (login 6 casos, register 4 casos, signOut 4 casos, invariante token/localStorage). `crypto.service.spec.ts` ampliado con `hashEmail()` y `hashPassword()` (8 casos nuevos).
+*Próximos pasos:* Fase 2 — Core del negocio: `currency-api.service.ts`, `transaction.service.ts`, CRUD completo de transacciones y carteras, NgRx effects conectados a Sheets real.
+*(Qué / Por qué / Dónde / Qué se aprendió):* La Sheets API `values.append` con un rango de columnas más ancho que los headers existentes produce columnas vacías intercaladas — usar una referencia de celda (`USERS!A1`) elimina este comportamiento. El salt de PBKDF2 debe ser dinámico por usuario para garantizar aislamiento de claves. `crypto.randomUUID()` está disponible en browsers modernos sin dependencias adicionales.
+
+---
+
+### Qué hemos completado hasta ahora (Fase 1.3 — Service Account + Login Propio + CryptoService):
+*Fase actual:* Fase 1.3: Auth Service Account + Cifrado PII (CryptoService)
+*Estado actual:* Completado ✅ | Archivado: 2026-04-12
+- ✔️ **Auth Híbrido:** Implementado login propio (Email/Password) para identificar al usuario, mientras la app usa una **Service Account** (JWT con `jsrsasign`) de forma transparente para interactuar con Google Sheets API.
+- ✔️ **UI de Login/Registro Premium:** Pantallas creadas con **Ionic + Tailwind CSS**, diseño responsive, glassmorphism y micro-animaciones.
+- ✔️ **Tailwind CSS Habilitado:** Configurado formalmente `tailwind.config.js` y `postcss.config.js` para el proyecto Angular.
+- ✔️ **CryptoService implementado:** Cifrado **AES-GCM 256** (Web Crypto API) para proteger `email` y `display_name` antes de ir a Sheets. Clave única derivada por usuario vía PBKDF2 (100k iter).
+- ✔️ **Persistencia de Sesión:** `localStorage` para el usuario local, asegurando que la clave criptográfica se derive automáticamente al reabrir la app.
+- ✔️ **Validación en Navegador:** Prueba de registro completada con éxito para el usuario `test@financepro.com`, verificando la redirección al Dashboard y la derivación de claves criptográficas.
+- ✔️ **Estabilización Arquitectónica:** Resolución de dependencia circular (`NG0200`) mediante inyección perezosa (`Injector`) en interceptores y el uso de `HttpBackend` en `AuthService` para peticiones de sistema.
+*Próximos pasos:* Fase 2 — Core del negocio: Lectura de datos reales en el Dashboard y CRUD de transacciones filtrando por `user_id`.
+*(Qué / Por qué / Dónde / Qué se aprendió):* El uso de `HttpBackend` es fundamental cuando un servicio de autenticación necesita hacer peticiones HTTP propias sin entrar en el bucle de sus propios interceptores. Tailwind CSS v3 resultó ser más estable para la integración actual con Ionic que la v4.
+
+---
+
 ### Qué hemos completado hasta ahora (Fase 1 — Auth OAuth2 + Cifrado PII + SheetsApiService directo):
 *Fase actual:* Fase 1.3: Auth GIS + Crypto + Sheets API directa
 *Estado actual:* Completado ✅ | Archivado: 2026-04-12
@@ -16,6 +49,8 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 - ✔️ **64/64 tests pasan:** `crypto.service.spec.ts` (8), `auth.service.spec.ts` (11), `sheets-api.service.spec.ts` (10), `auth.guard.spec.ts` (2), `auth.interceptor.spec.ts` (3) + anteriores.
 *Próximos pasos:* Configuración manual del usuario (Google Cloud Console: OAuth2, Sheets API v4, spreadsheet con 8 tabs). Luego Fase 2 — Login page real + CRUD de transacciones via SheetsApiService.
 *(Qué / Por qué / Dónde / Qué se aprendió):* GIS `initTokenClient` hace early return si `environment.googleClientId` está vacío — los tests mutaban el objeto `environment` antes de la instanciación del servicio para evitarlo. Web Crypto API `subtle` disponible en localhost sin HTTPS. Salt PBKDF2 = userId (sub de Google) es suficiente sin salt adicional porque el sub es único y estable. `observe: 'response'` en `HttpClient` es necesario para acceder al header `ETag` en la respuesta.
+
+---
 
 ---
 

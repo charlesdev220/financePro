@@ -1,26 +1,24 @@
 import { Injectable } from '@angular/core';
 
 /**
- * CryptoService — cifrado AES-GCM de PII usando Web Crypto API (nativa del browser).
- *
- * La clave se deriva del `sub` de Google del usuario mediante PBKDF2.
- * Mismo userId → misma clave determinista. Nunca se persiste la clave.
- *
- * Uso:
- *   const key = await cryptoService.deriveKey(user.sub);
- *   const cipher = await cryptoService.encrypt(user.email, key);
- *   const plain  = await cryptoService.decrypt(cipher, key);
+ * CryptoService — Único punto de cifrado/descifrado de PII.
+ * AES-GCM 256 · PBKDF2 100k iter · salt dinámico por usuario · Web Crypto API
  */
 @Injectable({ providedIn: 'root' })
 export class CryptoService {
+  private readonly ALGO = 'AES-GCM';
+  private readonly KEY_LENGTH = 256;
+  private readonly ITERATIONS = 100_000;
+
+  private cryptoKey: CryptoKey | null = null;
 
   /**
-   * Deriva una CryptoKey AES-GCM 256 bits desde el userId (sub de Google).
-   * PBKDF2: salt = userId, 100.000 iteraciones, SHA-256.
+   * Deriva la clave AES-GCM a partir del userId (email).
+   * El salt es dinámico: bytes del propio userId → clave única por usuario.
    */
-  async deriveKey(userId: string): Promise<CryptoKey> {
+  async deriveKey(userId: string): Promise<void> {
     const encoder = new TextEncoder();
-    const keyMaterial = await crypto.subtle.importKey(
+    const keyMaterial = await window.crypto.subtle.importKey(
       'raw',
       encoder.encode(userId),
       'PBKDF2',
@@ -28,57 +26,87 @@ export class CryptoService {
       ['deriveKey'],
     );
 
-    return crypto.subtle.deriveKey(
+    this.cryptoKey = await window.crypto.subtle.deriveKey(
       {
         name: 'PBKDF2',
-        salt: encoder.encode(userId),
-        iterations: 100_000,
+        salt: encoder.encode(userId), // salt dinámico = userId
+        iterations: this.ITERATIONS,
         hash: 'SHA-256',
       },
       keyMaterial,
-      { name: 'AES-GCM', length: 256 },
+      { name: this.ALGO, length: this.KEY_LENGTH },
       false,
       ['encrypt', 'decrypt'],
     );
   }
 
   /**
-   * Cifra un string con AES-GCM.
-   * Retorna Base64( IV[12B] || ciphertext ).
-   * El IV es aleatorio en cada llamada — nunca reutilizado.
+   * Cifra texto plano. Devuelve "ivBase64.cipherBase64".
    */
-  async encrypt(plaintext: string, key: CryptoKey): Promise<string> {
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const encoded = new TextEncoder().encode(plaintext);
+  async encrypt(text: string): Promise<string> {
+    if (!this.cryptoKey) throw new Error('CryptoKey no inicializada.');
 
-    const cipherBuffer = await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv },
-      key,
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    const encoded = new TextEncoder().encode(text);
+    const ciphertext = await window.crypto.subtle.encrypt(
+      { name: this.ALGO, iv },
+      this.cryptoKey,
       encoded,
     );
 
-    const result = new Uint8Array(12 + cipherBuffer.byteLength);
-    result.set(iv, 0);
-    result.set(new Uint8Array(cipherBuffer), 12);
-
-    return btoa(String.fromCharCode(...result));
+    const ivBase64 = btoa(String.fromCharCode(...iv));
+    const cipherBase64 = btoa(String.fromCharCode(...new Uint8Array(ciphertext)));
+    return `${ivBase64}.${cipherBase64}`;
   }
 
   /**
-   * Descifra un string producido por `encrypt()`.
-   * Lanza si la clave es incorrecta o el ciphertext está corrupto.
+   * Descifra una cadena "ivBase64.cipherBase64".
+   * Retorna '[DATA_ERROR]' si falla (clave incorrecta o datos corruptos).
    */
-  async decrypt(ciphertext: string, key: CryptoKey): Promise<string> {
-    const bytes = Uint8Array.from(atob(ciphertext), c => c.charCodeAt(0));
-    const iv = bytes.slice(0, 12);
-    const data = bytes.slice(12);
+  async decrypt(encryptedData: string): Promise<string> {
+    if (!this.cryptoKey) throw new Error('CryptoKey no inicializada.');
 
-    const plainBuffer = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv },
-      key,
-      data,
-    );
+    const [ivBase64, cipherBase64] = encryptedData.split('.');
+    if (!ivBase64 || !cipherBase64) return encryptedData;
 
-    return new TextDecoder().decode(plainBuffer);
+    try {
+      const iv = new Uint8Array(atob(ivBase64).split('').map(c => c.charCodeAt(0)));
+      const ciphertext = new Uint8Array(atob(cipherBase64).split('').map(c => c.charCodeAt(0)));
+      const decrypted = await window.crypto.subtle.decrypt(
+        { name: this.ALGO, iv },
+        this.cryptoKey,
+        ciphertext,
+      );
+      return new TextDecoder().decode(decrypted);
+    } catch {
+      return '[DATA_ERROR]';
+    }
+  }
+
+  /**
+   * Hash de contraseña: SHA-256(email + ":" + password).
+   * Independiente de deriveKey — no requiere clave inicializada.
+   */
+  async hashPassword(email: string, password: string): Promise<string> {
+    return this._sha256(`${email}:${password}`);
+  }
+
+  /**
+   * Hash de email para búsqueda en USERS sin exponer el valor en claro.
+   * SHA-256(email.toLowerCase()) — no es PII recuperable.
+   */
+  async hashEmail(email: string): Promise<string> {
+    return this._sha256(email.toLowerCase().trim());
+  }
+
+  private async _sha256(value: string): Promise<string> {
+    const hashBuffer = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+    return Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
+  isReady(): boolean {
+    return this.cryptoKey !== null;
   }
 }

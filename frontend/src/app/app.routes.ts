@@ -55,6 +55,11 @@ export const routes: Routes = [
       import('./features/login/login.page').then(m => m.LoginPage),
   },
   {
+    path: 'register',
+    loadComponent: () =>
+      import('./features/register/register.page').then(m => m.RegisterPage),
+  },
+  {
     path: '**',
     redirectTo: 'dashboard',
   },

@@ -26,7 +26,7 @@ Versión 1.0 • Abril 2026
 
 **1. Resumen Ejecutivo**
 
-Este documento constituye el Plan de Trabajo completo, la Work Breakdown Structure (WBS) y la guía de arquitectura técnica para el desarrollo de **MyFinance**, una aplicación móvil de finanzas personales altamente interactiva. La app está construida sobre Ionic con Angular en el frontend y Google Sheets como backend/base de datos, accedida directamente mediante la Google Sheets API v4 con autenticación OAuth2 del usuario. Toda la lógica de negocio reside en Angular.
+Este documento constituye el Plan de Trabajo completo, la Work Breakdown Structure (WBS) y la guía de arquitectura técnica para el desarrollo de **MyFinance**, una aplicación móvil de finanzas personales altamente interactiva. La app está construida sobre Ionic con Angular en el frontend y Google Sheets como backend/base de datos, accedida mediante la Google Sheets API v4 utilizando una **Service Account con autenticación automática (JWT)**. Toda la lógica de negocio reside en Angular.
 
 +---------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | **🎯 Propuesta de Valor**                                                                                                                                     |
@@ -52,8 +52,8 @@ El proyecto se estructura en 6 fases evolutivas que van desde la configuración 
 
   Lenguaje             TypeScript                        v5.x (strict mode)
 
-  Backend/BBDD         Google Sheets API v4              REST + OAuth2 usuario
-
+  Backend/BBDD         Google Sheets API v4              REST + Service Account JWT
+  
   Spreadsheet          Google Sheets                     ID en `environment.ts` (no expuesto en UI)
 
   Gráficas             Chart.js                          v4.x
@@ -69,15 +69,13 @@ El proyecto se estructura en 6 fases evolutivas que van desde la configuración 
   Testing              Jasmine + Karma                   ---
   ---------------------------------------------------------------------------------
 
-> **Decisión ADR-001 — Angular directo a Sheets API, sin servidor intermedio:**
-> El usuario se autentica con Google OAuth2 (scopes: `openid`, `email`, `spreadsheets`).
-> Angular usa el access_token del usuario para llamar a Sheets API v4 directamente.
-> No hay `server/`, no hay Service Account, no hay Google Apps Script.
-> El `SPREADSHEET_ID` vive en `environment.ts` (compilado en el bundle, no visible en la UI).
-> La Spreadsheet es accesible para cualquier cuenta Google autenticada.
-> El aislamiento de datos se garantiza en Angular: todas las lecturas y escrituras filtran por el `user_id` extraído del token OAuth2.
-> Los campos PII (`email`, `display_name`) se cifran con AES-GCM usando el `sub` del usuario como clave antes de escribirse en Sheets. Se descifran al leer. Lo implementa `crypto.service.ts` (Web Crypto API).
-> Toda la lógica de negocio (cálculos, estados, proyecciones) reside exclusivamente en servicios Angular.
+> **Decisión ADR-001 — Acceso automatizado con Service Account (sin login de usuario):**
+> La aplicación utiliza una Service Account de Google Cloud para acceder a los datos de forma transparente.
+> No requiere que el usuario inicie sesión con su cuenta personal de Google cada vez.
+> El "login" es automático mediante el intercambio de un JWT firmado con la clave privada de la Service Account.
+> El `SPREADSHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_EMAIL` y `GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` viven en `environment.ts`.
+> La lógica de acceso, firmado de tokens (vía Web Crypto API) y comunicación con Sheets API v4 reside íntegramente en Angular.
+> Los campos PII (`email`, `display_name`) se cifran con AES-GCM usando un identificador único de dispositivo o usuario como clave. Lo implementa `crypto.service.ts`.
 
 **2.2 Principios Arquitectónicos Inamovibles**
 
@@ -98,8 +96,8 @@ El proyecto se estructura en 6 fases evolutivas que van desde la configuración 
 +----------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | **Criterio de acceso a datos**                                                                                                                                       |
 |                                                                                                                                                                      |
-| Todas las operaciones (lectura y escritura) → Sheets API v4 directa con el Bearer token OAuth2 del usuario.                                                         |
-| No existe Apps Script, no existe servidor Express, no existe Service Account.                                                                                        |
+| Todas las operaciones (lectura y escritura) → Sheets API v4 con Bearer token generado automáticamente mediante el flujo de Service Account.                          |
+| Login transparente: el usuario accede directo a sus datos sin pantallas de consentimiento de Google externas.                                                       |
 | Toda la lógica de negocio (cálculo de amount_base, estado ok/warning/exceeded, upsert de conceptos, recurrentes) vive en servicios Angular.                         |
 | Cache con ETag + timestamp en NgRx Store para evitar llamadas redundantes.                                                                                           |
 +----------------------------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -125,7 +123,7 @@ myfinance-app/
 │   │   │   │   ├── auth.interceptor.ts       # Añade Bearer token a cada petición HTTP
 │   │   │   │   └── error.interceptor.ts      # Manejo centralizado de errores de API
 │   │   │   ├── services/
-│   │   │   │   ├── auth.service.ts           # Google OAuth2: login, logout, refresh token (GIS)
+│   │   │   │   ├── auth.service.ts           # Service Account JWT: obtención automática de tokens
 │   │   │   │   ├── sheets-api.service.ts     # ÚNICA puerta de entrada a Google Sheets API v4
 │   │   │   │   ├── crypto.service.ts         # Cifrado/descifrado AES-GCM de PII con Web Crypto API
 │   │   │   │   └── currency-api.service.ts   # Tasas de cambio en tiempo real (API externa, cached)
@@ -280,7 +278,7 @@ myfinance-app/
 │   │   └── i18n/                             # Ficheros de traducción (ES, EN)
 │   │
 │   └── environments/
-│       ├── environment.ts                    # CLIENT_ID, SPREADSHEET_ID, CURRENCY_API_KEY
+│       ├── environment.ts                    # SERVICE_ACCOUNT_KEY, SPREADSHEET_ID, CURRENCY_API_KEY
 │       └── environment.prod.ts
 │
 ├── capacitor.config.ts
@@ -545,9 +543,9 @@ La WBS se organiza en 7 áreas de trabajo. Cada área se descompone hasta el niv
 **1.2 Integración con Google**
 
 -   1.2.1 Creación del proyecto en Google Cloud Console
--   1.2.2 Habilitación de Google Sheets API v4 y configuración de pantalla de consentimiento OAuth2
--   1.2.3 Configuración de OAuth2: `CLIENT_ID`, scopes (`openid`, `email`, `spreadsheets`), orígenes autorizados
--   1.2.4 Creación del libro de Google Sheets con las 8 hojas definidas en la sección 4, compartido como "cualquier persona con cuenta Google puede editar"
+-   1.2.2 Habilitación de Google Sheets API v4
+-   1.2.3 Creación de **Service Account** y descarga de clave privada JSON
+-   1.2.4 Configuración de permisos: compartir la Spreadsheet con el email de la Service Account como Editor
 
 **1.3 Arquitectura base de Angular/Ionic**
 
@@ -690,9 +688,9 @@ La WBS se organiza en 7 áreas de trabajo. Cada área se descompone hasta el niv
 +--------------------------------------------------------------------------------------------+
 
 -   Día 1-2: Ionic + Angular + Capacitor configurados. ESLint + Prettier operativos. Regla de linting que rechace HTML en archivos `.ts` configurada.
--   Día 3: Google Cloud Project creado, Sheets API v4 habilitada, OAuth2 configurado (CLIENT_ID, scopes, orígenes), libro de Sheets creado con las 8 hojas.
+-   Día 3: Google Cloud Project creado, Sheets API v4 habilitada, Service Account configurada, libro de Sheets creado con las 8 hojas.
 -   Día 4: CoreModule, SharedModule, AppModule y routing lazy generados. Estructura de carpetas completa según la sección 3.
--   Día 5: `auth.service.ts` con Google OAuth2 funcional. `sheets-api.service.ts` con lectura básica verificada.
+-   Día 5: `auth.service.ts` con firma de tokens JWT funcional. `sheets-api.service.ts` con lectura básica verificada.
 
 **6.2 Fase 2: Core — Transacciones y Carteras (Semanas 2-4)**
 

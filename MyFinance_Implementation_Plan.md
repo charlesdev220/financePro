@@ -8,15 +8,15 @@
 ## Stack Tecnológico Definitivo
 
 > ⚠️ **Versiones reales instaladas:** Angular v20, Ionic v8, Capacitor v8, NgRx v21.
-> **Decisión de arquitectura:** Sin servidor Express, sin Service Account, sin Google Apps Script. Angular llama directamente a Sheets API v4 con el token OAuth2 del usuario. Toda la lógica de negocio vive en servicios Angular.
+> **Decisión de arquitectura:** Autenticación híbrida. La App utiliza una **Service Account (JWT)** para comunicarse de forma transparente con Google Sheets API v4. El usuario se identifica mediante un **Login propio (Email/Password)** para el aislamiento de datos. `CryptoService` cifra los datos PII antes de enviarlos a Sheets.
 
 | Capa | Tecnología | Versión real | Rol |
 |---|---|---|---|
 | Framework móvil | Ionic Framework | **v8.x** | Navegación, componentes nativos, UX mobile-first |
 | Framework web | Angular | **v20.x** standalone APIs | Lógica de componentes, routing lazy, estado, lógica de negocio |
 | Lenguaje | TypeScript | v5.x strict | Todo el código fuente — sin `any` permitido |
-| Backend / BBDD | Google Sheets API v4 | REST + OAuth2 usuario | Lectura y escritura con Bearer token del usuario autenticado |
-| Auth | Google OAuth2 (GIS) | --- | Scopes: `openid`, `email`, `spreadsheets` |
+| Backend / BBDD | Google Sheets API v4 | REST + Service Account JWT | Lectura y escritura con Bearer token generado automáticamente |
+| Auth | Service Account (JWT) | --- | Clave privada en `environment.ts` (Auto-login) |
 | Spreadsheet | Google Sheets | --- | ID en `environment.ts` — no expuesto en UI |
 | Cifrado PII | Web Crypto API | nativa del browser | AES-GCM + PBKDF2 con `sub` del usuario como clave |
 | Tasas de cambio | ExchangeRate-API | --- | Consulta en tiempo real, caché en NgRx |
@@ -33,13 +33,13 @@
 ### 1. Separación total de plantillas
 Los archivos `.ts` **nunca** contienen HTML. Cada componente tiene su propio `.html`. Regla de ESLint configurada para rechazarlo en CI. Sin excepciones.
 
-### 2. Acceso directo a Sheets API — Sin servidor intermedio
+### 2. Acceso automatizado con Service Account (sin login de usuario)
 
 ```
 Usuario
   │
   ▼
-Google OAuth2 (scopes: openid + email + spreadsheets)
+Service Account (Auto-login vía JWT)
   │
   ▼
 Angular — SheetsApiService
@@ -54,11 +54,11 @@ Google Sheets API v4
 Spreadsheet compartida (ID en environment.ts)
 ```
 
-- No hay `server/`, no hay Service Account, no hay Google Apps Script.
-- `SheetsApiService` es la única puerta de entrada — ningún componente la llama directamente.
-- El `SPREADSHEET_ID` vive en `environment.ts` (compilado, no visible en UI).
-- La Spreadsheet está compartida como "cualquier persona con cuenta Google puede editar".
-- El aislamiento de datos por usuario se garantiza en Angular: todas las operaciones filtran por el `sub` del token OAuth2.
+- No hay servidor intermedio. La App firma sus propios tokens JWT (`jsrsasign`).
+- `AuthService` gestiona tanto el token de Google como la sesión local del usuario.
+- `CryptoService` es la única puerta de entrada para datos PII.
+- El `SPREADSHEET_ID` y las claves de la Service Account viven en `environment.ts`.
+- El aislamiento de datos se garantiza filtrando por el email del usuario logueado en cada operación de Sheets.
 
 ### 3. Lógica de negocio en Angular — Sin delegación a terceros
 
@@ -98,10 +98,10 @@ src/app/
 
 ### FASE 1 — Setup e Infraestructura *(Semana 1)*
 
-**Objetivo:** Entorno 100% operativo. Ionic + Angular corriendo en emulador iOS y Android. Google OAuth2 funcional. `SheetsApiService` leyendo datos reales del Spreadsheet con el token del usuario.
+**Objetivo:** Entorno 100% operativo. Ionic + Angular corriendo en emulador iOS y Android. Autenticación con Service Account funcional. `SheetsApiService` leyendo datos reales del Spreadsheet.
 
 **Criterio de entrada:** Repositorio Git vacío, acceso a Google Cloud Console.
-**Criterio de salida:** Login con Google funcional. `SheetsApiService` lee datos reales. Estructura de carpetas completa según WBS §3.
+**Criterio de salida:** Obtención automática de token funcional. `SheetsApiService` lee datos reales. Estructura de carpetas completa según WBS §3.
 
 **Tareas:**
 
@@ -111,19 +111,19 @@ src/app/
 | 1.1.2 | ESLint (strict) + Prettier + regla anti-inline-HTML | `.eslintrc.json` | ✅ |
 | 1.1.3 | Branching + .gitignore | `.gitignore` | ✅ |
 | 1.1.4 | GitHub Actions CI/CD: lint → test → build | `.github/workflows/ci.yml` | ✅ |
-| 1.2.1 | Google Cloud Project creado, Sheets API v4 habilitada | Google Cloud Console | ⏳ |
-| 1.2.2 | OAuth2 configurado: CLIENT_ID, scopes, orígenes autorizados (`localhost:8100`) | `environment.ts` | ⏳ |
-| 1.2.3 | Spreadsheet creada con las 8 hojas, compartida "cualquier Google puede editar" | Google Sheets | ⏳ |
-| 1.2.4 | SPREADSHEET_ID en `environment.ts` | `src/environments/environment.ts` | ⏳ tras 1.2.3 |
+| 1.2.1 | Google Cloud Project creado, Sheets API v4 habilitada | Google Cloud Console | ✅ |
+| 1.2.2 | Service Account creada y compartida con el Spreadsheet | Google Cloud Console | ✅ |
+| 1.2.3 | Spreadsheet creada con las 8 hojas | Google Sheets | ✅ |
+| 1.2.4 | SPREADSHEET_ID, EMAIL y PRIVATE_KEY en `environment.ts` | `src/environments/environment.ts` | ✅ |
 | 1.3.1 | Standalone bootstrap: `bootstrapApplication()`, `app.config.ts` | `main.ts`, `app.config.ts`, `app.routes.ts` | ✅ |
 | 1.3.2 | Lazy routing con `loadComponent()` para 7 pages | `app.routes.ts` | ✅ |
 | 1.3.3 | NgRx v21: 3 slices (transactions, wallets, budgets) | `store/app.state.ts`, `store/*/` | ✅ |
 | 1.3.4 | `auth.interceptor.ts` y `error.interceptor.ts` | `core/interceptors/` | ✅ |
 | 1.3.5 | `auth.guard.ts` como `CanActivateFn` | `core/guards/auth.guard.ts` | ✅ |
 | 1.3.6 | 6 interfaces de modelo en `models/` | `transaction`, `category`, `wallet`, `budget`, `currency`, `user-settings` | ✅ |
-| 1.3.7 | `auth.service.ts`: login/logout con Google Identity Services, token in-memory | `core/services/auth.service.ts` | ⏳ |
-| 1.3.8 | `crypto.service.ts`: `deriveKey()`, `encrypt()`, `decrypt()` con Web Crypto API | `core/services/crypto.service.ts` | ⏳ |
-| 1.3.9 | Tests unitarios de `crypto.service.ts` | `core/services/crypto.service.spec.ts` | ⏳ tras 1.3.8 |
+| 1.3.7 | `auth.service.ts`: firma de JWT y obtención de access_token automático | `core/services/auth.service.ts` | ✅ |
+| 1.3.8 | `crypto.service.ts`: `deriveKey()`, `encrypt()`, `decrypt()` con Web Crypto API | `core/services/crypto.service.ts` | ✅ |
+| 1.3.9 | Tests unitarios de `crypto.service.ts` | `core/services/crypto.service.spec.ts` | ✅ |
 
 ---
 
