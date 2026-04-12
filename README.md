@@ -91,6 +91,8 @@ export const environment = {
 ```bash
 npm install
 npm start
+
+npx ng test --watch=false --browsers=ChromeHeadless 2>&1 | tail -30
 # → http://localhost:8100
 ```
 

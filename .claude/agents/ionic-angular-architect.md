@@ -30,6 +30,7 @@ Eres el **ingeniero frontend senior** del proyecto MyFinance. Tu misión es cons
 - `/src/app/shared/`: Componentes "dumb", pipes y directivas reutilizables.
 - `/src/app/features/`: Módulos funcionales (Dashboard, Transactions, etc.) conteniendo páginas y servicios específicos.
 - `/src/app/models/`: Interfaces TypeScript que definen el dominio.
+- `/src/app/testing/`: **Todos los archivos `.spec.ts` del proyecto**, organizados con la misma estructura de carpetas que el código fuente. Ejemplo: el test de `core/services/auth.service.ts` vive en `testing/core/services/auth.service.spec.ts`. Los imports relativos apuntan de vuelta al código fuente (ej: `'../../../core/services/auth.service'`). Los fixtures compartidos están en `testing/fixtures.ts`.
 
 ### Capa de Datos
 - Toda comunicación con Google Sheets o Apps Script pasa por `SheetsApiService` o `AppsScriptService`.

@@ -4,6 +4,21 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Fase 1 — Auth OAuth2 + Cifrado PII + SheetsApiService directo):
+*Fase actual:* Fase 1.3: Auth GIS + Crypto + Sheets API directa
+*Estado actual:* Completado ✅ | Archivado: 2026-04-12
+- ✔️ **Arquitectura sin servidor:** Eliminado `server/` (Express), `apps-script/` y `.clasp.json`. Angular llama directo a Sheets API v4 con Bearer token del usuario.
+- ✔️ **Environment limpio:** `environment.ts` y `environment.prod.ts` reescritos — solo `googleClientId`, `spreadsheetId`, `currencyApiKey`. Cero referencias a `apiUrl` o `localhost:3001`.
+- ✔️ **GIS Token Flow:** `AuthService` reescrito con `google.accounts.oauth2.initTokenClient` + userinfo endpoint. `access_token` estrictamente in-memory — nunca en `localStorage`.
+- ✔️ **CryptoService (nuevo):** `deriveKey(userId)` con PBKDF2 (salt=sub, 100.000 iter, SHA-256) → `CryptoKey` AES-GCM 256b. `encrypt()` con IV random 12B prepended en Base64. `decrypt()` inverso. Web Crypto API nativa del browser.
+- ✔️ **AuthGuard real:** Redirige a `/login` si `isAuthenticated()` es false. Ruta `/login` añadida sin `canActivate`.
+- ✔️ **SheetsApiService reescrito:** `getRange()`, `appendRow()`, `updateRow()`, `deleteRow()`. Caché ETag con `Map<string, string>` y header `If-None-Match`. Sin métodos Express obsoletos.
+- ✔️ **64/64 tests pasan:** `crypto.service.spec.ts` (8), `auth.service.spec.ts` (11), `sheets-api.service.spec.ts` (10), `auth.guard.spec.ts` (2), `auth.interceptor.spec.ts` (3) + anteriores.
+*Próximos pasos:* Configuración manual del usuario (Google Cloud Console: OAuth2, Sheets API v4, spreadsheet con 8 tabs). Luego Fase 2 — Login page real + CRUD de transacciones via SheetsApiService.
+*(Qué / Por qué / Dónde / Qué se aprendió):* GIS `initTokenClient` hace early return si `environment.googleClientId` está vacío — los tests mutaban el objeto `environment` antes de la instanciación del servicio para evitarlo. Web Crypto API `subtle` disponible en localhost sin HTTPS. Salt PBKDF2 = userId (sub de Google) es suficiente sin salt adicional porque el sub es único y estable. `observe: 'response'` en `HttpClient` es necesario para acceder al header `ETag` en la respuesta.
+
+---
+
 ### Qué hemos completado hasta ahora (Fase 1.2 — Integración Google Sheets via Express + Service Account):
 *Fase actual:* Fase 1.2: Conexión real con Google Sheets
 *Estado actual:* Completado ✅

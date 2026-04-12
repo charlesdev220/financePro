@@ -2,9 +2,9 @@ import {
   selectAllTransactions,
   selectTransactionsLoading,
   selectTransactionsError,
-} from './transactions.selectors';
-import { AppState } from '../app.state';
-import { MOCK_TRANSACTIONS } from '../../testing/fixtures';
+} from '../../../store/transactions/transactions.selectors';
+import { AppState } from '../../../store/app.state';
+import { MOCK_TRANSACTIONS } from '../../fixtures';
 
 describe('Transactions Selectors', () => {
   const state: AppState = {

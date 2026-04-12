@@ -1,6 +1,6 @@
-import { budgetsReducer, BudgetsState } from './budgets.reducer';
-import { BudgetsActions } from './budgets.actions';
-import { MOCK_BUDGETS } from '../../testing/fixtures';
+import { budgetsReducer, BudgetsState } from '../../../store/budgets/budgets.reducer';
+import { BudgetsActions } from '../../../store/budgets/budgets.actions';
+import { MOCK_BUDGETS } from '../../fixtures';
 
 describe('budgetsReducer', () => {
   const initialState: BudgetsState = {

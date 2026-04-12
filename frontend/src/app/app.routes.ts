@@ -50,6 +50,11 @@ export const routes: Routes = [
       import('./features/settings/settings.page').then(m => m.SettingsPage),
   },
   {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/login/login.page').then(m => m.LoginPage),
+  },
+  {
     path: '**',
     redirectTo: 'dashboard',
   },

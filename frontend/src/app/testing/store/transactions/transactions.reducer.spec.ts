@@ -1,6 +1,6 @@
-import { transactionsReducer, TransactionsState } from './transactions.reducer';
-import { TransactionsActions } from './transactions.actions';
-import { MOCK_TRANSACTIONS } from '../../testing/fixtures';
+import { transactionsReducer, TransactionsState } from '../../../store/transactions/transactions.reducer';
+import { TransactionsActions } from '../../../store/transactions/transactions.actions';
+import { MOCK_TRANSACTIONS } from '../../fixtures';
 
 describe('transactionsReducer', () => {
   const initialState: TransactionsState = {

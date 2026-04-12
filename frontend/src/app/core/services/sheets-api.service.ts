@@ -1,58 +1,85 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export interface SheetValuesResponse {
-  range:  string;
+  range: string;
+  majorDimension: string;
   values: unknown[][];
 }
 
 /**
- * SheetsApiService — única puerta de entrada a Google Sheets.
- * Delega al servidor Express (server/index.js) que usa googleapis + service account.
- * El private key nunca llega al frontend.
+ * SheetsApiService — única puerta de entrada a Google Sheets API v4.
+ *
+ * Llama directamente a la Sheets API REST usando el Bearer token OAuth2
+ * del usuario (añadido por authInterceptor). Sin servidor Express intermedio.
+ *
+ * Caché ETag: almacena el ETag de cada rango leído. En la siguiente llamada
+ * envía If-None-Match — si Sheets responde 304 (sin cambios), retorna null
+ * y el efecto NgRx reutiliza el store cacheado.
  */
 @Injectable({ providedIn: 'root' })
 export class SheetsApiService {
-  private readonly http    = inject(HttpClient);
-  private readonly baseUrl = `${environment.apiUrl}/api/sheets`;
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = `https://sheets.googleapis.com/v4/spreadsheets/${environment.spreadsheetId}/values`;
+  private readonly etagCache = new Map<string, string>();
 
-  /** Lee un rango. Ej: 'TRANSACTIONS!A:O' */
-  getRange(range: string): Observable<SheetValuesResponse> {
+  /**
+   * Lee un rango de la Spreadsheet.
+   * Retorna null si los datos no cambiaron (304 / ETag match).
+   * El authInterceptor añade el Bearer token automáticamente.
+   */
+  getRange(range: string): Observable<SheetValuesResponse | null> {
+    const headers: Record<string, string> = {};
+    if (this.etagCache.has(range)) {
+      headers['If-None-Match'] = this.etagCache.get(range)!;
+    }
+
     return this.http.get<SheetValuesResponse>(
-      `${this.baseUrl}/values`,
-      { params: { range } }
+      `${this.baseUrl}/${encodeURIComponent(range)}`,
+      { observe: 'response', headers: new HttpHeaders(headers) },
+    ).pipe(
+      map(response => {
+        const etag = response.headers.get('ETag');
+        if (etag) {
+          this.etagCache.set(range, etag);
+        }
+        return response.body;
+      }),
     );
   }
 
-  /** Añade filas al final de un rango. */
+  /**
+   * Añade filas al final del rango indicado.
+   * Ej: appendRow('TRANSACTIONS!A:O', [[...]])
+   */
   appendRow(range: string, values: unknown[][]): Observable<unknown> {
-    return this.http.post(`${this.baseUrl}/append`, { range, values });
-  }
-
-  /** Sobreescribe un rango específico. */
-  updateRow(range: string, values: unknown[][]): Observable<unknown> {
-    return this.http.put(`${this.baseUrl}/values`, { range, values });
-  }
-
-  /** Limpia un rango (borrado lógico). */
-  deleteRow(range: string): Observable<unknown> {
-    return this.http.delete(`${this.baseUrl}/values`, { params: { range } });
-  }
-
-  /** Inicializa las 8 hojas con sus encabezados (idempotente). */
-  initDatabase(): Observable<{ success: boolean; sheets: string[] }> {
-    return this.http.post<{ success: boolean; sheets: string[] }>(
-      `${this.baseUrl}/init`,
-      {}
+    return this.http.post(
+      `${this.baseUrl}/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`,
+      { values },
     );
   }
 
-  /** Verifica la conexión con el servidor y el spreadsheet. */
-  healthCheck(): Observable<{ status: string; spreadsheetId: string }> {
-    return this.http.get<{ status: string; spreadsheetId: string }>(
-      `${environment.apiUrl}/api/health`
+  /**
+   * Sobreescribe un rango específico.
+   * Ej: updateRow('TRANSACTIONS!A2:O2', [[...]])
+   */
+  updateRow(range: string, values: unknown[][]): Observable<unknown> {
+    return this.http.put(
+      `${this.baseUrl}/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+      { values },
+    );
+  }
+
+  /**
+   * Borra el contenido de un rango (borrado lógico).
+   * Ej: deleteRow('TRANSACTIONS!A2:O2')
+   */
+  deleteRow(range: string): Observable<unknown> {
+    return this.http.post(
+      `${this.baseUrl}/${encodeURIComponent(range)}:clear`,
+      {},
     );
   }
 }

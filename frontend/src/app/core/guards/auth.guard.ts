@@ -1,10 +1,9 @@
-import { CanActivateFn } from '@angular/router';
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
-export const authGuard: CanActivateFn = (_route, _state) => {
-  // Phase 1 stub: allow all navigation while Google OAuth2 is not configured.
-  // Replace this return with real auth check in task 1.2.x:
-  //   const authService = inject(AuthService);
-  //   const router = inject(Router);
-  //   return authService.isAuthenticated() || router.createUrlTree(['/login']);
-  return true;
+export const authGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  const router = inject(Router);
+  return auth.isAuthenticated() || router.createUrlTree(['/login']);
 };

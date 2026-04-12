@@ -1,6 +1,6 @@
-import { walletsReducer, WalletsState } from './wallets.reducer';
-import { WalletsActions } from './wallets.actions';
-import { MOCK_WALLETS } from '../../testing/fixtures';
+import { walletsReducer, WalletsState } from '../../../store/wallets/wallets.reducer';
+import { WalletsActions } from '../../../store/wallets/wallets.actions';
+import { MOCK_WALLETS } from '../../fixtures';
 
 describe('walletsReducer', () => {
   const initialState: WalletsState = {
