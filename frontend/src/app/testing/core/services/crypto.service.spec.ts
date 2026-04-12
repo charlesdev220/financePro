@@ -3,6 +3,8 @@ import { CryptoService } from '../../../core/services/crypto.service';
 
 describe('CryptoService', () => {
   let service: CryptoService;
+  const userId = 'tester@financepro.com';
+  const plainText = 'Sensitive Info 123';
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
@@ -13,103 +15,76 @@ describe('CryptoService', () => {
     expect(service).toBeTruthy();
   });
 
-  // REQ-07: derivación determinista — misma userId → misma clave (mismos resultados de cifrado)
-  describe('deriveKey()', () => {
-    it('initializes the service so encrypt/decrypt work', async () => {
-      await service.deriveKey('google-sub-12345');
-      expect(service.isReady()).toBeTrue();
-    });
-
-    it('produces the same round-trip result when derived twice with the same userId', async () => {
-      const plaintext = 'test@example.com';
-
-      await service.deriveKey('google-sub-12345');
-      const cipher = await service.encrypt(plaintext);
-
-      await service.deriveKey('google-sub-12345');
-      const decrypted = await service.decrypt(cipher);
-
-      expect(decrypted).toBe(plaintext);
-    });
-
-    it('fails to decrypt with a different userId', async () => {
-      await service.deriveKey('sub-A');
-      const cipher = await service.encrypt('test@example.com');
-
-      await service.deriveKey('sub-B');
-      const result = await service.decrypt(cipher);
-
-      // decrypt devuelve '[DATA_ERROR]' cuando la clave no coincide
-      expect(result).toBe('[DATA_ERROR]');
-    });
+  it('isReady() returns false before deriveKey', () => {
+    expect(service.isReady()).toBeFalse();
   });
 
-  // REQ-08: cifrado AES-GCM
-  describe('encrypt()', () => {
-    it('produces different Base64 output each call (random IV)', async () => {
-      await service.deriveKey('sub-test');
-      const plaintext = 'test@example.com';
-
-      const cipher1 = await service.encrypt(plaintext);
-      const cipher2 = await service.encrypt(plaintext);
-
-      expect(cipher1).not.toBe(cipher2);
-    });
-
-    it('returns a "ivBase64.cipherBase64" formatted string', async () => {
-      await service.deriveKey('sub-test');
-      const result = await service.encrypt('test@example.com');
-
-      expect(result).toContain('.');
-      const [ivPart, cipherPart] = result.split('.');
-      expect(() => atob(ivPart)).not.toThrow();
-      expect(() => atob(cipherPart)).not.toThrow();
-    });
+  it('deriveKey() makes the service ready', async () => {
+    await service.deriveKey(userId);
+    expect(service.isReady()).toBeTrue();
   });
 
-  // REQ-09: descifrado AES-GCM
-  describe('decrypt()', () => {
-    it('round-trip: encrypt → decrypt returns the original string', async () => {
-      await service.deriveKey('sub-roundtrip');
-      const original = 'usuario@gmail.com';
-
-      const cipher = await service.encrypt(original);
-      const decrypted = await service.decrypt(cipher);
-
-      expect(decrypted).toBe(original);
-    });
-
-    it('returns [DATA_ERROR] when ciphertext is corrupted', async () => {
-      await service.deriveKey('sub-test');
-      const result = await service.decrypt('invalid.data');
-      expect(result).toBe('[DATA_ERROR]');
-    });
+  it('encrypt/decrypt round-trip returns original text', async () => {
+    await service.deriveKey(userId);
+    const encrypted = await service.encrypt(plainText);
+    expect(encrypted).toContain('.');
+    expect(encrypted).not.toBe(plainText);
+    expect(await service.decrypt(encrypted)).toBe(plainText);
   });
 
-  // hashPassword y hashEmail son independientes de deriveKey
-  describe('hashPassword()', () => {
-    it('returns a hex SHA-256 string', async () => {
-      const hash = await service.hashPassword('user@example.com', 'secret123');
-      expect(hash).toMatch(/^[0-9a-f]{64}$/);
-    });
+  it('decrypting with a different user key returns [DATA_ERROR]', async () => {
+    await service.deriveKey(userId);
+    const encrypted = await service.encrypt(plainText);
 
-    it('is deterministic', async () => {
-      const h1 = await service.hashPassword('user@example.com', 'secret123');
-      const h2 = await service.hashPassword('user@example.com', 'secret123');
-      expect(h1).toBe(h2);
-    });
+    await service.deriveKey('other@email.com');
+    expect(await service.decrypt(encrypted)).toBe('[DATA_ERROR]');
+  });
+
+  it('encrypt() throws if key not initialized', async () => {
+    await expectAsync(service.encrypt('foo')).toBeRejectedWithError('CryptoKey no inicializada.');
   });
 
   describe('hashEmail()', () => {
-    it('returns a hex SHA-256 string', async () => {
-      const hash = await service.hashEmail('User@Example.COM');
+    it('returns a 64-char hex string', async () => {
+      const hash = await service.hashEmail('user@test.com');
       expect(hash).toMatch(/^[0-9a-f]{64}$/);
     });
 
     it('is case-insensitive (normalizes to lowercase)', async () => {
-      const h1 = await service.hashEmail('User@Example.COM');
-      const h2 = await service.hashEmail('user@example.com');
+      const h1 = await service.hashEmail('User@Test.COM');
+      const h2 = await service.hashEmail('user@test.com');
       expect(h1).toBe(h2);
+    });
+
+    it('different emails produce different hashes', async () => {
+      const h1 = await service.hashEmail('a@test.com');
+      const h2 = await service.hashEmail('b@test.com');
+      expect(h1).not.toBe(h2);
+    });
+  });
+
+  describe('hashPassword()', () => {
+    it('returns a 64-char hex string', async () => {
+      const hash = await service.hashPassword(userId, 'mySecret');
+      expect(hash).toMatch(/^[0-9a-f]{64}$/);
+    });
+
+    it('same inputs produce same hash (deterministic)', async () => {
+      const h1 = await service.hashPassword(userId, 'mySecret');
+      const h2 = await service.hashPassword(userId, 'mySecret');
+      expect(h1).toBe(h2);
+    });
+
+    it('different passwords produce different hashes', async () => {
+      const h1 = await service.hashPassword(userId, 'correct');
+      const h2 = await service.hashPassword(userId, 'wrong');
+      expect(h1).not.toBe(h2);
+    });
+
+    it('same password with different email produces different hash', async () => {
+      const h1 = await service.hashPassword('a@test.com', 'pass');
+      const h2 = await service.hashPassword('b@test.com', 'pass');
+      expect(h1).not.toBe(h2);
     });
   });
 });

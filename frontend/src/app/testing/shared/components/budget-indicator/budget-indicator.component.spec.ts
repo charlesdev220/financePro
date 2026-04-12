@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BudgetIndicatorComponent } from './budget-indicator.component';
-import { IBudget } from '../../../models/budget.model';
+import { BudgetIndicatorComponent } from '../../../../shared/components/budget-indicator/budget-indicator.component';
+import { IBudget } from '../../../../models/budget.model';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BudgetIndicatorComponent — getters percentage y color

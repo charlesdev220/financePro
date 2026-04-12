@@ -1,4 +1,4 @@
-import { RelativeDatePipe } from './relative-date.pipe';
+import { RelativeDatePipe } from '../../../shared/pipes/relative-date.pipe';
 
 describe('RelativeDatePipe', () => {
   let pipe: RelativeDatePipe;

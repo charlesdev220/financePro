@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { Store } from '@ngrx/store';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
-import { selectBalanceForWallet } from './wallets.selectors';
-import { ITransaction } from '../../models/transaction.model';
+import { selectBalanceForWallet } from '../../../store/wallets/wallets.selectors';
+import { ITransaction } from '../../../models/transaction.model';
 
 const mockTx = (
   id: string,

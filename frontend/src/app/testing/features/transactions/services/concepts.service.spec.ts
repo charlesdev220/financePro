@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { ConceptsService } from './concepts.service';
-import { SheetsApiService } from '../../../core/services/sheets-api.service';
-import { IConcept } from '../../../models/concept.model';
-import { ITransaction } from '../../../models/transaction.model';
+import { ConceptsService } from '../../../../features/transactions/services/concepts.service';
+import { SheetsApiService } from '../../../../core/services/sheets-api.service';
+import { IConcept } from '../../../../models/concept.model';
+import { ITransaction } from '../../../../models/transaction.model';
 
 const mockConcept = (overrides: Partial<IConcept> = {}): IConcept => ({
   conceptId: 'con-001',
@@ -52,11 +52,13 @@ describe('ConceptsService.getSuggestions', () => {
   it('should return suggestions ordered by usageCount DESC', () => {
     const concepts: IConcept[] = [
       mockConcept({ text: 'Mercadona', usageCount: 5 }),
-      mockConcept({ conceptId: 'con-002', text: 'Mediamarkt', usageCount: 2 }),
-      mockConcept({ conceptId: 'con-003', text: 'Mercería', usageCount: 1 }),
+      mockConcept({ conceptId: 'con-002', text: 'Maderas', usageCount: 10 }), 
+      mockConcept({ conceptId: 'con-003', text: 'Mermelada', usageCount: 8 }),
     ];
+    // Prefix 'Mer' -> Mercadona y Mermelada
+    // Orden desc: Mermelada (8), Mercadona (5)
     const result = service.getSuggestions('cat-001', 'Mer', concepts);
-    expect(result).toEqual(['Mercadona', 'Mediamarkt', 'Mercería']);
+    expect(result).toEqual(['Mermelada', 'Mercadona']);
   });
 
   // REQ-09 sc2: sin coincidencias para el prefijo → retorna []

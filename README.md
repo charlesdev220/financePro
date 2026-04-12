@@ -105,6 +105,8 @@ Los campos sensibles del usuario (`email`, `display_name`) se cifran con **AES-G
 
 ```bash
 npm test
+
+cd frontend && npm test -- --no-watch --browsers=ChromeHeadless
 ```
 
 ## CI/CD

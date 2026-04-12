@@ -1,6 +1,6 @@
-import { DashboardService, DashboardSummary, CategoryBreakdown } from './dashboard.service';
-import { ITransaction } from '../../../models/transaction.model';
-import { ICategory } from '../../../models/category.model';
+import { DashboardService, DashboardSummary, CategoryBreakdown } from '../../../../features/dashboard/services/dashboard.service';
+import { ITransaction } from '../../../../models/transaction.model';
+import { ICategory } from '../../../../models/category.model';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers inline — sin dependencias externas
@@ -144,7 +144,7 @@ describe('DashboardService', () => {
 
       // Then
       expect(breakdown.length).toBe(6);
-      expect(breakdown.find(b => b.categoryId === 'others')).toBeUndefined();
+      expect(breakdown.find((b: any) => b.categoryId === 'others')).toBeUndefined();
     });
 
     // REQ-02 sc2: > 6 categorías → top 6 + "Otros" con monto agrupado
@@ -165,7 +165,7 @@ describe('DashboardService', () => {
 
       // Then
       expect(breakdown.length).toBe(7); // 6 top + Otros
-      const otros = breakdown.find(b => b.categoryId === 'others');
+      const otros = breakdown.find((b: any) => b.categoryId === 'others');
       expect(otros).toBeDefined();
       expect(otros!.name).toBe('Otros');
       expect(otros!.amount).toBe(50);
@@ -199,7 +199,7 @@ describe('DashboardService', () => {
       // Then
       expect(breakdown.length).toBe(1);
       expect(breakdown[0].categoryId).toBe('cat-2');
-      expect(breakdown.find(b => b.categoryId === 'cat-1')).toBeUndefined();
+      expect(breakdown.find((b: any) => b.categoryId === 'cat-1')).toBeUndefined();
     });
   });
 

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { PeriodSelectorComponent } from './period-selector.component';
+import { PeriodSelectorComponent } from '../../../../shared/components/period-selector/period-selector.component';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PeriodSelectorComponent — navegación de períodos mensuales

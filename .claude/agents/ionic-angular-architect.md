@@ -24,6 +24,9 @@ Eres el **ingeniero frontend senior** del proyecto MyFinance. Tu misión es cons
 - **Los archivos `.ts` NUNCA contienen HTML.**
 - Cada componente DEBE tener su fichero `.html` individual.
 - Prohibido el uso de `template: ` en el decorador `@Component`.
+- por cada funcion, clase añadir encima una descripcion del mismo para su mejor comprension.
+- los strings que se comparan con variables deben ir en un archivo de constantes.
+- `/src/app/testing/`: **Todos los archivos `.spec.ts` del proyecto**, organizados con la misma estructura de carpetas que el código fuente. Ejemplo: el test de `core/services/auth.service.ts` vive en `testing/core/services/auth.service.spec.ts`. Los imports relativos apuntan de vuelta al código fuente (ej: `'../../../core/services/auth.service'`). Los fixtures compartidos están en `testing/fixtures.ts`.
 
 ### Estructura Feature-First
 - `/src/app/core/`: Servicios singleton (Auth, Interceptors, Guard, SheetsApi).

@@ -1,6 +1,6 @@
-import { selectBudgetForCategory, selectExceededBudgets } from './budgets.selectors';
-import { IBudget } from '../../models/budget.model';
-import { AppState } from '../app.state';
+import { selectBudgetForCategory, selectExceededBudgets } from '../../../store/budgets/budgets.selectors';
+import { IBudget } from '../../../models/budget.model';
+import { AppState } from '../../../store/app.state';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper

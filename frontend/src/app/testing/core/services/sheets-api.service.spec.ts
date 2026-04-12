@@ -3,7 +3,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 import { SheetsApiService } from '../../../core/services/sheets-api.service';
 
-const BASE = 'https://sheets.googleapis.com/v4/spreadsheets//values';
+import { environment } from '../../../../environments/environment';
+
+const BASE = `https://sheets.googleapis.com/v4/spreadsheets/${environment.spreadsheetId}/values`;
 
 describe('SheetsApiService', () => {
   let service: SheetsApiService;

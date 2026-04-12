@@ -1,9 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { TransactionService, rowToTransaction, transactionToRow } from './transaction.service';
-import { CurrencyApiService } from '../../../core/services/currency-api.service';
-import { SheetsApiService } from '../../../core/services/sheets-api.service';
-import { ITransaction } from '../../../models/transaction.model';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { TransactionService, rowToTransaction, transactionToRow } from '../../../../features/transactions/services/transaction.service';
+import { CurrencyApiService } from '../../../../core/services/currency-api.service';
+import { SheetsApiService } from '../../../../core/services/sheets-api.service';
+import { AuthService } from '../../../../core/services/auth.service';
+import { ITransaction } from '../../../../models/transaction.model';
 
 const mockTx = (overrides: Partial<ITransaction> = {}): ITransaction => ({
   txId: 'tx-001',
@@ -28,16 +31,25 @@ describe('TransactionService', () => {
   let service: TransactionService;
   let currencySpy: jasmine.SpyObj<CurrencyApiService>;
   let sheetsSpy: jasmine.SpyObj<SheetsApiService>;
+  let authSpy: jasmine.SpyObj<AuthService>;
 
   beforeEach(() => {
     currencySpy = jasmine.createSpyObj('CurrencyApiService', ['getRate']);
     sheetsSpy = jasmine.createSpyObj('SheetsApiService', ['getRange', 'appendRow', 'updateRow', 'deleteRow']);
+    authSpy = jasmine.createSpyObj('AuthService', ['getUser', 'signIn', 'isAuthenticated', 'getAccessToken']);
+
+    // Mocks básicos para evitar errores si se llaman (aunque no deberían con los spies)
+    authSpy.isAuthenticated.and.returnValue(true);
+    authSpy.getUser.and.returnValue({ sub: 'user-001', email: 'test@test.com', name: 'Tester' });
 
     TestBed.configureTestingModule({
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         TransactionService,
         { provide: CurrencyApiService, useValue: currencySpy },
         { provide: SheetsApiService, useValue: sheetsSpy },
+        { provide: AuthService, useValue: authSpy },
       ],
     });
     service = TestBed.inject(TransactionService);

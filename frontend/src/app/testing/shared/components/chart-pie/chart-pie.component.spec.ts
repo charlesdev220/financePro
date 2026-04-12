@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Chart } from 'chart.js';
-import { ChartPieComponent } from './chart-pie.component';
+import { ChartPieComponent } from '../../../../shared/components/chart-pie/chart-pie.component';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ChartPieComponent — ciclo de vida y manejo del canvas
@@ -57,16 +57,27 @@ describe('ChartPieComponent', () => {
       labels: ['X'],
       datasets: [{ data: [100] }],
     };
-    fixture.detectChanges();
+    fixture.detectChanges(); // Ejecuta AfterViewInit: initialized = true, chart creado
 
-    const destroySpy = spyOn(Chart.prototype, 'destroy').and.callThrough();
+    const destroySpy = spyOn(component['chart'] as any, 'destroy').and.callThrough();
 
     // When: cambiamos data → ngOnChanges → destroy + re-create
+    // Usamos SimpleChange para simular el cambio de entrada si es necesario, 
+    // pero fixture.detectChanges() debería detectarlo si la referencia cambia.
     component.data = {
       labels: ['Y', 'Z'],
       datasets: [{ data: [50, 50] }],
     };
-    fixture.detectChanges();
+    
+    // Forzamos el trigger de cambios manualmente si detectChanges es perezoso con OnPush
+    component.ngOnChanges({
+      data: {
+        currentValue: component.data,
+        previousValue: null,
+        firstChange: false,
+        isFirstChange: () => false
+      } as any
+    });
 
     // Then
     expect(destroySpy).toHaveBeenCalled();

@@ -1,5 +1,5 @@
-import { calculateStatus, rowToBudget } from './budget.service';
-import { IBudget } from '../../../models/budget.model';
+import { calculateStatus, rowToBudget } from '../../../../features/budgets/services/budget.service';
+import { IBudget } from '../../../../models/budget.model';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // calculateStatus — función pura, no requiere DI
