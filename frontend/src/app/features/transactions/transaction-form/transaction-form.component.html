@@ -79,6 +79,16 @@
         }
       </ion-item>
 
+      <!-- Indicador de presupuesto -->
+      @if (getActiveBudget(); as budget) {
+        <div class="budget-info">
+          <app-budget-indicator [budget]="budget"></app-budget-indicator>
+          @if (getBudgetWarning()) {
+            <ion-note color="warning">Superarías el presupuesto de esta categoría</ion-note>
+          }
+        </div>
+      }
+
       <!-- Concepto con autocompletado -->
       <ion-item>
         <ion-label position="stacked">Concepto (opcional)</ion-label>

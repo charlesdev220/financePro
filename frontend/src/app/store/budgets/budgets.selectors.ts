@@ -6,15 +6,35 @@ export const selectBudgetsState =
 
 export const selectAllBudgets = createSelector(
   selectBudgetsState,
-  state => state.items
+  state => state.items,
+);
+
+export const selectBudgetsRowMap = createSelector(
+  selectBudgetsState,
+  state => state.rowMap,
 );
 
 export const selectBudgetsLoading = createSelector(
   selectBudgetsState,
-  state => state.loading
+  state => state.loading,
 );
 
 export const selectBudgetsError = createSelector(
   selectBudgetsState,
-  state => state.error
+  state => state.error,
 );
+
+export const selectBudgetForCategory = (categoryId: string, period: string) =>
+  createSelector(selectAllBudgets, budgets =>
+    budgets.find(b => b.categoryId === categoryId && b.period === period) ?? null,
+  );
+
+export const selectBudgetsForPeriod = (period: string) =>
+  createSelector(selectAllBudgets, budgets =>
+    budgets.filter(b => b.period === period),
+  );
+
+export const selectExceededBudgets = (period: string) =>
+  createSelector(selectAllBudgets, budgets =>
+    budgets.filter(b => b.period === period && b.status === 'exceeded'),
+  );

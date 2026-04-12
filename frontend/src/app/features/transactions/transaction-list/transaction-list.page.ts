@@ -63,6 +63,7 @@ export class TransactionListPage implements OnInit, OnDestroy {
 
   readonly filterWallet = signal<string>('');
   readonly filterCategory = signal<string>('');
+  readonly filterPeriod = signal<string>('');
 
   readonly error = toSignal(this.store.select(selectTransactionsError), { initialValue: null });
 
@@ -80,11 +81,24 @@ export class TransactionListPage implements OnInit, OnDestroy {
     let txs = this.allTransactions().filter(t => t.userId === userId);
     if (this.filterWallet()) txs = txs.filter(t => t.walletId === this.filterWallet());
     if (this.filterCategory()) txs = txs.filter(t => t.categoryId === this.filterCategory());
+    if (this.filterPeriod()) txs = txs.filter(t => t.date.startsWith(this.filterPeriod()));
     return txs.slice().sort((a, b) => b.date.localeCompare(a.date));
   });
 
+  readonly availablePeriods = computed(() => {
+    const periods: string[] = [];
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      periods.push(`${y}-${m}`);
+    }
+    return periods;
+  });
+
   readonly hasTransactions = computed(() => this.transactions().length > 0);
-  readonly activeFilters = computed(() => !!(this.filterWallet() || this.filterCategory()));
+  readonly activeFilters = computed(() => !!(this.filterWallet() || this.filterCategory() || this.filterPeriod()));
 
   constructor() {
     addIcons({ addOutline, trashOutline, createOutline, arrowUpOutline, arrowDownOutline });
@@ -153,6 +167,7 @@ export class TransactionListPage implements OnInit, OnDestroy {
   clearFilters(): void {
     this.filterWallet.set('');
     this.filterCategory.set('');
+    this.filterPeriod.set('');
   }
 
   getCategoryName(categoryId: string): string {

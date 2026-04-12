@@ -1,0 +1,38 @@
+<ion-grid>
+  <ion-row>
+    <ion-col size="12" size-sm="4">
+      <ion-card color="success">
+        <ion-card-header>
+          <ion-card-title>Ingresos</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="summary-amount">{{ summary.totalIncome | currencyFormat }}</p>
+        </ion-card-content>
+      </ion-card>
+    </ion-col>
+
+    <ion-col size="12" size-sm="4">
+      <ion-card color="danger">
+        <ion-card-header>
+          <ion-card-title>Gastos</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="summary-amount">{{ summary.totalExpenses | currencyFormat }}</p>
+        </ion-card-content>
+      </ion-card>
+    </ion-col>
+
+    <ion-col size="12" size-sm="4">
+      <ion-card [color]="balanceIsNegative ? 'warning' : 'primary'">
+        <ion-card-header>
+          <ion-card-title>Balance</ion-card-title>
+        </ion-card-header>
+        <ion-card-content>
+          <p class="summary-amount" [class.text-danger]="balanceIsNegative">
+            {{ summary.balance | currencyFormat }}
+          </p>
+        </ion-card-content>
+      </ion-card>
+    </ion-col>
+  </ion-row>
+</ion-grid>

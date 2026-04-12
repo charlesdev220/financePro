@@ -12,9 +12,12 @@ import { BehaviorSubject } from 'rxjs';
 import { TransactionsActions } from '../../../store/transactions/transactions.actions';
 import { selectByType } from '../../../store/categories/categories.selectors';
 import { selectAllWallets } from '../../../store/wallets/wallets.selectors';
+import { selectAllBudgets } from '../../../store/budgets/budgets.selectors';
 import { ITransaction } from '../../../models/transaction.model';
+import { IBudget } from '../../../models/budget.model';
 import { ConceptsService } from '../services/concepts.service';
 import { AutocompleteInputComponent } from '../../../shared/components/autocomplete-input/autocomplete-input.component';
+import { BudgetIndicatorComponent } from '../../../shared/components/budget-indicator/budget-indicator.component';
 
 const SUPPORTED_CURRENCIES = ['EUR', 'USD', 'GBP', 'ARS', 'BRL', 'MXN', 'CLP', 'COP'];
 
@@ -29,6 +32,7 @@ const SUPPORTED_CURRENCIES = ['EUR', 'USD', 'GBP', 'ARS', 'BRL', 'MXN', 'CLP', '
     IonContent, IonList, IonItem, IonLabel, IonInput,
     IonSelect, IonSelectOption, IonToggle, IonTextarea, IonNote,
     AutocompleteInputComponent,
+    BudgetIndicatorComponent,
   ],
 })
 export class TransactionFormComponent implements OnInit {
@@ -37,6 +41,8 @@ export class TransactionFormComponent implements OnInit {
   @Input() userId!: string;
   @Input() userBaseCurrency!: string;
   @Input() rowNumber?: number;
+  /** Tipo inicial del formulario al abrir en modo creación */
+  @Input() initialType?: 'income' | 'expense';
 
   private readonly fb = inject(FormBuilder);
   private readonly store = inject(Store);
@@ -55,6 +61,8 @@ export class TransactionFormComponent implements OnInit {
 
   readonly suggestions$ = new BehaviorSubject<string[]>([]);
 
+  private readonly allBudgets = toSignal(this.store.select(selectAllBudgets), { initialValue: [] as IBudget[] });
+
   private readonly expenseCategories = toSignal(
     this.store.select(selectByType('expense')), { initialValue: [] },
   );
@@ -68,10 +76,28 @@ export class TransactionFormComponent implements OnInit {
     return type === 'income' ? this.incomeCategories() : this.expenseCategories();
   });
 
+  getActiveBudget(): IBudget | null {
+    const catId = this.form?.get('categoryId')?.value as string;
+    const date = this.form?.get('date')?.value as string;
+    const type = this.form?.get('type')?.value as string;
+    if (!catId || !date || type !== 'expense') return null;
+    const period = date.slice(0, 7);
+    return this.allBudgets().find(b => b.categoryId === catId && b.period === period) ?? null;
+  }
+
+  getBudgetWarning(): boolean {
+    const budget = this.getActiveBudget();
+    if (!budget) return false;
+    const newAmount = Number(this.form?.get('amount')?.value ?? 0);
+    const originalAmount = this.transaction?.type === 'expense' ? (this.transaction.amount ?? 0) : 0;
+    const projectedSpent = budget.spentAmount - originalAmount + newAmount;
+    return projectedSpent > budget.budgetAmount;
+  }
+
   ngOnInit(): void {
     const tx = this.transaction;
     this.form = this.fb.group({
-      type:           [tx?.type ?? 'expense', Validators.required],
+      type:           [tx?.type ?? this.initialType ?? 'expense', Validators.required],
       amount:         [tx?.amount ?? null, [Validators.required, Validators.min(0.01)]],
       currency:       [tx?.currency ?? this.userBaseCurrency ?? 'EUR', Validators.required],
       walletId:       [tx?.walletId ?? '', Validators.required],

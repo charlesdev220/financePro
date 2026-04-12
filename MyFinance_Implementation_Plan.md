@@ -178,23 +178,23 @@ src/app/
 
 | ID | Tarea | Artefacto |
 |---|---|---|
-| 5.1.1 | `dashboard.service.ts`: agrega transacciones del período, calcula ingresos, gastos, saldo | `features/dashboard/services/` |
-| 5.1.2 | `dashboard-summary.component`: KPIs con clase CSS `danger` si supera límite global | `.ts` + `.html` separados |
-| 5.1.3 | `dashboard-chart.component`: pie chart Chart.js + drill-down a categoría | `.ts` + `.html` separados |
-| 5.1.4 | `chart-pie.component` reutilizable en Shared | `shared/components/chart-pie/` |
-| 5.1.5 | `period-settings.component`: día de inicio, vista mensual / trimestral / custom | `features/settings/period-settings/` |
-| 5.1.6 | `dashboard.page`: orquesta summary + chart + período | `.ts` + `.html` separados |
+| 3.1.1 | `dashboard.service.ts`: agrega transacciones del período, calcula ingresos, gastos, saldo | `features/dashboard/services/` |
+| 3.1.2 | `dashboard-summary.component`: KPIs con clase CSS `danger` si supera límite global | `.ts` + `.html` separados |
+| 3.1.3 | `dashboard-chart.component`: pie chart Chart.js + drill-down a categoría | `.ts` + `.html` separados |
+| 3.1.4 | `chart-pie.component` reutilizable en Shared | `shared/components/chart-pie/` |
+| 3.1.5 | `period-settings.component`: día de inicio, vista mensual / trimestral / custom | `features/settings/period-settings/` |
+| 3.1.6 | `dashboard.page`: orquesta summary + chart + período | `.ts` + `.html` separados |
 
 **Sprint 3.2 — Sistema de Presupuestos (Semana 7)**
 
 | ID | Tarea | Artefacto |
 |---|---|---|
-| 5.2.1 | `budget.service.ts`: calcula `status` (`ok`/`warning`/`exceeded`) y persiste en `BUDGETS` al guardar transacción | `features/budgets/services/` |
-| 5.2.2 | NgRx: actions, reducer, effects para presupuestos | `store/budgets/` |
-| 5.2.3 | `category-badge.component`: estados ok (gris) / warning (⚠️ amarillo) / exceeded (🔴 rojo) | `shared/components/category-badge/` |
-| 5.2.4 | `budget-indicator.component`: barra de progreso con transición de color CSS | `shared/components/budget-indicator/` |
-| 5.2.5 | Alerta en tiempo real en `transaction-form`: calcula impacto antes de guardar | Actualización de `.ts` y `.html` |
-| 5.2.6 | Alerta global de límite mensual en dashboard (`global_monthly_limit` de `USER_SETTINGS`) | Actualización de `dashboard.service.ts` |
+| 3.2.1 | `budget.service.ts`: calcula `status` (`ok`/`warning`/`exceeded`) y persiste en `BUDGETS` al guardar transacción | `features/budgets/services/` |
+| 3.2.2 | NgRx: actions, reducer, effects para presupuestos | `store/budgets/` |
+| 3.2.3 | `category-badge.component`: estados ok (gris) / warning (⚠️ amarillo) / exceeded (🔴 rojo) | `shared/components/category-badge/` |
+| 3.2.4 | `budget-indicator.component`: barra de progreso con transición de color CSS | `shared/components/budget-indicator/` |
+| 3.2.5 | Alerta en tiempo real en `transaction-form`: calcula impacto antes de guardar | Actualización de `.ts` y `.html` |
+| 3.2.6 | Alerta global de límite mensual en dashboard (`global_monthly_limit` de `USER_SETTINGS`) | Actualización de `dashboard.service.ts` |
 
 ---
 
@@ -207,12 +207,13 @@ src/app/
 
 | ID | Tarea | Artefacto |
 |---|---|---|
-| 6.1.1 | `analytics.service.ts`: series temporales de gasto por categoría y totales por período | `features/analytics/services/` |
-| 6.1.2 | `analytics-overview.page`: layout de gráficas con filtros de período y categoría | `.ts` + `.html` separados |
-| 6.2.1 | `projections.component`: regresión lineal sobre historial de transacciones | `features/analytics/projections/` |
-| 6.2.2 | `projections.component.html`: gráfica de proyección + inputs de horizonte temporal | Separado del `.ts` |
-| 6.3.1 | `spending-ranking.component`: clasifica recurrentes (≥3 períodos) vs superfluos (alta cuantía única) | `features/analytics/spending-ranking/` |
-| 6.3.2 | `spending-ranking.component.html`: lista ordenada por impacto con badges | Separado del `.ts` |
+| 4.1.1 | `analytics.service.ts`: series temporales de gasto por categoría y totales por período | `features/analytics/services/` |
+| 4.1.2 | `analytics-overview.page`: layout de gráficas con filtros de período y categoría | `.ts` + `.html` separados |
+| 4.1.3 | Comprobacion de nuevos registros de usuarios en sheets, comprobar por email desencriptando los que estan en sheets | Actualización de `sheets-api.service.ts` |
+| 4.2.1 | `projections.component`: regresión lineal sobre historial de transacciones | `features/analytics/projections/` |
+| 4.2.2 | `projections.component.html`: gráfica de proyección + inputs de horizonte temporal | Separado del `.ts` |
+| 4.3.1 | `spending-ranking.component`: clasifica recurrentes (≥3 períodos) vs superfluos (alta cuantía única) | `features/analytics/spending-ranking/` |
+| 4.3.2 | `spending-ranking.component.html`: lista ordenada por impacto con badges | Separado del `.ts` |
 
 ---
 
@@ -225,10 +226,10 @@ src/app/
 
 | ID | Tarea | Artefacto |
 |---|---|---|
-| 7.1 | `currency-api.service.ts`: consulta ExchangeRate-API, persiste en `CURRENCIES` con `source: 'api'`, caché NgRx | `core/services/currency-api.service.ts` |
-| 7.2 | `currency-settings.component`: búsqueda de divisas, refresco, edición manual (`source: 'manual'`) | `features/settings/currency-settings/` |
-| 7.3 | `currency-format.pipe.ts`: formatea importes según divisa y locale | `shared/pipes/` |
-| 7.4 | `dashboard.service.ts` usa `amount_base` para consolidar multicartera sin recalcular en render | Actualización del servicio existente |
+| 5.1 | `currency-api.service.ts`: consulta ExchangeRate-API, persiste en `CURRENCIES` con `source: 'api'`, caché NgRx | `core/services/currency-api.service.ts` |
+| 5.2 | `currency-settings.component`: búsqueda de divisas, refresco, edición manual (`source: 'manual'`) | `features/settings/currency-settings/` |
+| 5.3 | `currency-format.pipe.ts`: formatea importes según divisa y locale | `shared/pipes/` |
+| 5.4 | `dashboard.service.ts` usa `amount_base` para consolidar multicartera sin recalcular en render | Actualización del servicio existente |
 
 ---
 

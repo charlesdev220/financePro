@@ -1,0 +1,4 @@
+<div class="budget-indicator">
+  <ion-progress-bar [value]="percentage / 100" [color]="color"></ion-progress-bar>
+  <ion-note>{{ budget.spentAmount | number:'1.2-2' }} / {{ budget.budgetAmount | number:'1.2-2' }} EUR</ion-note>
+</div>

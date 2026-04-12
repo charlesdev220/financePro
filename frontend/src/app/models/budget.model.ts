@@ -6,5 +6,5 @@ export interface IBudget {
   spentAmount: number;
   budgetAmount: number;
   status: 'ok' | 'warning' | 'exceeded';
-  lastUpdated: string; // ISO 8601 timestamp — set by Apps Script
+  lastUpdated: string; // ISO 8601 timestamp
 }

@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map, switchMap } from 'rxjs';
 import { SheetsApiService } from '../../../core/services/sheets-api.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ICategory } from '../../../models/category.model';
 
 // CATEGORIES schema (A:I — 9 columnas)
@@ -41,6 +42,7 @@ export function categoryToRow(cat: ICategory): unknown[] {
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
   private readonly sheetsApi = inject(SheetsApiService);
+  private readonly authService = inject(AuthService);
 
   loadCategories(): Observable<{ categories: ICategory[]; rowMap: Record<string, number> }> {
     return this.sheetsApi.getRange('CATEGORIES!A:J').pipe(
@@ -49,13 +51,15 @@ export class CategoryService {
           return { categories: [], rowMap: {} };
         }
         const allRows = response.values.slice(1);
+        const userId = this.authService.getUser()?.sub ?? '';
         const rowMap: Record<string, number> = {};
         allRows.forEach((row, i) => {
           const id = String(row[0] ?? '');
-          if (id) rowMap[id] = i + 2;
+          const uid = String(row[1] ?? '');
+          if (id && uid === userId) rowMap[id] = i + 2;
         });
         const categories = allRows
-          .filter(row => row[0])
+          .filter(row => row[0] && String(row[1] ?? '') === userId)
           .map(rowToCategory);
         return { categories, rowMap };
       }),

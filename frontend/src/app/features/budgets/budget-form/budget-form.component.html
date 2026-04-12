@@ -1,0 +1,73 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="cancel()">Cancelar</ion-button>
+    </ion-buttons>
+    <ion-title>{{ isEditMode() ? 'Editar presupuesto' : 'Nuevo presupuesto' }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="save()" [disabled]="form?.invalid">Guardar</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  @if (form) {
+    <form [formGroup]="form">
+      <ion-list>
+        <!-- Categoría -->
+        <ion-item>
+          <ion-label position="stacked">Categoría *</ion-label>
+          <ion-select formControlName="categoryId" placeholder="Seleccioná una categoría">
+            @for (cat of expenseCategories(); track cat.categoryId) {
+              <ion-select-option [value]="cat.categoryId">
+                {{ cat.icon }} {{ cat.name }}
+              </ion-select-option>
+            }
+          </ion-select>
+        </ion-item>
+        @if (form.get('categoryId')?.invalid && form.get('categoryId')?.touched) {
+          <ion-note color="danger" class="ion-padding-horizontal">
+            La categoría es obligatoria
+          </ion-note>
+        }
+
+        <!-- Período -->
+        <ion-item>
+          <ion-label position="stacked">Período (YYYY-MM) *</ion-label>
+          <ion-input
+            formControlName="period"
+            placeholder="2026-04"
+            pattern="^\d{4}-\d{2}$">
+          </ion-input>
+        </ion-item>
+        @if (form.get('period')?.invalid && form.get('period')?.touched) {
+          <ion-note color="danger" class="ion-padding-horizontal">
+            El período es obligatorio (formato YYYY-MM)
+          </ion-note>
+        }
+
+        <!-- Monto de presupuesto -->
+        <ion-item>
+          <ion-label position="stacked">Monto del presupuesto *</ion-label>
+          <ion-input
+            type="number"
+            formControlName="budgetAmount"
+            placeholder="0.00"
+            min="1">
+          </ion-input>
+        </ion-item>
+        @if (form.get('budgetAmount')?.invalid && form.get('budgetAmount')?.touched) {
+          <ion-note color="danger" class="ion-padding-horizontal">
+            El monto es obligatorio y debe ser mayor a 0
+          </ion-note>
+        }
+      </ion-list>
+
+      <div class="ion-padding">
+        <ion-button expand="block" (click)="save()" [disabled]="form.invalid">
+          {{ isEditMode() ? 'Actualizar' : 'Crear presupuesto' }}
+        </ion-button>
+      </div>
+    </form>
+  }
+</ion-content>

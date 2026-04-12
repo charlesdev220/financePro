@@ -1,0 +1,7 @@
+@if (chartData) {
+  <app-chart-pie [data]="chartData"></app-chart-pie>
+} @else {
+  <div class="chart-empty">
+    <p>Sin gastos en este período</p>
+  </div>
+}

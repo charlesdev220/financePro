@@ -4,6 +4,30 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Fase 3 — Dashboard + Sistema de Presupuestos):
+*Fase actual:* Fase 3: Dashboard, Chart.js, Presupuestos CRUD, alertas y badge de estado
+*Estado actual:* Completado ✅
+- ✔️ **IBudget model + BUDGETS sheet schema:** Hoja `BUDGETS` con 8 columnas (`budget_id | user_id | category_id | period | budget_amount | spent_amount | status | last_updated`). `calculateStatus()` puro exportado (ok < 80%, warning 80-99%, exceeded ≥ 100%).
+- ✔️ **NgRx budgets/ slice completo:** actions CRUD (save/update/delete/recalculate), reducer con patrón optimista + rollback, selectors: `selectAllBudgets`, `selectBudgetsRowMap`, `selectBudgetForCategory(catId,period)`, `selectBudgetsForPeriod(period)`, `selectExceededBudgets(period)`.
+- ✔️ **BudgetsEffects:** `loadBudgets$`, `saveBudget$`, `updateBudget$`, `deleteBudget$`, `recalculateBudget$` (recalcula `spentAmount` de transacciones del store + persiste en Sheets).
+- ✔️ **TransactionsEffects → recalculate:** Tras add/update/delete de gastos, dispatch `recalculateBudget({ categoryId, period })` automáticamente.
+- ✔️ **BudgetService:** `rowToBudget`, `budgetToRow`, mappers completos. `loadBudgets()`, `saveBudget()`, `updateBudget()`, `deleteBudget()` con Sheets API v4.
+- ✔️ **DashboardService:** `calculateSummary(txs, period)` → `{ income, expense, balance }`. `calculateBreakdown(txs, cats, period)` → top-6 + "Otros" agrupado. `getRecentTransactions(txs, limit)` → últimas N por fecha.
+- ✔️ **ChartPieComponent:** Wrapper manual de Chart.js doughnut. AfterViewInit + OnChanges + OnDestroy con `chart.destroy()` para evitar leak de canvas.
+- ✔️ **BudgetIndicatorComponent:** `@Input({ required: true }) budget: IBudget`. Getters `percentage` (clamped 0-100) y `color` ('success'/'warning'/'danger'). Reutilizado en category-list y transaction-form.
+- ✔️ **PeriodSelectorComponent:** `@Input() period` + `@Output() periodChange`. Navegación mes-a-mes con `Intl.DateTimeFormat` español, manejo correcto de borde de año.
+- ✔️ **Dashboard page:** Señal `period`, computed `summary/breakdown/recentTransactions/exceededBudgets`. Banner de presupuestos superados, gráfica de dona, resumen financiero, accesos rápidos (nuevo gasto / nuevo ingreso), lista de últimas transacciones.
+- ✔️ **Budget List/Form:** CRUD completo con modal. Selector de categoría, monto límite, período. Edición con `updateBudget`, creación con `saveBudget`.
+- ✔️ **transaction-form integración:** Muestra `app-budget-indicator` y alerta cuando el gasto activo supera el 80% del presupuesto del mes.
+- ✔️ **category-list integración:** Badge de `app-budget-indicator` por cada categoría para el período actual.
+- ✔️ **transaction-list filtro período:** `ion-select` con últimos 12 meses generados via `computed()`.
+- ✔️ **Routing:** `/budgets` → `BudgetListPage` (lazy). `app.routes.ts` actualizado.
+- ✔️ **Tests (44 nuevos):** `budget.service.spec` (8), `dashboard.service.spec` (10), `budgets.selectors.spec` (8), `chart-pie.component.spec` (3), `period-selector.component.spec` (5), `budget-indicator.component.spec` (5). `tsc --noEmit` EXIT:0.
+*Próximos pasos:* Fase 4 — Proyecciones (mensual, anual, período custom) + sdd-verify/archive Fase 3.
+*(Qué se aprendió):* `recalculateBudget` effect lee `spentAmount` del store NgRx (no hace query adicional a Sheets) — ADR-01. `signal<string>` local para el período del dashboard evita una slice NgRx innecesaria — ADR-02. `computed()` no puede referenciar `this.form` (inicializado en ngOnInit) — usar métodos getter en su lugar. `Chart<'doughnut'>` no es directamente asignable a `Chart<keyof ChartTypeRegistry>` — usar `Chart | null` sin genérico.
+
+---
+
 ### Qué hemos completado hasta ahora (Fase 2 — Core Transacciones, Categorías y Carteras):
 *Fase actual:* Fase 2: NgRx + Feature Services + UI + Tests
 *Estado actual:* Completado ✅ | Archivado: 2026-04-12

@@ -41,7 +41,7 @@ export const routes: Routes = [
     path: 'budgets',
     canActivate: [authGuard],
     loadComponent: () =>
-      import('./features/budgets/budgets.page').then(m => m.BudgetsPage),
+      import('./features/budgets/budget-list/budget-list.page').then(m => m.BudgetListPage),
   },
   {
     path: 'analytics',

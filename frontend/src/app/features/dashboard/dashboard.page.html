@@ -1,6 +1,11 @@
 <ion-header>
   <ion-toolbar>
-    <ion-title>Dashboard</ion-title>
+    <ion-buttons slot="start">
+      <ion-button (click)="navigateToSettings()">
+        <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>MyFinance</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="handleSignOut()">
         <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
@@ -9,4 +14,46 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content></ion-content>
+<ion-content class="ion-padding">
+  @if (exceededBudgets().length > 0) {
+    <div class="exceeded-banner">
+      ⚠️ {{ exceededBudgets().length }} categoría(s) superaron su presupuesto
+    </div>
+  }
+
+  <app-period-selector
+    [period]="period()"
+    (periodChange)="onPeriodChange($event)">
+  </app-period-selector>
+
+  <app-dashboard-summary [summary]="summary()"></app-dashboard-summary>
+
+  <app-dashboard-chart [breakdown]="breakdown()"></app-dashboard-chart>
+
+  <div class="quick-actions">
+    <ion-button expand="block" color="danger" (click)="openAddModal('expense')">
+      <ion-icon slot="start" name="trending-down-outline"></ion-icon>
+      Nuevo gasto
+    </ion-button>
+    <ion-button expand="block" color="success" (click)="openAddModal('income')">
+      <ion-icon slot="start" name="trending-up-outline"></ion-icon>
+      Nuevo ingreso
+    </ion-button>
+  </div>
+
+  @if (recentTransactions().length > 0) {
+    <ion-list>
+      @for (tx of recentTransactions(); track tx.txId) {
+        <ion-item>
+          <ion-label>
+            <h3>{{ tx.concept || '—' }}</h3>
+            <p>{{ tx.date | relativeDate }}</p>
+          </ion-label>
+          <ion-note slot="end" [color]="tx.type === 'income' ? 'success' : 'danger'">
+            {{ tx.type === 'income' ? '+' : '-' }}{{ tx.amount | currencyFormat }}
+          </ion-note>
+        </ion-item>
+      }
+    </ion-list>
+  }
+</ion-content>

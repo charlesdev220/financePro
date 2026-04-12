@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { SheetsApiService } from '../../../core/services/sheets-api.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { IWallet } from '../../../models/wallet.model';
 
 // WALLETS schema (A:I — 9 columnas)
@@ -38,6 +39,7 @@ export function walletToRow(wallet: IWallet): unknown[] {
 @Injectable({ providedIn: 'root' })
 export class WalletService {
   private readonly sheetsApi = inject(SheetsApiService);
+  private readonly authService = inject(AuthService);
 
   loadWallets(): Observable<{ wallets: IWallet[]; rowMap: Record<string, number> }> {
     return this.sheetsApi.getRange('WALLETS!A:I').pipe(
@@ -46,13 +48,15 @@ export class WalletService {
           return { wallets: [], rowMap: {} };
         }
         const allRows = response.values.slice(1);
+        const userId = this.authService.getUser()?.sub ?? '';
         const rowMap: Record<string, number> = {};
         allRows.forEach((row, i) => {
           const id = String(row[0] ?? '');
-          if (id) rowMap[id] = i + 2; // +2: header (row 1) + 0-based index
+          const uid = String(row[1] ?? '');
+          if (id && uid === userId) rowMap[id] = i + 2; // +2: header (row 1) + 0-based index
         });
         const wallets = allRows
-          .filter(row => row[0])
+          .filter(row => row[0] && String(row[1] ?? '') === userId)
           .map(rowToWallet);
         return { wallets, rowMap };
       }),

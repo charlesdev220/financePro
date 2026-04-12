@@ -8,6 +8,7 @@ import { selectAllTransactions, selectTransactionsRowMap } from './transactions.
 import { TransactionService } from '../../features/transactions/services/transaction.service';
 import { ConceptsService } from '../../features/transactions/services/concepts.service';
 import { CurrencyApiService } from '../../core/services/currency-api.service';
+import { BudgetsActions } from '../budgets/budgets.actions';
 
 @Injectable()
 export class TransactionsEffects {
@@ -63,6 +64,15 @@ export class TransactionsEffects {
                 this.conceptsService.upsertConcept(transaction).catch(err =>
                   console.warn('[TransactionsEffects] Concept upsert failed:', err),
                 );
+                // Recalcular presupuesto si es un gasto
+                if (transaction.type === 'expense') {
+                  this.store.dispatch(
+                    BudgetsActions.recalculateBudget({
+                      categoryId: transaction.categoryId,
+                      period: transaction.date.slice(0, 7),
+                    }),
+                  );
+                }
               }),
               catchError(error => {
                 this.store.dispatch(
@@ -99,6 +109,17 @@ export class TransactionsEffects {
           ),
           concatMap(updated =>
             this.transactionService.updateTransaction(updated, rowNumber).pipe(
+              tap(() => {
+                // Recalcular presupuesto si es un gasto
+                if (updated.type === 'expense') {
+                  this.store.dispatch(
+                    BudgetsActions.recalculateBudget({
+                      categoryId: updated.categoryId,
+                      period: updated.date.slice(0, 7),
+                    }),
+                  );
+                }
+              }),
               catchError(error => {
                 this.store.dispatch(
                   TransactionsActions.updateTransactionFailure({ error: String(error), prevItems }),
@@ -123,6 +144,18 @@ export class TransactionsEffects {
           TransactionsActions.deleteTransactionSuccess({ txId }),
         );
         return this.transactionService.deleteTransaction(rowNumber).pipe(
+          tap(() => {
+            // Recalcular presupuesto del tx eliminado si era un gasto
+            const deletedTx = prevItems.find(t => t.txId === txId);
+            if (deletedTx?.type === 'expense') {
+              this.store.dispatch(
+                BudgetsActions.recalculateBudget({
+                  categoryId: deletedTx.categoryId,
+                  period: deletedTx.date.slice(0, 7),
+                }),
+              );
+            }
+          }),
           catchError(error => {
             this.store.dispatch(
               TransactionsActions.deleteTransactionFailure({

@@ -16,6 +16,11 @@
               <ion-note>Presupuesto: {{ cat.budgetAmount }} · {{ cat.budgetPeriod }}</ion-note>
             }
           </ion-label>
+          @if (cat.type === 'expense') {
+            @if (getBudgetForCategory(cat.categoryId); as budget) {
+              <app-budget-indicator [budget]="budget"></app-budget-indicator>
+            }
+          }
           <ion-badge [style.background]="cat.color" slot="end">
             {{ cat.type === 'income' ? '↑' : '↓' }}
           </ion-badge>

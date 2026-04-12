@@ -3,6 +3,7 @@ import { Observable, map } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
 import { SheetsApiService } from '../../../core/services/sheets-api.service';
 import { CurrencyApiService } from '../../../core/services/currency-api.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ITransaction } from '../../../models/transaction.model';
 import { TransactionDraft } from '../../../store/transactions/transactions.actions';
 
@@ -55,6 +56,7 @@ export function transactionToRow(tx: ITransaction): unknown[] {
 export class TransactionService {
   private readonly sheetsApi = inject(SheetsApiService);
   private readonly currencyApi = inject(CurrencyApiService);
+  private readonly authService = inject(AuthService);
 
   loadTransactions(): Observable<{ transactions: ITransaction[]; rowMap: Record<string, number> }> {
     return this.sheetsApi.getRange('TRANSACTIONS!A:O').pipe(
@@ -63,13 +65,15 @@ export class TransactionService {
           return { transactions: [], rowMap: {} };
         }
         const allRows = response.values.slice(1);
+        const userId = this.authService.getUser()?.sub ?? '';
         const rowMap: Record<string, number> = {};
         allRows.forEach((row, i) => {
           const id = String(row[0] ?? '');
-          if (id) rowMap[id] = i + 2;
+          const uid = String(row[1] ?? '');
+          if (id && uid === userId) rowMap[id] = i + 2;
         });
         const transactions = allRows
-          .filter(row => row[0])
+          .filter(row => row[0] && String(row[1] ?? '') === userId)
           .map(rowToTransaction);
         return { transactions, rowMap };
       }),

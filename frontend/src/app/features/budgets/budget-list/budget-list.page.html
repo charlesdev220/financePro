@@ -1,0 +1,42 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Presupuestos</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding">
+  <app-period-selector
+    [period]="currentPeriod()"
+    (periodChange)="onPeriodChange($event)">
+  </app-period-selector>
+
+  @if (budgets().length > 0) {
+    <ion-list>
+      @for (budget of budgets(); track budget.budgetId) {
+        <ion-item-sliding>
+          <ion-item (click)="openEditModal(budget)" button detail>
+            <ion-label>
+              <app-budget-indicator [budget]="budget"></app-budget-indicator>
+            </ion-label>
+          </ion-item>
+          <ion-item-options side="end">
+            <ion-item-option color="danger" (click)="deleteBudget(budget)">
+              <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+            </ion-item-option>
+          </ion-item-options>
+        </ion-item-sliding>
+      }
+    </ion-list>
+  } @else {
+    <div class="empty-state">
+      <p>No hay presupuestos para este período.</p>
+      <p>Tocá el botón + para crear uno.</p>
+    </div>
+  }
+
+  <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+    <ion-fab-button (click)="openAddModal()">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>

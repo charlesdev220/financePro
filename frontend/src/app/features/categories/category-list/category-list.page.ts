@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
@@ -15,9 +15,13 @@ import {
   selectActiveCategories,
   selectCategoriesRowMap,
 } from '../../../store/categories/categories.selectors';
+import { selectAllBudgets } from '../../../store/budgets/budgets.selectors';
+import { BudgetsActions } from '../../../store/budgets/budgets.actions';
 import { ICategory } from '../../../models/category.model';
+import { IBudget } from '../../../models/budget.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { CategoryFormComponent } from '../category-form/category-form.component';
+import { BudgetIndicatorComponent } from '../../../shared/components/budget-indicator/budget-indicator.component';
 
 @Component({
   selector: 'app-category-list',
@@ -27,6 +31,7 @@ import { CategoryFormComponent } from '../category-form/category-form.component'
     IonContent, IonHeader, IonTitle, IonToolbar,
     IonList, IonItem, IonLabel, IonBadge,
     IonFab, IonFabButton, IonIcon, IonButton, IonButtons, IonNote,
+    BudgetIndicatorComponent,
   ],
 })
 export class CategoryListPage implements OnInit {
@@ -37,6 +42,11 @@ export class CategoryListPage implements OnInit {
 
   readonly categories = toSignal(this.store.select(selectActiveCategories), { initialValue: [] });
   private readonly rowMap = toSignal(this.store.select(selectCategoriesRowMap), { initialValue: {} as Record<string, number> });
+  private readonly currentPeriod = signal(new Date().toISOString().slice(0, 7));
+  private readonly allBudgets = toSignal(
+    this.store.select(selectAllBudgets),
+    { initialValue: [] as IBudget[] },
+  );
 
   constructor() {
     addIcons({ addOutline, trashOutline, createOutline });
@@ -44,6 +54,11 @@ export class CategoryListPage implements OnInit {
 
   ngOnInit(): void {
     this.store.dispatch(CategoriesActions.loadCategories());
+    this.store.dispatch(BudgetsActions.loadBudgets());
+  }
+
+  getBudgetForCategory(categoryId: string): IBudget | null {
+    return this.allBudgets().find(b => b.categoryId === categoryId && b.period === this.currentPeriod()) ?? null;
   }
 
   async openAddModal(): Promise<void> {

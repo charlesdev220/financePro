@@ -34,6 +34,18 @@
         <ion-select-option [value]="cat.categoryId">{{ cat.icon }} {{ cat.name }}</ion-select-option>
       }
     </ion-select>
+    <ion-select
+      [value]="filterPeriod()"
+      (ionChange)="filterPeriod.set($event.detail.value)"
+      placeholder="Todos los períodos"
+      interface="action-sheet"
+      style="margin: 0 8px"
+    >
+      <ion-select-option value="">Todos los períodos</ion-select-option>
+      @for (period of availablePeriods(); track period) {
+        <ion-select-option [value]="period">{{ period }}</ion-select-option>
+      }
+    </ion-select>
   </ion-toolbar>
 </ion-header>
 
