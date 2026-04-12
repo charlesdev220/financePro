@@ -26,7 +26,7 @@ Versión 1.0 • Abril 2026
 
 **1. Resumen Ejecutivo**
 
-Este documento constituye el Plan de Trabajo completo, la Work Breakdown Structure (WBS) y la guía de arquitectura técnica para el desarrollo de **MyFinance**, una aplicación móvil de finanzas personales altamente interactiva. La app está construida sobre Ionic con Angular en el frontend y Google Sheets como backend/base de datos, accedido mediante la Google Sheets API v4 y Google Apps Script.
+Este documento constituye el Plan de Trabajo completo, la Work Breakdown Structure (WBS) y la guía de arquitectura técnica para el desarrollo de **MyFinance**, una aplicación móvil de finanzas personales altamente interactiva. La app está construida sobre Ionic con Angular en el frontend y Google Sheets como backend/base de datos, accedida directamente mediante la Google Sheets API v4 con autenticación OAuth2 del usuario. Toda la lógica de negocio reside en Angular.
 
 +---------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | **🎯 Propuesta de Valor**                                                                                                                                     |
@@ -52,13 +52,9 @@ El proyecto se estructura en 6 fases evolutivas que van desde la configuración 
 
   Lenguaje             TypeScript                        v5.x (strict mode)
 
-  API Server           Node.js + Express                 v4.x (server/)
+  Backend/BBDD         Google Sheets API v4              REST + OAuth2 usuario
 
-  Backend/BBDD         Google Sheets API v4              REST + Service Account JWT
-
-  Auth Sheets          Google Service Account            `googleapis` npm — JWT
-
-  Spreadsheet          Google Sheets                     ID: 1euG0ltec2DIX-dRTaB2Y9Lvs0Jk1FHgSDyKoeCKWRXs
+  Spreadsheet          Google Sheets                     ID en `environment.ts` (no expuesto en UI)
 
   Gráficas             Chart.js                          v4.x
 
@@ -73,32 +69,39 @@ El proyecto se estructura en 6 fases evolutivas que van desde la configuración 
   Testing              Jasmine + Karma                   ---
   ---------------------------------------------------------------------------------
 
-> **Decisión ADR-001 — Sin Google Apps Script:**
-> La capa de datos usa un servidor Express local (`server/`) con `googleapis` + service account.
-> Patrón tomado de proyectoSalomon2 (`/Users/charles/Documents/apps/proyectoSalomon2`).
-> La private key vive en `server/.env` (gitignored). El frontend nunca toca credenciales.
-> Para mobile (Capacitor): el servidor Express deberá desplegarse en un host externo (Fase 6).
+> **Decisión ADR-001 — Angular directo a Sheets API, sin servidor intermedio:**
+> El usuario se autentica con Google OAuth2 (scopes: `openid`, `email`, `spreadsheets`).
+> Angular usa el access_token del usuario para llamar a Sheets API v4 directamente.
+> No hay `server/`, no hay Service Account, no hay Google Apps Script.
+> El `SPREADSHEET_ID` vive en `environment.ts` (compilado en el bundle, no visible en la UI).
+> La Spreadsheet es accesible para cualquier cuenta Google autenticada.
+> El aislamiento de datos se garantiza en Angular: todas las lecturas y escrituras filtran por el `user_id` extraído del token OAuth2.
+> Los campos PII (`email`, `display_name`) se cifran con AES-GCM usando el `sub` del usuario como clave antes de escribirse en Sheets. Se descifran al leer. Lo implementa `crypto.service.ts` (Web Crypto API).
+> Toda la lógica de negocio (cálculos, estados, proyecciones) reside exclusivamente en servicios Angular.
 
 **2.2 Principios Arquitectónicos Inamovibles**
 
--   **Separación total de plantillas**: los archivos `.ts` nunca contienen HTML. Cada componente tiene su propio `.html`. Esta regla no admite excepciones.
+-   **Sparación total de plantillas**: los archivos `.ts` nunca contienen HTML. Cada componente tiene su propio `.html`. Esta regla no admite excepciones.
 
 -   **Feature-First**: la estructura de carpetas se organiza por dominio funcional (transacciones, presupuestos, carteras…), no por tipo de fichero.
 
--   **Capa de abstracción de datos**: toda comunicación con Google Sheets pasa por `SheetsApiService` → `server/` → `googleapis`. Ningún componente llama al servidor directamente.
+-   **Capa de abstracción de datos**: toda comunicación con Google Sheets pasa por `SheetsApiService` → Sheets API v4. Ningún componente llama al API directamente.
 
 -   **Estado reactivo**: NgRx para colecciones grandes; `BehaviorSubject` para preferencias y sesión.
 
 -   **Lazy loading obligatorio**: cada feature se carga bajo demanda (`loadComponent()`).
 
-**2.3 Decisión: Google Sheets API vs Apps Script**
+-   **Cifrado de PII en Sheets — REGLA INAMOVIBLE**: los campos sensibles del usuario (`email`, `display_name`) se cifran con AES-GCM usando el `sub` de Google (user_id) como clave de derivación (Web Crypto API — `PBKDF2` → `AES-GCM`). El cifrado ocurre en `crypto.service.ts` antes de cualquier escritura en Sheets y el descifrado al leer. El `user_id` (sub) nunca se cifra: es la clave, no el dato protegido. El access_token nunca se persiste (solo in-memory). Si en el futuro se persiste un refresh_token, aplica el mismo cifrado.
+
+**2.3 Decisión: Arquitectura sin servidor**
 
 +----------------------------------------------------------------------------------------------------------------------------------------------------------------------+
-| **Criterio de uso**                                                                                                                                                  |
+| **Criterio de acceso a datos**                                                                                                                                       |
 |                                                                                                                                                                      |
-| Sheets API directa → operaciones de lectura simples (listar transacciones, obtener categorías). Menor latencia.                                                      |
-| Google Apps Script (Web App) → operaciones de escritura con lógica de negocio: añadir transacción y actualizar presupuesto en el mismo paso, upsert de conceptos,   |
-| recalcular `amount_base` con la tasa de cambio vigente. La lógica de negocio vive en el servidor, el cliente solo envía y recibe datos limpios.                     |
+| Todas las operaciones (lectura y escritura) → Sheets API v4 directa con el Bearer token OAuth2 del usuario.                                                         |
+| No existe Apps Script, no existe servidor Express, no existe Service Account.                                                                                        |
+| Toda la lógica de negocio (cálculo de amount_base, estado ok/warning/exceeded, upsert de conceptos, recurrentes) vive en servicios Angular.                         |
+| Cache con ETag + timestamp en NgRx Store para evitar llamadas redundantes.                                                                                           |
 +----------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 ---
@@ -122,10 +125,10 @@ myfinance-app/
 │   │   │   │   ├── auth.interceptor.ts       # Añade Bearer token a cada petición HTTP
 │   │   │   │   └── error.interceptor.ts      # Manejo centralizado de errores de API
 │   │   │   ├── services/
-│   │   │   │   ├── auth.service.ts           # Google OAuth2: login, logout, refresh token
-│   │   │   │   ├── sheets-api.service.ts     # ÚNICA puerta de entrada a Google Sheets API
-│   │   │   │   ├── apps-script.service.ts    # Llamadas a endpoints de Google Apps Script
-│   │   │   │   └── currency-api.service.ts   # Consulta de tasas de cambio a API externa
+│   │   │   │   ├── auth.service.ts           # Google OAuth2: login, logout, refresh token (GIS)
+│   │   │   │   ├── sheets-api.service.ts     # ÚNICA puerta de entrada a Google Sheets API v4
+│   │   │   │   ├── crypto.service.ts         # Cifrado/descifrado AES-GCM de PII con Web Crypto API
+│   │   │   │   └── currency-api.service.ts   # Tasas de cambio en tiempo real (API externa, cached)
 │   │   │   └── core.module.ts
 │   │   │
 │   │   ├── shared/                           # Componentes y pipes reutilizables entre features
@@ -277,18 +280,11 @@ myfinance-app/
 │   │   └── i18n/                             # Ficheros de traducción (ES, EN)
 │   │
 │   └── environments/
-│       ├── environment.ts                    # CLIENT_ID, SPREADSHEET_ID, API_KEY
+│       ├── environment.ts                    # CLIENT_ID, SPREADSHEET_ID, CURRENCY_API_KEY
 │       └── environment.prod.ts
 │
 ├── capacitor.config.ts
-├── ionic.config.json
-│
-└── apps-script/                              # Backend ligero en Google Apps Script
-    ├── Code.gs                               # Router principal: doGet / doPost
-    ├── TransactionsHandler.gs                # Lógica de escritura de transacciones + upsert budgets
-    ├── ConceptsHandler.gs                    # Upsert de conceptos para autocompletado
-    ├── BudgetHandler.gs                      # Recalculo de estado de presupuestos
-    └── appsscript.json                       # Configuración de scopes OAuth
+└── ionic.config.json
 ```
 
 **3.1 Convención de nombrado de archivos**
@@ -323,7 +319,7 @@ myfinance-app/
 
 -   Los efectos de NgRx son el único lugar donde se llama a los servicios de datos. Los reducers son funciones puras sin efectos secundarios.
 
--   El directorio `apps-script/` se versiona junto al proyecto en el mismo repositorio Git. Los ficheros `.gs` se sincronizan con `clasp`.
+-   `SheetsApiService` cachea las respuestas con ETag. Antes de cada lectura comprueba si el recurso fue modificado (HTTP 304 → usa caché; HTTP 200 → actualiza store NgRx).
 
 ---
 
@@ -338,9 +334,9 @@ El libro de Google Sheets actúa como base de datos relacional ligera. Se organi
   -------------------- -------------- -----------------------------------
   user_id              String         Identificador único. Ej: `usr_001`
 
-  email                String         Email de la cuenta Google
+  email                String         🔒 **Cifrado AES-GCM** — Email de la cuenta Google
 
-  display_name         String         Nombre visible en la app
+  display_name         String         🔒 **Cifrado AES-GCM** — Nombre visible en la app
 
   default_currency     String         Código ISO. Ej: `EUR`
 
@@ -348,6 +344,8 @@ El libro de Google Sheets actúa como base de datos relacional ligera. Se organi
 
   created_at           Timestamp      Fecha de registro
   -----------------------------------------------------------------------
+
+> **🔒 Cifrado de PII:** `email` y `display_name` se almacenan cifrados con AES-GCM. La clave se deriva del `user_id` (sub de Google) usando PBKDF2 vía Web Crypto API. `crypto.service.ts` es el único servicio autorizado para cifrar y descifrar estos campos.
 
 `period_start_day` permite que el "mes" del usuario comience el día que quiera, por ejemplo el día 25 si cobra el 24 de cada mes.
 
@@ -437,7 +435,7 @@ El campo `type` diferencia ingresos de gastos. Las categorías de ingreso (`inco
   updated_at         Timestamp   ---
   -----------------------------------------------------------------------
 
-`amount_base` es el campo crítico para el dashboard multimoneda. Apps Script lo calcula en el momento de inserción usando la tasa de `CURRENCIES` vigente, evitando recalcular en el cliente con tasas potencialmente desactualizadas.
+`amount_base` es el campo crítico para el dashboard multimoneda. `transaction.service.ts` lo calcula en el momento de inserción usando la tasa en tiempo real de `currency-api.service.ts`. El valor se persiste en Sheets para que lecturas futuras no requieran recalcular.
 
 **4.5 Hoja 5 — `BUDGETS`** *(estado mensual calculado)*
 
@@ -458,14 +456,14 @@ El campo `type` diferencia ingresos de gastos. Las categorías de ingreso (`inco
 
   status            String      `ok`, `warning` (>80%) o `exceeded` (>100%)
 
-  last_updated      Timestamp   Última vez que Apps Script actualizó esta fila
+  last_updated      Timestamp   Última vez que `budget.service.ts` actualizó esta fila
   -----------------------------------------------------------------------
 
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | **💡 Decisión de diseño**                                                                                                                                         |
 |                                                                                                                                                                   |
-| El campo `status` lo actualiza Google Apps Script automáticamente cada vez que se inserta o modifica una transacción. El cliente no recalcula el estado:          |
-| simplemente lee el valor de esta hoja. Esto garantiza consistencia y elimina el riesgo de que diferentes instancias del cliente calculen resultados distintos.    |
+| El campo `status` lo calcula y persiste `budget.service.ts` en Angular cada vez que se inserta o modifica una transacción. La lógica es: >80% del tope → warning,|
+| >100% → exceeded. Al guardar la transacción, el servicio actualiza la fila correspondiente en BUDGETS en la misma operación.                                      |
 +-------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 
 **4.6 Hoja 6 — `CURRENCIES`**
@@ -502,7 +500,7 @@ El campo `type` diferencia ingresos de gastos. Las categorías de ingreso (`inco
   last_used      Timestamp   Última vez que se usó
   -----------------------------------------------------------------------
 
-Cada vez que el usuario confirma una transacción, Apps Script hace un **upsert**: si el concepto ya existe para esa categoría, incrementa `usage_count` y actualiza `last_used`; si no existe, crea una nueva fila. El frontend ordena las sugerencias por `usage_count DESC` para mostrar primero las más frecuentes.
+Cada vez que el usuario confirma una transacción, `concepts.service.ts` hace un **upsert**: si el concepto ya existe para esa categoría, incrementa `usage_count` y actualiza `last_used`; si no existe, crea una nueva fila. El servicio ordena las sugerencias por `usage_count DESC` para mostrar primero las más frecuentes.
 
 **4.8 Hoja 8 — `USER_SETTINGS`**
 
@@ -547,11 +545,9 @@ La WBS se organiza en 7 áreas de trabajo. Cada área se descompone hasta el niv
 **1.2 Integración con Google**
 
 -   1.2.1 Creación del proyecto en Google Cloud Console
--   1.2.2 Habilitación de Google Sheets API v4
--   1.2.3 Configuración de OAuth2 (CLIENT_ID, scopes de lectura y escritura)
--   1.2.4 Creación del libro de Google Sheets con las 8 hojas definidas en la sección 4
--   1.2.5 Despliegue inicial de Google Apps Script como Web App (doGet / doPost)
--   1.2.6 Sincronización del directorio `apps-script/` con `clasp`
+-   1.2.2 Habilitación de Google Sheets API v4 y configuración de pantalla de consentimiento OAuth2
+-   1.2.3 Configuración de OAuth2: `CLIENT_ID`, scopes (`openid`, `email`, `spreadsheets`), orígenes autorizados
+-   1.2.4 Creación del libro de Google Sheets con las 8 hojas definidas en la sección 4, compartido como "cualquier persona con cuenta Google puede editar"
 
 **1.3 Arquitectura base de Angular/Ionic**
 
@@ -564,19 +560,25 @@ La WBS se organiza en 7 áreas de trabajo. Cada área se descompone hasta el niv
 
 **5.2 Área 2: Capa de Datos (SheetsApiService)**
 
+**2.0 Servicio de cifrado (prerequisito)**
+
+-   2.0.1 Implementación de `crypto.service.ts`: `deriveKey(userId: string): Promise<CryptoKey>` usando PBKDF2 con salt fijo derivado del userId (Web Crypto API)
+-   2.0.2 `encrypt(plain: string, key: CryptoKey): Promise<string>` → AES-GCM, resultado en Base64
+-   2.0.3 `decrypt(cipher: string, key: CryptoKey): Promise<string>` → inverso de encrypt
+-   2.0.4 Tests unitarios de `crypto.service.ts`: cifrar → descifrar → verificar igualdad para email y display_name
+
 **2.1 Servicio base de Sheets API**
 
--   2.1.1 Implementación de `sheets-api.service.ts`: métodos `getRange()`, `appendRow()`, `updateRow()`, `deleteRow()`
--   2.1.2 Mapeo de rangos de Sheets a interfaces TypeScript (serialización / deserialización)
+-   2.1.1 Implementación de `sheets-api.service.ts`: métodos `getRange()`, `appendRow()`, `updateRow()`, `deleteRow()` usando Bearer token OAuth2
+-   2.1.2 Mapeo de rangos de Sheets a interfaces TypeScript (serialización / deserialización); campos PII pasan por `crypto.service.ts` al leer y escribir
 -   2.1.3 Manejo de errores de cuota y rate limiting de Google Sheets API
--   2.1.4 Caché en memoria con `BehaviorSubject` para evitar llamadas redundantes
+-   2.1.4 Caché con ETag: almacenar ETag por rango, enviar `If-None-Match` en cada lectura; HTTP 304 → usar store NgRx sin actualizar
 
-**2.2 Apps Script backend**
+**2.2 Servicios de lógica de negocio (Angular)**
 
--   2.2.1 Implementación del router `doPost()` en `Code.gs`
--   2.2.2 `TransactionsHandler.gs`: inserta transacción + actualiza `BUDGETS` + upsert en `CONCEPTS` en una única operación atómica
--   2.2.3 `BudgetHandler.gs`: recalcula `status` (ok / warning / exceeded) al modificar una transacción
--   2.2.4 `ConceptsHandler.gs`: lógica de upsert para el autocompletado
+-   2.2.1 `transaction.service.ts`: CRUD completo + cálculo de `amount_base` usando tasa en tiempo real de `currency-api.service.ts`
+-   2.2.2 `budget.service.ts`: calcula y persiste `status` (`ok` / `warning` / `exceeded`) en `BUDGETS` cada vez que se guarda una transacción
+-   2.2.3 `concepts.service.ts`: upsert de conceptos (incrementa `usage_count`, actualiza `last_used`) al confirmar una transacción
 
 **5.3 Área 3: Módulo de Transacciones**
 
@@ -595,7 +597,7 @@ La WBS se organiza en 7 áreas de trabajo. Cada área se descompone hasta el niv
 
 **3.3 Transacciones recurrentes**
 
--   3.3.1 Lógica de detección y generación automática de transacciones recurrentes en Apps Script
+-   3.3.1 `transaction.service.ts`: detección y generación automática de transacciones recurrentes en el arranque de la app (compara `recurrence_rule` + `date` de la última ocurrencia con la fecha actual)
 -   3.3.2 UI de gestión de recurrencias en `transaction-detail.page.html`
 
 **5.4 Área 4: Módulo de Categorías y Presupuestos**
@@ -656,7 +658,7 @@ La WBS se organiza en 7 áreas de trabajo. Cada área se descompone hasta el niv
 -   7.1 `currency-api.service.ts`: llama a ExchangeRate-API o Fixer.io; guarda las tasas en la hoja `CURRENCIES` con `source: 'api'`
 -   7.2 `currency-settings.component.ts`: permite buscar divisas, refrescar tasas desde API o editar la tasa manualmente (`source: 'manual'`)
 -   7.3 `currency-settings.component.html`: buscador de divisas + lista de divisas activas con tasa editable inline
--   7.4 Conversión automática en el dashboard: el `dashboard.service.ts` usa `amount_base` (pre-calculado por Apps Script) para consolidar importes de diferentes carteras
+-   7.4 Conversión automática en el dashboard: `dashboard.service.ts` usa `amount_base` (calculado y persistido por `transaction.service.ts` al crear la transacción) para consolidar importes de diferentes carteras sin recalcular en cada render
 
 ---
 
@@ -684,11 +686,11 @@ La WBS se organiza en 7 áreas de trabajo. Cada área se descompone hasta el niv
 | **Objetivo**                                                                               |
 |                                                                                            |
 | Dejar el entorno 100% operativo: Ionic + Angular funcionando en emulador iOS y Android,   |
-| Google Sheets API autenticada y Apps Script desplegado como Web App con endpoint de prueba.|
+| Google Sheets API autenticada vía OAuth2 del usuario, login funcional, lectura básica de Sheets verificada. |
 +--------------------------------------------------------------------------------------------+
 
 -   Día 1-2: Ionic + Angular + Capacitor configurados. ESLint + Prettier operativos. Regla de linting que rechace HTML en archivos `.ts` configurada.
--   Día 3: Google Cloud Project creado, Sheets API habilitada, OAuth2 configurado, libro de Sheets creado con las 8 hojas.
+-   Día 3: Google Cloud Project creado, Sheets API v4 habilitada, OAuth2 configurado (CLIENT_ID, scopes, orígenes), libro de Sheets creado con las 8 hojas.
 -   Día 4: CoreModule, SharedModule, AppModule y routing lazy generados. Estructura de carpetas completa según la sección 3.
 -   Día 5: `auth.service.ts` con Google OAuth2 funcional. `sheets-api.service.ts` con lectura básica verificada.
 
@@ -705,7 +707,7 @@ La WBS se organiza en 7 áreas de trabajo. Cada área se descompone hasta el niv
 **Sprint 2.1 (Semanas 2-3): Transacciones y categorías**
 
 -   Modelos TypeScript completos (`ITransaction`, `ICategory`, `IWallet`) en `models/`
--   `TransactionsHandler.gs` en Apps Script: inserción atómica con upsert de `CONCEPTS`
+-   `transaction.service.ts`: inserción con cálculo de `amount_base` + llamada a `concepts.service.ts` para upsert
 -   `transaction-list.page` completa con filtros básicos
 -   `transaction-form.component` completo con `autocomplete-input`
 -   `category-form.component` con selector de icono y color
@@ -736,8 +738,7 @@ La WBS se organiza en 7 áreas de trabajo. Cada área se descompone hasta el niv
 
 **Sprint 3.2 (Semana 7): Sistema de presupuestos**
 
--   `BudgetHandler.gs` en Apps Script: actualiza `status` de `BUDGETS` automáticamente
--   `budget.service.ts`: expone estado de cada presupuesto vía `BehaviorSubject`
+-   `budget.service.ts`: calcula `status` (`ok` / `warning` / `exceeded`) y persiste en `BUDGETS`; expone estado vía `BehaviorSubject`
 -   `category-badge.component` con estados visuales (normal / warning / exceeded)
 -   Alerta en tiempo real en `transaction-form`: al escribir el monto, el formulario consulta el estado del presupuesto antes de guardar y muestra un aviso
 -   Alerta global de límite mensual en el dashboard
@@ -765,10 +766,10 @@ La WBS se organiza en 7 áreas de trabajo. Cada área se descompone hasta el niv
 | cambio. El dashboard consolida todos los importes en la divisa base del usuario.           |
 +--------------------------------------------------------------------------------------------+
 
--   `currency-api.service.ts` con integración a ExchangeRate-API
+-   `currency-api.service.ts` con integración a ExchangeRate-API, caché de tasas en NgRx
 -   `currency-settings.component` con búsqueda, refresco automático y edición manual de tasas
--   Apps Script actualiza `amount_base` en `TRANSACTIONS` al detectar nuevas tasas
--   Dashboard usa `amount_base` para consolidar multimoneda sin recalcular en el cliente
+-   Al editar una tasa manualmente, `currency-api.service.ts` persiste el cambio en la hoja `CURRENCIES` con `source: 'manual'`
+-   Dashboard usa `amount_base` (calculado en el momento de inserción de cada transacción) para consolidar multimoneda
 
 **6.6 Fase 6: QA, UX y Despliegue (Semanas 11-12)**
 
@@ -791,9 +792,7 @@ La WBS se organiza en 7 áreas de trabajo. Cada área se descompone hasta el niv
   -----------------------------------------------------------------------
   **Rol**                      **Dedicación**   **Responsabilidades**
   ---------------------------- ---------------- -------------------------
-  Developer Frontend (Angular/Ionic)  Full-time   Features, componentes, store NgRx
-
-  Developer Backend (Apps Script)     Part-time (50%)  Lógica de servidor, integraciones Google
+  Developer Frontend (Angular/Ionic)  Full-time   Features, componentes, store NgRx, lógica de negocio en servicios
 
   QA / Tester                        Part-time (50%)  Tests, regresión, pruebas en dispositivos
 
@@ -805,15 +804,15 @@ La WBS se organiza en 7 áreas de trabajo. Cada área se descompone hasta el niv
   -----------------------------------------------------------------------
   **Riesgo**                                     **Probabilidad**   **Impacto**   **Mitigación**
   ---------------------------------------------- ------------------ ------------- -----------------------------------------------
-  Cuota de Google Sheets API agotada             Media              Alto          Caché agresiva en `BehaviorSubject`. Operaciones de escritura batched via Apps Script.
+  Cuota de Google Sheets API agotada             Media              Alto          Caché ETag agresiva en NgRx. Leer solo rangos necesarios. Batching de escrituras cuando sea posible.
 
   Latencia elevada de Sheets API                 Alta               Medio         Optimistic UI: mostrar el cambio antes de confirmar. Sincronización en background.
 
   HTML accidentalmente en archivos `.ts`         Media              Medio         Regla de ESLint personalizada + revisión obligatoria en PR que valide la separación.
 
-  Inconsistencia de datos entre cliente y Sheets Media              Alto          Apps Script como única fuente de escritura. El cliente nunca modifica Sheets directamente para operaciones con lógica de negocio.
+  Usuario técnico accede a Sheets directamente   Baja               Medio         Riesgo aceptado. El SPREADSHEET_ID no se expone en la UI. Aislamiento garantizado en la capa Angular para el 99% de usuarios.
 
-  Complejidad de multimoneda y tasas             Media              Medio         `amount_base` calculado en servidor. El cliente solo lee, nunca recalcula tasas.
+  Complejidad de multimoneda y tasas             Media              Medio         `amount_base` calculado y persistido al insertar la transacción. El dashboard solo lee, nunca recalcula.
   -----------------------------------------------------------------------
 
 **7.3 Resumen del Timeline**

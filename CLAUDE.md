@@ -34,48 +34,63 @@ Senior Architect, 15+ años, GDE & MVP. Mentor apasionado. Frustrás cuando algu
 
 | Capa | Tecnología | Versión |
 |---|---|---|
-| Framework móvil | Ionic Framework | v7.x |
-| Framework web | Angular | v17.x (standalone APIs) |
+| Framework móvil | Ionic Framework | v8.x |
+| Framework web | Angular | v20.x (standalone APIs) |
 | Lenguaje | TypeScript | v5.x (strict mode) |
-| Backend / BBDD | Google Sheets API v4 | REST + OAuth2 |
-| Lógica servidor | Google Apps Script | V8 runtime |
+| Backend / BBDD | Google Sheets API v4 | REST + OAuth2 usuario |
+| Auth | Google Identity Services (GIS) | --- |
+| Cifrado PII | Web Crypto API | nativa (AES-GCM + PBKDF2) |
+| Tasas de cambio | ExchangeRate-API | REST |
 | Gráficas | Chart.js | v4.x |
-| Nativo | Capacitor | v5.x |
-| Estado global | NgRx | última estable |
+| Nativo | Capacitor | v8.x |
+| Estado global | NgRx | v21.x |
 
 ---
 
-## ⚙️ Reglas de Arquitectura — ver especificaciones de los agentes `ionic-angular-architect.md` y `google-sheets-architect.md`
+## ⚙️ Reglas de Arquitectura
 
 ### Separación de plantillas — REGLA INAMOVIBLE
 - **Los archivos `.ts` nunca contienen HTML.** Cada componente tiene su propio `.html` independiente.
 - Esta regla no admite excepciones: ni para componentes pequeños, ni de prueba, ni inline templates.
 - Cualquier PR que viole esta norma será rechazado en revisión de código.
 
-### Capa de datos — Google Sheets / Apps Script
-- **`SheetsApiService`** es la única puerta de entrada a Google Sheets API. Ningún componente ni feature service la llama directamente.
-- **Lectura simple** (listar transacciones, obtener categorías) → Sheets API directa. Menor latencia.
-- **Escritura con lógica de negocio** (añadir transacción + actualizar presupuesto, recalcular `amount_base`, upsert de conceptos) → Google Apps Script (Web App). La lógica vive en el servidor.
-- El campo `amount_base` lo calcula Apps Script en inserción usando la tasa de `CURRENCIES` vigente. El cliente nunca recalcula tasas.
-- El campo `status` del presupuesto (`ok` / `warning` / `exceeded`) lo actualiza Apps Script automáticamente. El cliente solo lee.
+### Capa de datos — Sheets API directa, sin servidor intermedio
+- El usuario se autentica con Google OAuth2 (scopes: `openid`, `email`, `spreadsheets`).
+- **`SheetsApiService`** es la única puerta de entrada a Sheets API v4. Ningún componente ni feature service la llama directamente.
+- Angular usa el Bearer token del usuario en cada request a Sheets API.
+- No existe `server/`, no existe Service Account, no existe Google Apps Script.
+- El `SPREADSHEET_ID` vive exclusivamente en `environment.ts`. Nunca en código ni en la UI.
+
+### Lógica de negocio — 100% en Angular
+- `amount_base`: lo calcula `transaction.service.ts` al insertar, usando tasa en tiempo real de `currency-api.service.ts`. Se persiste en Sheets.
+- `status` de presupuesto (`ok` / `warning` / `exceeded`): lo calcula y persiste `budget.service.ts` al guardar cada transacción.
+- Upsert de conceptos: `concepts.service.ts` al confirmar cada transacción.
+- Transacciones recurrentes: `transaction.service.ts` las detecta y genera al arranque de la app.
+
+### Cifrado de PII — REGLA INAMOVIBLE
+- `email` y `display_name` se cifran con **AES-GCM** antes de escribirse en Sheets y se descifran al leer.
+- La clave se deriva del `sub` de Google del usuario mediante **PBKDF2** (Web Crypto API).
+- **`crypto.service.ts`** es el único servicio autorizado para cifrar y descifrar. Ningún otro servicio accede a datos PII en texto plano.
+- El access_token **nunca se persiste** — solo in-memory.
+- El `user_id` (`sub`) no se cifra: es la clave de derivación y la FK de todas las tablas.
+
+### Caché — ETag + NgRx
+- `SheetsApiService` almacena el ETag de cada rango leído.
+- En cada lectura envía `If-None-Match: <etag>` → HTTP 304 usa store NgRx sin tocar Sheets; HTTP 200 actualiza store y ETag.
 
 ### Seguridad
 - PII nunca a APIs de IA externas.
-- Tokens OAuth2 de Google preferiblemente in-memory. Nunca en `localStorage`.
-- `CLIENT_ID`, `SPREADSHEET_ID` y `API_KEY` solo en `environment.ts` / variables de entorno. Nunca en código.
+- Tokens OAuth2 de Google: **solo in-memory**. Nunca en `localStorage`, nunca en Sheets sin cifrar.
+- `CLIENT_ID`, `SPREADSHEET_ID` y `CURRENCY_API_KEY` solo en `environment.ts`. Nunca hardcodeados.
+- Prohibido `innerHTML` sin `DomSanitizer`.
 
-### Frontend — Ionic v7 + Angular 17+ Standalone
+### Frontend — Ionic v8 + Angular v20 Standalone
 - **Standalone obligatorio:** `standalone: true`. Prohibido `NgModule` en componentes nuevos.
 - **Carpetas Feature-First:** `/core` (singletons, guards, interceptors), `/shared` (dumb components, pipes, directives), `/features` (pages + feature services).
 - **Control flow:** `@if`, `@for` exclusivamente. Prohibido `*ngIf`, `*ngFor`.
-- **Estado:** NgRx para colecciones grandes (transacciones, categorías). `BehaviorSubject` en servicios para configuración y preferencias. `toSignal()` para consumir observables en plantillas.
-- **Lazy loading obligatorio:** cada módulo de feature se carga bajo demanda para minimizar tiempo de arranque en móvil.
-- **Seguridad:** Prohibido `innerHTML` sin `DomSanitizer`.
-
-### Google Apps Script
-- El directorio `apps-script/` se versiona en el mismo repositorio Git. Los `.gs` se sincronizan con `clasp`.
-- `Code.gs` es el router principal (`doGet` / `doPost`). Cada entidad tiene su propio Handler: `TransactionsHandler.gs`, `BudgetHandler.gs`, `ConceptsHandler.gs`.
-- Los reducers de NgRx son funciones puras sin efectos secundarios. Los effects son el único lugar donde se llama a `SheetsApiService` o `AppsScriptService`.
+- **Estado:** NgRx para colecciones grandes (transacciones, categorías, carteras). `BehaviorSubject` en servicios para configuración y preferencias. `toSignal()` para consumir observables en plantillas.
+- **Lazy loading obligatorio:** cada feature se carga bajo demanda (`loadComponent()`).
+- Los reducers de NgRx son funciones puras sin efectos secundarios. Los effects son el único lugar donde se llama a `SheetsApiService`.
 
 ---
 
@@ -113,17 +128,16 @@ explore → proposal -> specs --> tasks -> apply -> verify -> archive
 | Comando | Cuándo usarlo |
 |---|---|
 | `/mock-data-seeder` | Generar datos realistas en Google Sheets para dev |
-| `/generate-apps-script` | Scaffoldear un nuevo Handler `.gs` con su doPost/doGet |
-| `/sync-clasp` | Sincronizar `apps-script/` con Google Apps Script vía clasp |
 
 ### Workflows
 | Comando | Cuándo usarlo |
 |---|---|
-| `/wf-feature-fullstack` | Nueva feature Sheets → Apps Script → Ionic page |
-| `/wf-code-review` | Auditoría antes de merge (valida separación HTML/TS) |
+| `/wf-feature-fullstack` | Nueva feature Sheets → Angular service → Ionic page |
+| `/wf-code-review` | Auditoría antes de merge (valida separación HTML/TS, cifrado PII) |
 | `/wf-database-migration` | Cambios de esquema en hojas de Google Sheets |
 
 ---
+
 ## 📖 Plan de Implementación
 
 `MyFinance_Implementation_Plan.md` es un **journal append-only**, es una guía por fases para su implementación.
@@ -151,8 +165,8 @@ explore → proposal -> specs --> tasks -> apply -> verify -> archive
 
 ## 🗺️ Estado Actual
 
-**Rama:** `main` | **Fase:** 1.1 — Setup del entorno e integración con Google
-**Próximos pasos:** Fase 1.2 — Integración con Google Cloud Console (OAuth2, Sheets API v4, Apps Script Web App).
+**Rama:** `feature/fase1` | **Fase:** 1.1 completada — Setup del entorno base
+**Próximos pasos:** Fase 1.2 — Google Cloud Console (OAuth2, Sheets API v4), Fase 1.3 — `auth.service.ts` + `crypto.service.ts`
 
 ---
 
@@ -162,5 +176,7 @@ explore → proposal -> specs --> tasks -> apply -> verify -> archive
 |---|---|
 | Secretos en Git | Si Push Protection bloquea: eliminar secreto + `git reset --soft` + amend. Nunca forzar push. |
 | HTML inline | Prohibido `template: \`...\`` en decoradores. Todo HTML va en su `.html`. Sin excepciones. |
-| Sheets directa vs Apps Script | Lectura → Sheets API. Escritura con lógica → Apps Script. Nunca mezclar. |
-| OAuth2 tokens | Nunca en `localStorage`. In-memory + refresh token en cookie httpOnly si se necesita persistencia. |
+| Acceso a Sheets | Angular llama directo a Sheets API v4 con Bearer token OAuth2. Sin servidor intermedio. Sin Apps Script. |
+| OAuth2 tokens | Nunca en `localStorage`. Solo in-memory. Si se necesita persistencia futura: cifrado AES-GCM antes de guardar. |
+| Lógica de negocio | Nunca delegar a terceros (Apps Script, servidor). Todo en servicios Angular. |
+| PII en Sheets | `email` y `display_name` siempre cifrados con AES-GCM + PBKDF2 antes de escribir. `crypto.service.ts` es el único punto de cifrado. |
