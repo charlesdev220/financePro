@@ -1,7 +1,31 @@
-@if (chartData()) {
-  <app-chart-pie [data]="chartData()"></app-chart-pie>
-} @else {
-  <div class="flex items-center justify-center h-40 text-[var(--ion-color-medium)] text-sm">
-    <p>Sin gastos en este período</p>
-  </div>
-}
+<div class="relative flex flex-col items-center">
+  @if (chartData()) {
+    <div class="relative w-full aspect-square max-h-[280px]">
+      <app-chart-pie [data]="chartData()"></app-chart-pie>
+      
+      <!-- Balance central (Monefy soul) -->
+      <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+        <span class="text-[10px] uppercase font-bold text-[var(--color-gray-400)] tracking-widest">Balance</span>
+        <span class="text-2xl font-black text-[var(--color-gray-900)] tracking-tighter">
+          {{ balance() | currencyFormat:currency() }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Leyenda personalizada (Monefy style) -->
+    <div class="grid grid-cols-2 gap-x-4 gap-y-2 mt-4 px-2 w-full">
+      @for (item of breakdown(); track item.categoryId) {
+        <div class="flex items-center gap-2 overflow-hidden">
+          <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" [style.backgroundColor]="item.color"></div>
+          <span class="text-[11px] font-bold text-[var(--color-gray-900)] truncate">{{ item.name }}</span>
+          <span class="text-[10px] text-[var(--color-gray-400)] ml-auto">{{ item.amount | currencyFormat:currency() }}</span>
+        </div>
+      }
+    </div>
+    
+  } @else {
+    <div class="flex items-center justify-center h-48 text-[var(--color-gray-400)] text-sm italic">
+      <p>Sin movimientos en este período</p>
+    </div>
+  }
+</div>

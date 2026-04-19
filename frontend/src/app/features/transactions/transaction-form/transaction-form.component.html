@@ -1,182 +1,140 @@
-<ion-header>
-  <ion-toolbar>
+<ion-header class="ion-no-border">
+  <ion-toolbar [color]="typeValue() === 'income' ? 'success' : 'danger'" class="transition-colors duration-300">
     <ion-buttons slot="start">
-      <ion-button (click)="cancel()" color="medium">Cancelar</ion-button>
+      <ion-button (click)="cancel()">
+        <ion-icon slot="icon-only" name="arrow-back-outline"></ion-icon>
+      </ion-button>
     </ion-buttons>
     <ion-title>{{ formTitle() }}</ion-title>
     <ion-buttons slot="end">
-      <ion-button
-        (click)="save()"
-        [disabled]="form.invalid"
-        color="primary"
-        strong="true"
-      >
-        Guardar
+      <ion-button (click)="save()" [disabled]="form.invalid" strong="true">
+        GUARDAR
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
+
+  <!-- Cabeza de Monto Gigante (Monefy style) -->
+  <div class="flex flex-col items-center justify-center py-6 transition-colors duration-300 shadow-inner"
+       [class]="typeValue() === 'income' ? 'bg-[var(--ion-color-success)]' : 'bg-[var(--ion-color-danger)]'">
+    <div class="flex items-baseline text-white">
+      <span class="text-2xl font-bold opacity-80 mr-2">{{ form.get('currency')?.value }}</span>
+      <span class="text-6xl font-black tracking-tighter">{{ amountString() }}</span>
+    </div>
+  </div>
 </ion-header>
 
-<ion-content style="--background: var(--ion-color-light)">
+<ion-content>
+  <form [formGroup]="form" class="h-full flex flex-col">
+    
+    <div class="flex-1 overflow-y-auto bg-gray-50 p-4">
+      
+      <!-- Selectores Rápidos (Iconos) -->
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <!-- Cartera -->
+        <div class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex items-center gap-3 active:scale-95 transition-transform overflow-hidden">
+          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+            <ion-icon name="wallet-outline"></ion-icon>
+          </div>
+          <div class="flex-1">
+            <span class="text-[10px] uppercase font-bold text-gray-400 block">Cartera</span>
+            <ion-select formControlName="walletId" interface="action-sheet" class="text-sm font-bold p-0 min-h-0">
+              @for (wallet of wallets(); track wallet.walletId) {
+                <ion-select-option [value]="wallet.walletId">{{ wallet.icon }} {{ wallet.name }}</ion-select-option>
+              }
+            </ion-select>
+          </div>
+        </div>
 
-  <!-- Badge de tipo cuando viene prefijado desde el contexto -->
-  @if (initialType()) {
-    <div class="flex justify-center pt-4 pb-1">
-      <span class="inline-flex items-center gap-1.5 px-5 py-1.5 rounded-full text-sm font-semibold
-        {{ initialType() === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600' }}">
-        {{ initialType() === 'income' ? '↑ Ingreso' : '↓ Gasto' }}
-      </span>
-    </div>
-  }
+        <!-- Categoría -->
+        <div class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex items-center gap-3 active:scale-95 transition-transform overflow-hidden">
+          <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+            {{ selectedCategoryIcon() }}
+          </div>
+          <div class="flex-1">
+            <span class="text-[10px] uppercase font-bold text-gray-400 block">Categoría</span>
+            <ion-select formControlName="categoryId" interface="action-sheet" class="text-sm font-bold p-0 min-h-0">
+              @for (cat of filteredCategories(); track cat.categoryId) {
+                <ion-select-option [value]="cat.categoryId">{{ cat.name }}</ion-select-option>
+              }
+            </ion-select>
+          </div>
+        </div>
 
-  <!-- Aviso si faltan carteras o categorías -->
-  @if (wallets().length === 0 || filteredCategories().length === 0) {
-    <div class="mx-4 mt-3 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-700">
-      @if (wallets().length === 0) {
-        <p>⚠️ Necesitás una cartera para registrar movimientos.</p>
-      }
-      @if (filteredCategories().length === 0) {
-        <p>⚠️ No hay categorías para este tipo de transacción.</p>
-      }
-    </div>
-  }
+        <!-- Fecha -->
+        <div class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex items-center gap-3 active:scale-95 transition-transform overflow-hidden relative">
+          <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-xl">
+            <ion-icon name="calendar-outline"></ion-icon>
+          </div>
+          <div class="flex-1">
+            <span class="text-[10px] uppercase font-bold text-gray-400 block">Fecha</span>
+            <input type="date" formControlName="date" class="text-sm font-bold bg-transparent border-none p-0 w-full outline-none" />
+          </div>
+        </div>
 
-  <form [formGroup]="form">
+        <!-- Divisa -->
+        <div class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex items-center gap-3 active:scale-95 transition-transform overflow-hidden">
+          <div class="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center text-xl">
+            <ion-icon name="cash-outline"></ion-icon>
+          </div>
+          <div class="flex-1">
+            <span class="text-[10px] uppercase font-bold text-gray-400 block">Divisa</span>
+            <ion-select formControlName="currency" interface="action-sheet" class="text-sm font-bold p-0 min-h-0">
+              @for (c of currencies; track c) {
+                <ion-select-option [value]="c">{{ c }}</ion-select-option>
+              }
+            </ion-select>
+          </div>
+        </div>
+      </div>
 
-    <!-- Lista principal: tipo + montos + destino -->
-    <ion-list inset="true" class="mt-3">
-
-      <!-- Tipo — solo cuando no viene prefijado desde el contexto -->
-      @if (!initialType()) {
-        <ion-item>
-          <ion-label>Tipo</ion-label>
-          <ion-select formControlName="type" interface="action-sheet">
-            <ion-select-option value="expense">↓ Gasto</ion-select-option>
-            <ion-select-option value="income">↑ Ingreso</ion-select-option>
-          </ion-select>
+      <!-- Otros campos (Descripción y Notas) -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
+        <ion-item lines="full" class="ion-no-padding px-4">
+          <ion-textarea
+            formControlName="concept"
+            placeholder="¿En qué lo usaste?"
+            label="Descripción"
+            labelPlacement="stacked"
+            [autoGrow]="true"
+            rows="1"
+            class="text-sm font-semibold"
+          ></ion-textarea>
         </ion-item>
-      }
-
-      <!-- Monto -->
-      <ion-item>
-        <ion-label position="stacked">Monto</ion-label>
-        <ion-input
-          formControlName="amount"
-          type="number"
-          placeholder="0.00"
-          inputmode="decimal"
-        ></ion-input>
-        @if (form.get('amount')?.invalid && form.get('amount')?.touched) {
-          <ion-note color="danger" slot="error">Ingresá un monto mayor a 0</ion-note>
-        }
-      </ion-item>
-
-      <!-- Divisa — label inline para que el select muestre el valor seleccionado -->
-      <ion-item>
-        <ion-label>Divisa</ion-label>
-        <ion-select formControlName="currency" interface="action-sheet">
-          @for (c of currencies; track c) {
-            <ion-select-option [value]="c">{{ c }}</ion-select-option>
-          }
-        </ion-select>
-      </ion-item>
-
-      <!-- Cartera -->
-      @if (wallets().length > 0) {
-        <ion-item>
-          <ion-label>Cartera</ion-label>
-          <ion-select formControlName="walletId" interface="alert" placeholder="Seleccioná">
-            @for (wallet of wallets(); track wallet.walletId) {
-              <ion-select-option [value]="wallet.walletId">{{ wallet.icon }} {{ wallet.name }}</ion-select-option>
-            }
-          </ion-select>
-          @if (form.get('walletId')?.invalid && form.get('walletId')?.touched) {
-            <ion-note color="danger" slot="error">Seleccioná una cartera</ion-note>
-          }
+        <ion-item lines="none" class="ion-no-padding px-4">
+          <ion-textarea
+            formControlName="notes"
+            placeholder="Notas adicionales..."
+            label="Notas"
+            labelPlacement="stacked"
+            [autoGrow]="true"
+            rows="1"
+            class="text-xs text-gray-500"
+          ></ion-textarea>
         </ion-item>
-      }
+      </div>
 
-      <!-- Categoría -->
-      @if (filteredCategories().length > 0) {
-        <ion-item>
-          <ion-label>Categoría</ion-label>
-          <ion-select formControlName="categoryId" interface="alert" placeholder="Seleccioná">
-            @for (cat of filteredCategories(); track cat.categoryId) {
-              <ion-select-option [value]="cat.categoryId">{{ cat.icon }} {{ cat.name }}</ion-select-option>
-            }
-          </ion-select>
-          @if (form.get('categoryId')?.invalid && form.get('categoryId')?.touched) {
-            <ion-note color="danger" slot="error">Seleccioná una categoría</ion-note>
-          }
-        </ion-item>
-      }
-
-      <!-- Indicador de presupuesto -->
       @if (getActiveBudget(); as budget) {
-        <div class="px-4 pb-3">
+        <div class="mb-4">
           <app-budget-indicator [budget]="budget"></app-budget-indicator>
-          @if (getBudgetWarning()) {
-            <ion-note color="warning" class="text-xs">Superarías el presupuesto de esta categoría</ion-note>
-          }
         </div>
       }
+    </div>
 
-    </ion-list>
-
-    <!-- Lista secundaria: detalle + recurrencia -->
-    <ion-list inset="true" class="mt-2">
-
-      <!-- Descripción con autocompletado -->
-      <ion-item>
-        <ion-label position="stacked">Descripción</ion-label>
-        <app-autocomplete-input
-          [suggestions$]="suggestions$"
-          [value]="form.get('concept')?.value ?? ''"
-          placeholder="Ej: Supermercado, Netflix, taxi..."
-          (inputChange)="onConceptInput($event)"
-          (selected)="onConceptSelected($event)"
-        ></app-autocomplete-input>
-        <ion-note slot="helper" color="medium">Se usa para buscar y agrupar gastos similares.</ion-note>
-      </ion-item>
-
-      <!-- Fecha — input nativo para garantizar que el valor del form control se muestre correctamente -->
-      <ion-item>
-        <ion-label position="stacked">Fecha</ion-label>
-        <input
-          type="date"
-          formControlName="date"
-          class="w-full py-2 text-sm bg-transparent border-none outline-none"
-        />
-      </ion-item>
-
-      <!-- Notas adicionales -->
-      <ion-item>
-        <ion-label position="stacked">Notas adicionales</ion-label>
-        <ion-textarea
-          formControlName="notes"
-          placeholder="Detalles que solo necesitás recordar vos (factura, descuento, con quién...)"
-          rows="2"
-        ></ion-textarea>
-      </ion-item>
-
-      <!-- Recurrencia -->
-      <ion-item>
-        <ion-label>¿Es un pago recurrente?</ion-label>
-        <ion-toggle formControlName="isRecurring" slot="end"></ion-toggle>
-      </ion-item>
-
-      @if (form.get('isRecurring')?.value) {
-        <ion-item>
-          <ion-label>Frecuencia</ion-label>
-          <ion-select formControlName="recurrenceRule" interface="action-sheet">
-            <ion-select-option value="daily">Diario</ion-select-option>
-            <ion-select-option value="weekly">Semanal</ion-select-option>
-            <ion-select-option value="monthly">Mensual</ion-select-option>
-          </ion-select>
-        </ion-item>
-      }
-
-    </ion-list>
+    <!-- Numpad (Monefy style) -->
+    <div class="bg-white border-t border-gray-200 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
+      <div class="grid grid-cols-4 select-none">
+        @for (num of ['7','8','9','4','5','6','1','2','3','0','00','.']; track num) {
+          <div (click)="onNumberPress(num)" 
+               class="flex items-center justify-center h-14 text-xl font-medium active:bg-gray-100 border-r border-b border-gray-50 transition-colors">
+            {{ num }}
+          </div>
+        }
+        <div (click)="onDelete()" 
+             class="flex items-center justify-center h-14 bg-gray-50/50 active:bg-red-50 text-red-500 border-b border-gray-50 transition-colors col-span-4">
+          <ion-icon name="backspace-outline" class="text-2xl"></ion-icon>
+        </div>
+      </div>
+    </div>
 
   </form>
 </ion-content>

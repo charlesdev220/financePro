@@ -1,118 +1,173 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Transacciones</ion-title>
+<ion-header class="ion-no-border">
+  <ion-toolbar style="--background: var(--color-primary); --color: white;">
+    <ion-buttons slot="start">
+      <ion-button (click)="clearFilters()" color="light">
+        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title class="font-extrabold tracking-tight">Movimientos</ion-title>
     @if (activeFilters()) {
       <ion-buttons slot="end">
-        <ion-button (click)="clearFilters()" color="medium" size="small">
-          Limpiar filtros
+        <ion-button (click)="clearFilters()" fill="clear" class="text-[10px] font-bold uppercase tracking-widest text-white/80">
+          Borrar Filtros
         </ion-button>
       </ion-buttons>
     }
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-
-  <!-- Filtros inline tipo acordeón — se despliegan empujando el contenido hacia abajo -->
-  <div class="bg-white border-b border-gray-200">
-
-    <!-- Cartera -->
-    <button type="button" class="w-full flex items-center justify-between px-4 py-3 border-b border-gray-100" (click)="toggleWalletFilter()">
-      <span class="text-sm" [class.font-semibold]="!!filterWallet()">{{ filterWalletLabel() }}</span>
-      <ion-icon [name]="filterWalletOpen() ? 'chevron-up-outline' : 'chevron-down-outline'" class="text-gray-400 text-base" />
-    </button>
-    @if (filterWalletOpen()) {
-      <div class="bg-gray-50 border-b border-gray-100">
-        <button type="button" class="w-full text-left px-6 py-2.5 text-sm border-b border-gray-100" [class.font-semibold]="!filterWallet()" (click)="setWalletFilter('')">
-          Todas las carteras
-        </button>
-        @for (w of wallets(); track w.walletId) {
-          <button type="button" class="w-full text-left px-6 py-2.5 text-sm border-b border-gray-100 last:border-b-0" [class.font-semibold]="filterWallet() === w.walletId" (click)="setWalletFilter(w.walletId)">
-            {{ w.name }}
-          </button>
-        }
-      </div>
-    }
-
-    <!-- Categoría -->
-    <button type="button" class="w-full flex items-center justify-between px-4 py-3 border-b border-gray-100" (click)="toggleCategoryFilter()">
-      <span class="text-sm" [class.font-semibold]="!!filterCategory()">{{ filterCategoryLabel() }}</span>
-      <ion-icon [name]="filterCategoryOpen() ? 'chevron-up-outline' : 'chevron-down-outline'" class="text-gray-400 text-base" />
-    </button>
-    @if (filterCategoryOpen()) {
-      <div class="bg-gray-50 border-b border-gray-100">
-        <button type="button" class="w-full text-left px-6 py-2.5 text-sm border-b border-gray-100" [class.font-semibold]="!filterCategory()" (click)="setCategoryFilter('')">
-          Todas las categorías
-        </button>
-        @for (cat of categories(); track cat.categoryId) {
-          <button type="button" class="w-full text-left px-6 py-2.5 text-sm border-b border-gray-100 last:border-b-0" [class.font-semibold]="filterCategory() === cat.categoryId" (click)="setCategoryFilter(cat.categoryId)">
-            {{ cat.icon }} {{ cat.name }}
-          </button>
-        }
-      </div>
-    }
-
-    <!-- Período -->
-    <button type="button" class="w-full flex items-center justify-between px-4 py-3" (click)="togglePeriodFilter()">
-      <span class="text-sm" [class.font-semibold]="!!filterPeriod()">{{ filterPeriodLabel() }}</span>
-      <ion-icon [name]="filterPeriodOpen() ? 'chevron-up-outline' : 'chevron-down-outline'" class="text-gray-400 text-base" />
-    </button>
-    @if (filterPeriodOpen()) {
-      <div class="bg-gray-50">
-        <button type="button" class="w-full text-left px-6 py-2.5 text-sm border-b border-gray-100" [class.font-semibold]="!filterPeriod()" (click)="setPeriodFilter('')">
-          Todos los períodos
-        </button>
-        @for (period of availablePeriods(); track period) {
-          <button type="button" class="w-full text-left px-6 py-2.5 text-sm border-b border-gray-100 last:border-b-0" [class.font-semibold]="filterPeriod() === period" (click)="setPeriodFilter(period)">
-            {{ period }}
-          </button>
-        }
-      </div>
-    }
-
+<ion-content style="--background: var(--color-bg-mint);">
+  <!-- Filtros Rápidos (Monefy Style) -->
+  <div class="flex gap-2 p-4 overflow-x-auto no-scrollbar bg-[var(--color-primary)] pb-8 rounded-b-[40px] shadow-lg mb-4">
+    <div (click)="toggleWalletFilter()" class="bg-white/20 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform">
+      <ion-icon name="wallet-outline" class="text-xs"></ion-icon>
+      <span class="text-xs font-bold">{{ filterWalletLabel() }}</span>
+    </div>
+    <div (click)="toggleCategoryFilter()" class="bg-white/20 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform">
+      <ion-icon name="sparkles-outline" class="text-xs"></ion-icon>
+      <span class="text-xs font-bold">{{ filterCategoryLabel() }}</span>
+    </div>
+    <div (click)="togglePeriodFilter()" class="bg-white/20 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform">
+      <ion-icon name="calendar-outline" class="text-xs"></ion-icon>
+      <span class="text-xs font-bold">{{ filterPeriodLabel() }}</span>
+    </div>
   </div>
 
-  @if (hasTransactions()) {
-    <ion-list>
-      @for (tx of transactions(); track tx.txId) {
-        <ion-item-sliding>
-          <ion-item>
-            <ion-label>
-              <h3>{{ tx.concept || getCategoryName(tx.categoryId) }}</h3>
-              <p>{{ getCategoryName(tx.categoryId) }} · {{ getWalletName(tx.walletId) }}</p>
-              <p><ion-note>{{ tx.date | relativeDate }}</ion-note></p>
-            </ion-label>
-            <div slot="end" [class]="tx.type === 'income' ? 'flex items-center gap-1 text-[var(--ion-color-success)] font-semibold' : 'flex items-center gap-1 text-[var(--ion-color-danger)] font-semibold'">
-              <ion-icon [name]="tx.type === 'income' ? 'arrow-up-outline' : 'arrow-down-outline'" size="small"></ion-icon>
-              {{ tx.amount | currencyFormat:tx.currency }}
-            </div>
-          </ion-item>
-
-          <ion-item-options side="end">
-            <ion-item-option color="primary" (click)="openEditModal(tx)">
-              <ion-icon slot="icon-only" name="create-outline"></ion-icon>
-            </ion-item-option>
-            <ion-item-option color="danger" (click)="deleteTransaction(tx)">
-              <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
-            </ion-item-option>
-          </ion-item-options>
-        </ion-item-sliding>
-      }
-    </ion-list>
-  } @else {
-    <div class="flex flex-col items-center justify-center h-[50vh] gap-4 text-gray-400 text-center">
-      <p class="text-base">No hay transacciones para los filtros seleccionados</p>
-      <ion-button fill="outline" (click)="openAddModal()">
-        <ion-icon slot="start" name="add-outline"></ion-icon>
-        Nueva transacción
-      </ion-button>
+  <!-- Popovers de Filtros (Simulados como modales compactos si están abiertos) -->
+  @if (filterWalletOpen()) {
+    <div class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end" (click)="filterWalletOpen.set(false)">
+      <div class="bg-white w-full rounded-t-[32px] p-6 animate-slide-up" (click)="$event.stopPropagation()">
+        <h4 class="text-sm font-black uppercase tracking-widest text-gray-400 mb-4">Filtrar por Cartera</h4>
+        <div class="grid grid-cols-2 gap-3">
+          <button (click)="setWalletFilter('')" class="p-4 rounded-2xl border-2 transition-all flex items-center gap-2" [class]="!filterWallet() ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)] font-bold' : 'border-gray-100 text-gray-500'">
+            Todas
+          </button>
+          @for (w of wallets(); track w.walletId) {
+            <button (click)="setWalletFilter(w.walletId)" class="p-4 rounded-2xl border-2 transition-all flex items-center gap-2 truncate" [class]="filterWallet() === w.walletId ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)] font-bold' : 'border-gray-100 text-gray-500'">
+              {{ w.name }}
+            </button>
+          }
+        </div>
+      </div>
     </div>
   }
 
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="openAddModal()" color="primary">
-      <ion-icon name="add-outline"></ion-icon>
+  @if (filterCategoryOpen()) {
+    <div class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end" (click)="filterCategoryOpen.set(false)">
+      <div class="bg-white w-full rounded-t-[32px] p-6 max-h-[70vh] overflow-y-auto animate-slide-up" (click)="$event.stopPropagation()">
+        <h4 class="text-sm font-black uppercase tracking-widest text-gray-400 mb-4">Filtrar por Categoría</h4>
+        <div class="grid grid-cols-3 gap-3">
+          <button (click)="setCategoryFilter('')" class="flex flex-col items-center p-3 rounded-2xl border-2 transition-all gap-1" [class]="!filterCategory() ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)]' : 'border-gray-100 text-gray-500'">
+            <span class="text-xl">📂</span>
+            <span class="text-[10px] font-bold">Todas</span>
+          </button>
+          @for (c of categories(); track c.categoryId) {
+            <button (click)="setCategoryFilter(c.categoryId)" class="flex flex-col items-center p-3 rounded-2xl border-2 transition-all gap-1" [class]="filterCategory() === c.categoryId ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)]' : 'border-gray-100 text-gray-500'">
+              <span class="text-xl">{{ c.icon }}</span>
+              <span class="text-[10px] font-bold truncate w-full text-center">{{ c.name }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Listado Agrupado (El alma de la vista) -->
+  <div class="px-4 pb-24">
+    @if (hasTransactions()) {
+      <div class="space-y-6">
+        @for (group of groupedTransactions(); track group.date) {
+          <div class="space-y-3">
+            <!-- Cabecera de grupo (Hoy, Ayer o Fecha) -->
+            <div class="flex items-center justify-between px-2">
+              <div class="flex items-baseline gap-2">
+                <h4 class="text-sm font-black text-gray-800">{{ group.date | relativeDate }}</h4>
+                <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+                  {{ group.transactions.length }} {{ group.transactions.length === 1 ? 'movimiento' : 'movimientos' }}
+                </span>
+              </div>
+              <div class="px-3 py-1 rounded-full text-[10px] font-black" [class]="group.totalDaily >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'">
+                {{ group.totalDaily >= 0 ? '+' : '' }}{{ group.totalDaily | currencyFormat:userBaseCurrency() }}
+              </div>
+            </div>
+
+            <!-- Movimientos del día -->
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+              @for (tx of group.transactions; track tx.txId; let last = $last) {
+                <ion-item-sliding>
+                  <ion-item lines="none" class="ion-no-padding px-4" (click)="openEditModal(tx)" style="--padding-start: 16px; --padding-end: 16px; --inner-padding-end: 0;">
+                    <!-- Dot de color -->
+                    <div slot="start" class="flex flex-col items-center mr-4">
+                      <div class="w-1.5 h-full bg-gray-100 absolute -z-10"></div>
+                      <div class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center text-xl shadow-inner border border-white">
+                        {{ tx.categoryIcon }}
+                      </div>
+                    </div>
+                    
+                    <ion-label class="py-4">
+                      <div class="flex justify-between items-start mb-1">
+                        <h3 class="text-sm font-bold text-gray-900 m-0">{{ tx.concept || tx.categoryName }}</h3>
+                        <span class="text-sm font-black" [class]="tx.type === 'income' ? 'text-[var(--color-income)]' : 'text-[var(--color-expense)]'">
+                          {{ tx.type === 'income' ? '+' : '-' }}{{ tx.amount | currencyFormat:tx.currency }}
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="text-[10px] uppercase font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
+                          {{ tx.categoryName }}
+                        </span>
+                        <span class="text-[10px] font-bold text-gray-300">
+                          {{ getWalletName(tx.walletId) }}
+                        </span>
+                      </div>
+                    </ion-label>
+                  </ion-item>
+
+                  <ion-item-options side="end">
+                    <ion-item-option color="danger" (click)="deleteTransaction(tx)" style="border-radius: 0 24px 24px 0;">
+                      <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+                    </ion-item-option>
+                  </ion-item-options>
+                </ion-item-sliding>
+                @if (!last) {
+                  <div class="mx-6 h-[1px] bg-gray-50"></div>
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="flex flex-col items-center justify-center pt-20 gap-6 text-center animate-fade-in">
+        <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center text-5xl">Empty</div>
+        <div class="space-y-1">
+          <p class="text-lg font-black text-gray-800">No hay nada por aquí</p>
+          <p class="text-sm text-gray-400 px-10">No encontramos movimientos con los filtros actuales.</p>
+        </div>
+        <ion-button (click)="openAddModal()" style="--border-radius: 20px; --padding-start: 32px; --padding-end: 32px;" class="font-bold shadow-lg">
+          Empezar a sumar
+        </ion-button>
+      </div>
+    }
+  </div>
+
+  <!-- Botón flotante Estilo Monefy (Minimalista) -->
+  <ion-fab vertical="bottom" horizontal="center" slot="fixed" class="pb-6">
+    <ion-fab-button (click)="openAddModal()" style="--background: var(--color-primary); --box-shadow: 0 8px 32px rgba(91, 173, 143, 0.4);">
+      <ion-icon name="add-outline" class="text-2xl"></ion-icon>
     </ion-fab-button>
   </ion-fab>
 
 </ion-content>
+
+<ion-modal [isOpen]="isModalOpen()" (didDismiss)="closeModal()" [backdropDismiss]="true" class="transaction-modal">
+  <ng-template>
+    <app-transaction-form
+      class="ion-page"
+      [transaction]="selectedTransaction() ?? undefined"
+      [userId]="currentUserId()"
+      [userBaseCurrency]="userBaseCurrency()"
+      [rowNumber]="selectedTransaction() ? rowMap()[selectedTransaction()!.txId] : undefined"
+      (dismiss)="closeModal()">
+    </app-transaction-form>
+  </ng-template>
+</ion-modal>

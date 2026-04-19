@@ -3,16 +3,21 @@ import { ChartData } from 'chart.js';
 import { ChartPieComponent } from '../../../../shared/components/chart-pie/chart-pie.component';
 import { CategoryBreakdown } from '../../services/dashboard.service';
 
+import { CurrencyFormatPipe } from '../../../../shared/pipes/currency-format.pipe';
+import { CommonModule } from '@angular/common';
+
 @Component({
   selector: 'app-dashboard-chart',
   templateUrl: 'dashboard-chart.component.html',
   styleUrls: [],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ChartPieComponent],
+  imports: [CommonModule, ChartPieComponent, CurrencyFormatPipe],
 })
 export class DashboardChartComponent {
   breakdown = input.required<CategoryBreakdown[]>();
+  balance = input.required<number>();
+  currency = input.required<string>();
 
   /** Datos formateados para Chart.js doughnut, derivados del breakdown del período activo. */
   readonly chartData = computed<ChartData<'doughnut'> | null>(() => {

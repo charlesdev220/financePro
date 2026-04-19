@@ -14,4 +14,8 @@ export interface ITransaction {
   notes: string | null;
   createdAt: string; // ISO 8601 timestamp
   updatedAt: string; // ISO 8601 timestamp
+  
+  // Presentation fields (Joined in UI)
+  categoryName?: string;
+  categoryIcon?: string;
 }

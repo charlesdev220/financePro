@@ -47,14 +47,14 @@ export class DashboardService {
     categories: ICategory[],
     period: string,
   ): CategoryBreakdown[] {
-    const expenseTxs = transactions.filter(
-      t => t.type === TRANSACTION_TYPES.EXPENSE && t.date.startsWith(period),
+    const periodTxs = transactions.filter(
+      t => t.date.startsWith(period),
     );
 
-    if (expenseTxs.length === 0) return [];
+    if (periodTxs.length === 0) return [];
 
     const grouped = new Map<string, number>();
-    for (const tx of expenseTxs) {
+    for (const tx of periodTxs) {
       grouped.set(tx.categoryId, (grouped.get(tx.categoryId) ?? 0) + tx.amountBase);
     }
 

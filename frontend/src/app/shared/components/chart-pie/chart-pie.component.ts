@@ -62,8 +62,9 @@ export class ChartPieComponent implements AfterViewInit, OnDestroy {
       data,
       options: {
         responsive: true,
-        plugins: { legend: { position: 'bottom' } },
-      },
+        plugins: { legend: { display: false } },
+        cutout: '70%'
+      } as any,
     });
   }
 }
