@@ -1,16 +1,30 @@
-import { ChangeDetectionStrategy, Component, Input, OnInit, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
+import { CommonModule } from '@angular/common';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import {
-  IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
-  IonContent, IonList, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption, IonNote,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonButtons,
+  IonButton,
+  IonContent,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonInput,
+  IonSelect,
+  IonSelectOption,
+  IonNote,
   ModalController,
 } from '@ionic/angular/standalone';
 import { BudgetsActions } from '../../../store/budgets/budgets.actions';
 import { selectByType } from '../../../store/categories/categories.selectors';
 import { AuthService } from '../../../core/services/auth.service';
 import { IBudget } from '../../../models/budget.model';
+import { BUDGET_STATUS } from '../../../core/constants/budget.constants';
 
 @Component({
   selector: 'app-budget-form',
@@ -18,36 +32,52 @@ import { IBudget } from '../../../models/budget.model';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    CommonModule,
     ReactiveFormsModule,
-    IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
-    IonContent, IonList, IonItem, IonLabel, IonInput, IonSelect, IonSelectOption, IonNote,
+    IonHeader,
+    IonToolbar,
+    IonTitle,
+    IonButtons,
+    IonButton,
+    IonContent,
+    IonList,
+    IonItem,
+    IonLabel,
+    IonInput,
+    IonSelect,
+    IonSelectOption,
+    IonNote,
   ],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class BudgetFormComponent implements OnInit {
-  @Input() budget?: IBudget;
-  @Input() period?: string;
-  @Input() rowNumber?: number;
+  budget    = input<IBudget>();
+  period    = input<string>();
+  rowNumber = input<number>();
 
-  private readonly fb = inject(FormBuilder);
-  private readonly store = inject(Store);
-  private readonly modalCtrl = inject(ModalController);
+  private readonly fb          = inject(FormBuilder);
+  private readonly store       = inject(Store);
+  private readonly modalCtrl   = inject(ModalController);
   private readonly authService = inject(AuthService);
 
   form!: FormGroup;
 
-  readonly isEditMode = computed(() => !!this.budget);
+  /** True cuando se recibió un presupuesto existente, indicando modo edición. */
+  readonly isEditMode = computed(() => !!this.budget());
 
+  /** Categorías de tipo gasto para el selector de categoría del presupuesto. */
   readonly expenseCategories = toSignal(
     this.store.select(selectByType('expense')),
     { initialValue: [] },
   );
 
   ngOnInit(): void {
-    const defaultPeriod = this.budget?.period ?? this.period ?? new Date().toISOString().slice(0, 7);
+    const defaultPeriod = this.budget()?.period ?? this.period() ?? new Date().toISOString().slice(0, 7);
+    const b = this.budget();
     this.form = this.fb.group({
-      categoryId:   [this.budget?.categoryId ?? '', Validators.required],
+      categoryId:   [b?.categoryId ?? '', Validators.required],
       period:       [defaultPeriod, Validators.required],
-      budgetAmount: [this.budget?.budgetAmount ?? null, [Validators.required, Validators.min(1)]],
+      budgetAmount: [b?.budgetAmount ?? null, [Validators.required, Validators.min(1)]],
     });
   }
 
@@ -55,22 +85,20 @@ export class BudgetFormComponent implements OnInit {
     if (this.form.invalid) return;
 
     const value = this.form.getRawValue();
-    const now = new Date().toISOString();
+    const now   = new Date().toISOString();
+    const b     = this.budget();
+    const rn    = this.rowNumber();
 
-    if (this.budget && this.rowNumber) {
-      // Modo edición: dispatch updateBudget
+    if (b && rn) {
       const updatedBudget: IBudget = {
-        ...this.budget,
+        ...b,
         categoryId:   value.categoryId,
         period:       value.period,
         budgetAmount: Number(value.budgetAmount),
         lastUpdated:  now,
       };
-      this.store.dispatch(
-        BudgetsActions.updateBudget({ budget: updatedBudget, rowNumber: this.rowNumber }),
-      );
+      this.store.dispatch(BudgetsActions.updateBudget({ budget: updatedBudget, rowNumber: rn }));
     } else {
-      // Modo creación: dispatch saveBudget
       const user = this.authService.getUser();
       if (!user) return;
 
@@ -81,7 +109,7 @@ export class BudgetFormComponent implements OnInit {
         period:       value.period,
         budgetAmount: Number(value.budgetAmount),
         spentAmount:  0,
-        status:       'ok',
+        status:       BUDGET_STATUS.OK,
         lastUpdated:  now,
       };
       this.store.dispatch(BudgetsActions.saveBudget({ budget: newBudget }));

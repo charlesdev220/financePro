@@ -1,24 +1,23 @@
-import { Injectable, inject } from '@angular/core';
+import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { concatMap, switchMap, map, catchError, tap, withLatestFrom } from 'rxjs/operators';
+import { concatMap, switchMap, map, catchError, withLatestFrom } from 'rxjs/operators';
 import { of, EMPTY } from 'rxjs';
 import { BudgetsActions } from './budgets.actions';
 import { selectAllBudgets, selectBudgetsRowMap } from './budgets.selectors';
 import { selectAllTransactions } from '../transactions/transactions.selectors';
 import { BudgetService, calculateStatus } from '../../features/budgets/services/budget.service';
+import { TRANSACTION_TYPES } from '../../core/constants/transaction.constants';
 
-@Injectable()
-export class BudgetsEffects {
-  private readonly actions$ = inject(Actions);
-  private readonly store = inject(Store);
-  private readonly budgetService = inject(BudgetService);
-
-  loadBudgets$ = createEffect(() =>
-    this.actions$.pipe(
+export const loadBudgets$ = createEffect(
+  (
+    actions$ = inject(Actions),
+    budgetService = inject(BudgetService),
+  ) =>
+    actions$.pipe(
       ofType(BudgetsActions.loadBudgets),
       switchMap(() =>
-        this.budgetService.loadBudgets().pipe(
+        budgetService.loadBudgets().pipe(
           map(({ budgets, rowMap }) =>
             BudgetsActions.loadBudgetsSuccess({ budgets, rowMap }),
           ),
@@ -28,18 +27,23 @@ export class BudgetsEffects {
         ),
       ),
     ),
-  );
+  { functional: true },
+);
 
-  saveBudget$ = createEffect(() =>
-    this.actions$.pipe(
+export const saveBudget$ = createEffect(
+  (
+    actions$ = inject(Actions),
+    budgetService = inject(BudgetService),
+    store = inject(Store),
+  ) =>
+    actions$.pipe(
       ofType(BudgetsActions.saveBudget),
-      withLatestFrom(this.store.select(selectAllBudgets)),
+      withLatestFrom(store.select(selectAllBudgets)),
       concatMap(([{ budget }, prevItems]) => {
-        // Optimistic dispatch antes de confirmar en Sheets
-        this.store.dispatch(BudgetsActions.saveBudgetSuccess({ budget }));
-        return this.budgetService.saveBudget(budget).pipe(
+        store.dispatch(BudgetsActions.saveBudgetSuccess({ budget }));
+        return budgetService.saveBudget(budget).pipe(
           catchError(error => {
-            this.store.dispatch(
+            store.dispatch(
               BudgetsActions.saveBudgetFailure({ error: String(error), prevItems }),
             );
             return EMPTY;
@@ -47,18 +51,23 @@ export class BudgetsEffects {
         );
       }),
     ),
-    { dispatch: false },
-  );
+  { functional: true, dispatch: false },
+);
 
-  updateBudget$ = createEffect(() =>
-    this.actions$.pipe(
+export const updateBudget$ = createEffect(
+  (
+    actions$ = inject(Actions),
+    budgetService = inject(BudgetService),
+    store = inject(Store),
+  ) =>
+    actions$.pipe(
       ofType(BudgetsActions.updateBudget),
-      withLatestFrom(this.store.select(selectAllBudgets)),
+      withLatestFrom(store.select(selectAllBudgets)),
       concatMap(([{ budget, rowNumber }, prevItems]) => {
-        this.store.dispatch(BudgetsActions.updateBudgetSuccess({ budget }));
-        return this.budgetService.updateBudget(budget, rowNumber).pipe(
+        store.dispatch(BudgetsActions.updateBudgetSuccess({ budget }));
+        return budgetService.updateBudget(budget, rowNumber).pipe(
           catchError(error => {
-            this.store.dispatch(
+            store.dispatch(
               BudgetsActions.updateBudgetFailure({ error: String(error), prevItems }),
             );
             return EMPTY;
@@ -66,19 +75,23 @@ export class BudgetsEffects {
         );
       }),
     ),
-    { dispatch: false },
-  );
+  { functional: true, dispatch: false },
+);
 
-  deleteBudget$ = createEffect(() =>
-    this.actions$.pipe(
+export const deleteBudget$ = createEffect(
+  (
+    actions$ = inject(Actions),
+    budgetService = inject(BudgetService),
+    store = inject(Store),
+  ) =>
+    actions$.pipe(
       ofType(BudgetsActions.deleteBudget),
-      withLatestFrom(this.store.select(selectAllBudgets)),
+      withLatestFrom(store.select(selectAllBudgets)),
       concatMap(([{ budgetId, rowNumber }, prevItems]) => {
-        // Optimistic dispatch
-        this.store.dispatch(BudgetsActions.deleteBudgetSuccess({ budgetId }));
-        return this.budgetService.deleteBudget(rowNumber).pipe(
+        store.dispatch(BudgetsActions.deleteBudgetSuccess({ budgetId }));
+        return budgetService.deleteBudget(rowNumber).pipe(
           catchError(error => {
-            this.store.dispatch(
+            store.dispatch(
               BudgetsActions.deleteBudgetFailure({ error: String(error), prevItems }),
             );
             return EMPTY;
@@ -86,23 +99,26 @@ export class BudgetsEffects {
         );
       }),
     ),
-    { dispatch: false },
-  );
+  { functional: true, dispatch: false },
+);
 
-  recalculateBudget$ = createEffect(() =>
-    this.actions$.pipe(
+export const recalculateBudget$ = createEffect(
+  (
+    actions$ = inject(Actions),
+    budgetService = inject(BudgetService),
+    store = inject(Store),
+  ) =>
+    actions$.pipe(
       ofType(BudgetsActions.recalculateBudget),
       withLatestFrom(
-        this.store.select(selectAllTransactions),
-        this.store.select(selectAllBudgets),
-        this.store.select(selectBudgetsRowMap),
+        store.select(selectAllTransactions),
+        store.select(selectAllBudgets),
+        store.select(selectBudgetsRowMap),
       ),
       concatMap(([{ categoryId, period }, allTransactions, allBudgets, rowMap]) => {
         const budget = allBudgets.find(
           b => b.categoryId === categoryId && b.period === period,
         );
-
-        // Si no existe presupuesto para esta categoría/período, no hacer nada
         if (!budget) return EMPTY;
 
         const rowNumber = rowMap[budget.budgetId];
@@ -110,7 +126,10 @@ export class BudgetsEffects {
 
         const spentAmount = allTransactions
           .filter(
-            t => t.type === 'expense' && t.categoryId === categoryId && t.date.startsWith(period),
+            t =>
+              t.type === TRANSACTION_TYPES.EXPENSE &&
+              t.categoryId === categoryId &&
+              t.date.startsWith(period),
           )
           .reduce((sum, t) => sum + t.amountBase, 0);
 
@@ -122,12 +141,11 @@ export class BudgetsEffects {
           lastUpdated: new Date().toISOString(),
         };
 
-        // Dispatch optimista del resultado calculado
-        this.store.dispatch(BudgetsActions.recalculateBudgetSuccess({ budget: updatedBudget }));
+        store.dispatch(BudgetsActions.recalculateBudgetSuccess({ budget: updatedBudget }));
 
-        return this.budgetService.updateBudget(updatedBudget, rowNumber).pipe(
+        return budgetService.updateBudget(updatedBudget, rowNumber).pipe(
           catchError(error => {
-            this.store.dispatch(
+            store.dispatch(
               BudgetsActions.recalculateBudgetFailure({ error: String(error) }),
             );
             return EMPTY;
@@ -135,6 +153,5 @@ export class BudgetsEffects {
         );
       }),
     ),
-    { dispatch: false },
-  );
-}
+  { functional: true, dispatch: false },
+);

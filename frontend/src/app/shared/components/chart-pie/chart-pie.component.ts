@@ -3,11 +3,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  Input,
-  OnChanges,
   OnDestroy,
-  SimpleChanges,
   ViewChild,
+  effect,
+  input,
+  signal,
 } from '@angular/core';
 import {
   ArcElement,
@@ -27,29 +27,28 @@ Chart.register(ArcElement, DoughnutController, Tooltip, Legend);
   templateUrl: './chart-pie.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ChartPieComponent implements AfterViewInit, OnChanges, OnDestroy {
-  @Input() data: ChartData<'doughnut'> | null = null;
+export class ChartPieComponent implements AfterViewInit, OnDestroy {
+  data = input<ChartData<'doughnut'> | null>(null);
 
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
 
   private chart: Chart | null = null;
-  private initialized = false;
+  private readonly initialized = signal(false);
 
-  ngAfterViewInit(): void {
-    this.initialized = true;
-    if (this.data) {
-      this.createChart();
-    }
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['data'] && this.initialized) {
+  constructor() {
+    effect(() => {
+      const data = this.data();
+      if (!this.initialized()) return;
       this.chart?.destroy();
       this.chart = null;
-      if (this.data) {
-        this.createChart();
+      if (data) {
+        this.createChart(data);
       }
-    }
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this.initialized.set(true);
   }
 
   ngOnDestroy(): void {
@@ -57,15 +56,13 @@ export class ChartPieComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.chart = null;
   }
 
-  private createChart(): void {
+  private createChart(data: ChartData<'doughnut'>): void {
     this.chart = new Chart(this.canvasRef.nativeElement, {
       type: 'doughnut',
-      data: this.data!,
+      data,
       options: {
         responsive: true,
-        plugins: {
-          legend: { position: 'bottom' },
-        },
+        plugins: { legend: { position: 'bottom' } },
       },
     });
   }

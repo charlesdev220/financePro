@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ITransaction } from '../../../models/transaction.model';
+import { TRANSACTION_TYPES } from '../../../core/constants/transaction.constants';
 
 export interface MonthlyTotal {
   period: string; // YYYY-MM
@@ -37,7 +38,7 @@ export class AnalyticsService {
         map.set(period, { period, income: 0, expense: 0 });
       }
       const entry = map.get(period)!;
-      if (tx.type === 'income') {
+      if (tx.type === TRANSACTION_TYPES.INCOME) {
         entry.income += tx.amountBase;
       } else {
         entry.expense += tx.amountBase;
@@ -104,7 +105,7 @@ export class AnalyticsService {
     txs: ITransaction[],
     periods: string[],
   ): { recurrentes: SpendingItem[]; superfluos: SpendingItem[] } {
-    const expenses = txs.filter(tx => tx.type === 'expense');
+    const expenses = txs.filter(tx => tx.type === TRANSACTION_TYPES.EXPENSE);
 
     if (!expenses.length) {
       return { recurrentes: [], superfluos: [] };

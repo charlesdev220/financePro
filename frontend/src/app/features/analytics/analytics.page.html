@@ -11,18 +11,18 @@
     (periodChange)="onPeriodChange($event)"
   />
 
-  <section class="analytics-section">
-    <h2 class="section-title">Ingresos vs Gastos</h2>
+  <section class="mb-8">
+    <h2 class="text-base font-semibold text-[var(--ion-text-color)] mb-3">Ingresos vs Gastos</h2>
     <app-analytics-chart [data]="monthlyTotals()" />
   </section>
 
-  <section class="analytics-section">
-    <h2 class="section-title">Proyección de tendencia</h2>
+  <section class="mb-8">
+    <h2 class="text-base font-semibold text-[var(--ion-text-color)] mb-3">Proyección de tendencia</h2>
     <app-projections [data]="monthlyTotals()" [horizon]="3" />
   </section>
 
-  <section class="analytics-section">
-    <h2 class="section-title">Ranking de gastos</h2>
+  <section class="mb-8">
+    <h2 class="text-base font-semibold text-[var(--ion-text-color)] mb-3">Ranking de gastos</h2>
     <app-spending-ranking
       [recurrentes]="spendingData().recurrentes"
       [superfluos]="spendingData().superfluos"

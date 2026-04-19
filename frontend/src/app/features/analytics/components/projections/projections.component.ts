@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { ChartDataset } from 'chart.js';
 import { ChartBarComponent } from '../../../../shared/components/chart-bar/chart-bar.component';
 import { AnalyticsService, MonthlyTotal } from '../../services/analytics.service';
@@ -13,32 +13,24 @@ import { AnalyticsService, MonthlyTotal } from '../../services/analytics.service
 export class ProjectionsComponent {
   private readonly analyticsService = inject(AnalyticsService);
 
-  private _data = signal<MonthlyTotal[]>([]);
-  private _horizon = signal<3 | 6 | 12>(3);
+  data    = input<MonthlyTotal[]>([]);
+  horizon = input<3 | 6 | 12>(3);
 
-  @Input() set data(value: MonthlyTotal[]) {
-    this._data.set(value);
-  }
+  /** True cuando hay al menos 3 meses de datos para generar una regresión fiable. */
+  readonly hasEnoughData = computed(() => this.data().length >= 3);
 
-  @Input() set horizon(value: 3 | 6 | 12) {
-    this._horizon.set(value);
-  }
-
-  readonly hasEnoughData = computed(() => this._data().length >= 3);
-
+  /** Etiquetas del eje X: períodos históricos + períodos proyectados según el horizonte. */
   readonly labels = computed(() => {
-    const data = this._data();
-    const horizon = this._horizon();
-    const historical = data.map(t => t.period);
-    const projected = this.buildProjectedPeriods(data, horizon);
+    const historical = this.data().map(t => t.period);
+    const projected  = this.buildProjectedPeriods(this.data(), this.horizon());
     return [...historical, ...projected];
   });
 
+  /** Datasets para Chart.js: gasto histórico real + proyección lineal para el horizonte elegido. */
   readonly datasets = computed<ChartDataset[]>(() => {
-    const data = this._data();
-    const horizon = this._horizon();
-
-    const points = data.map((t, i) => ({ x: i, y: t.expense }));
+    const data    = this.data();
+    const horizon = this.horizon();
+    const points  = data.map((t, i) => ({ x: i, y: t.expense }));
     const { slope, intercept } = this.analyticsService.linearRegression(points);
 
     const historicalExpense = data.map(t => t.expense);

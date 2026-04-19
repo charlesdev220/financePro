@@ -11,7 +11,7 @@ const BASE = { categories: buildMockCategories(), users: buildMockUsers() };
 test.describe('Budget List — estado vacío (REQ-E2E-13)', () => {
 
   test('sc1: sin presupuestos → empty-state visible', async ({ page }) => {
-    await setupAndNavigate(page, '/budgets', { ...BASE });
+    await setupAndNavigate(page, '/tabs/budgets', { ...BASE });
 
     const emptyState = page.locator('.empty-state');
     await expect(emptyState).toBeVisible({ timeout: 8000 });
@@ -25,7 +25,7 @@ test.describe('Budget List — estado vacío (REQ-E2E-13)', () => {
 test.describe('Budget List — con datos (REQ-E2E-14)', () => {
 
   test('sc1: con presupuestos → app-budget-indicator visible en ion-list', async ({ page }) => {
-    await setupAndNavigate(page, '/budgets', {
+    await setupAndNavigate(page, '/tabs/budgets', {
       ...BASE,
       budgets: buildMockBudgets(CURRENT_PERIOD),
     });
@@ -35,7 +35,7 @@ test.describe('Budget List — con datos (REQ-E2E-14)', () => {
   });
 
   test('sc2: period-selector responde al click en botón anterior', async ({ page }) => {
-    await setupAndNavigate(page, '/budgets', {
+    await setupAndNavigate(page, '/tabs/budgets', {
       ...BASE,
       budgets: buildMockBudgets(CURRENT_PERIOD),
     });

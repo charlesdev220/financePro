@@ -19,13 +19,14 @@ El `verify-report.md` debe existir y no tener issues CRITICAL.
 ## Formato de entrada en `HISTORIAL_IMPLEMENTACION.md`
 
 ```markdown
-### Qué hemos completado hasta ahora ({Título del cambio}):
-*Fase actual:* Fase {X}: {nombre de fase del plan}
-*Estado actual:* Completado
+### Qué hemos completado hasta ahora ({Título}):
+*Fase actual:* Fase X: ...
+*Estado actual:* Completado / En Proceso
 - ✔️ **{Nombre}:** {Descripción técnica en 1 línea}
-- ✔️ **{Nombre}:** {Descripción técnica en 1 línea}
-*Próximos pasos:* {siguiente tarea del plan o fase}
-*(Qué / Por qué / Dónde / Qué se aprendió):* {...}
+*Próximos pasos:* {...}
+*Qué se aprendió:* {...}
+*Por qué se aprendió:* {...}
+*Dónde se aprendió:* {...}
 ```
 
 ## Reglas

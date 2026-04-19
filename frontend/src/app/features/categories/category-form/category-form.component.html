@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-button (click)="cancel()" color="medium">Cancelar</ion-button>
     </ion-buttons>
-    <ion-title>{{ isEditMode ? 'Editar categoría' : 'Nueva categoría' }}</ion-title>
+    <ion-title>{{ isEditMode() ? 'Editar categoría' : 'Nueva categoría' }}</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="save()" [disabled]="form.invalid" color="primary" strong="true">
         Guardar

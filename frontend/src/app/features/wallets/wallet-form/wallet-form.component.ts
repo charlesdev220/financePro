@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { ModalController } from '@ionic/angular/standalone';
@@ -18,6 +18,7 @@ const COLOR_OPTIONS = ['#4CAF50','#2196F3','#9C27B0','#FF9800','#F44336','#00968
   selector: 'app-wallet-form',
   templateUrl: 'wallet-form.component.html',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     ReactiveFormsModule,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
@@ -26,23 +27,24 @@ const COLOR_OPTIONS = ['#4CAF50','#2196F3','#9C27B0','#FF9800','#F44336','#00968
   ],
 })
 export class WalletFormComponent implements OnInit {
-  @Input() wallet?: IWallet;
-  @Input() userId?: string;
-  @Input() rowNumber?: number;
+  wallet    = input<IWallet>();
+  userId    = input<string>();
+  rowNumber = input<number>();
 
-  private readonly fb = inject(FormBuilder);
-  private readonly store = inject(Store);
+  private readonly fb        = inject(FormBuilder);
+  private readonly store     = inject(Store);
   private readonly modalCtrl = inject(ModalController);
 
   form!: FormGroup;
   readonly currencies = SUPPORTED_CURRENCIES;
-  readonly icons = ICON_OPTIONS;
-  readonly colors = COLOR_OPTIONS;
-  isEditMode = false;
+  readonly icons      = ICON_OPTIONS;
+  readonly colors     = COLOR_OPTIONS;
+
+  /** True cuando se recibió una cartera existente, indicando modo edición. */
+  readonly isEditMode = computed(() => !!this.wallet());
 
   ngOnInit(): void {
-    this.isEditMode = !!this.wallet;
-    const w = this.wallet;
+    const w = this.wallet();
     this.form = this.fb.group({
       name:      [w?.name ?? '', [Validators.required, Validators.minLength(1)]],
       currency:  [w?.currency ?? 'EUR', Validators.required],
@@ -55,18 +57,16 @@ export class WalletFormComponent implements OnInit {
   async save(): Promise<void> {
     if (this.form.invalid) return;
     const value = this.form.getRawValue();
-    const now = new Date().toISOString();
+    const now   = new Date().toISOString();
+    const w     = this.wallet();
+    const rn    = this.rowNumber();
 
-    if (this.wallet && this.rowNumber) {
-      const updated: IWallet = {
-        ...this.wallet,
-        ...value,
-      };
-      this.store.dispatch(WalletsActions.updateWallet({ wallet: updated, rowNumber: this.rowNumber }));
+    if (w && rn) {
+      this.store.dispatch(WalletsActions.updateWallet({ wallet: { ...w, ...value }, rowNumber: rn }));
     } else {
       const newWallet: IWallet = {
         walletId:  crypto.randomUUID(),
-        userId:    this.userId!,
+        userId:    this.userId()!,
         name:      value.name.trim(),
         currency:  value.currency,
         balance:   0,
@@ -78,6 +78,10 @@ export class WalletFormComponent implements OnInit {
       this.store.dispatch(WalletsActions.addWallet({ wallet: newWallet }));
     }
     await this.modalCtrl.dismiss();
+  }
+
+  onColorSelect(color: string): void {
+    this.form.patchValue({ color });
   }
 
   async cancel(): Promise<void> {

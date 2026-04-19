@@ -1,5 +1,6 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { BudgetsState } from './budgets.reducer';
+import { BUDGET_STATUS } from '../../core/constants/budget.constants';
 
 export const selectBudgetsState =
   createFeatureSelector<BudgetsState>('budgets');
@@ -36,5 +37,5 @@ export const selectBudgetsForPeriod = (period: string) =>
 
 export const selectExceededBudgets = (period: string) =>
   createSelector(selectAllBudgets, budgets =>
-    budgets.filter(b => b.period === period && b.status === 'exceeded'),
+    budgets.filter(b => b.period === period && b.status === BUDGET_STATUS.EXCEEDED),
   );

@@ -16,8 +16,8 @@
               <ion-note color="primary">Cartera principal</ion-note>
             }
           </ion-label>
-          <div slot="end" class="wallet-item-end">
-            <span class="wallet-balance"
+          <div slot="end" class="flex flex-col items-end gap-1">
+            <span class="font-semibold text-lg"
                   [style.color]="getBalance(wallet.walletId) >= 0 ? 'var(--ion-color-success)' : 'var(--ion-color-danger)'">
               {{ getBalance(wallet.walletId) | currencyFormat:wallet.currency }}
             </span>
@@ -34,7 +34,7 @@
       }
     </ion-list>
   } @else {
-    <div class="empty-state">
+    <div class="empty-state flex flex-col items-center justify-center h-[60vh] gap-4 text-[var(--ion-color-medium)]">
       <p>No hay carteras creadas</p>
       <ion-button fill="outline" (click)="openAddModal()">
         <ion-icon slot="start" name="add-outline"></ion-icon>

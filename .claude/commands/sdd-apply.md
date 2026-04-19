@@ -1,57 +1,84 @@
-# SDD Apply
+# SDD Apply — MyFinance
 
-Implementa las tareas del cambio escribiendo código real.  
-Recibís: **$ARGUMENTS** (nombre del cambio, y opcionalmente qué tareas: "Phase 1, tasks 1.1-1.3").
+Implementa las tareas del cambio activo escribiendo código real.
+Recibís: **$ARGUMENTS** (nombre del cambio, y opcionalmente qué tareas: "T-01, T-02").
 
 ## Pre-requisitos
-Leer `.sdd/changes/{change-name}/spec.md`, `design.md` y `tasks.md` (todos obligatorios).  
-Leer el código actual de los archivos que se van a modificar antes de tocarlos.
 
-## Qué hacer
+Leer **obligatoriamente** antes de escribir una línea:
+- `.sdd/changes/{change-name}/spec.md` → QUÉ debe hacer el código
+- `.sdd/changes/{change-name}/tasks.md` → cuáles tareas ejecutar
+- `.sdd/changes/{change-name}/design.md` → CÓMO estructurarlo (si existe)
+- El código actual de los archivos que se van a modificar
 
-1. Leer specs → entender QUÉ debe hacer el código.
-2. Leer design → entender CÓMO estructurarlo.
-3. Leer código existente → entender patrones actuales del proyecto.
-4. Implementar las tareas asignadas.
-5. Marcar cada tarea completada en `tasks.md`: `- [ ]` → `- [x]`.
-6. Actualizar `.sdd/changes/{change-name}/apply-progress.md` con lo implementado.
+## Delegación de agentes
+
+| Tipo de tarea | Agente responsable |
+|---|---|
+| Componentes, pages, NgRx (actions/reducer/effects/selectors) | `ionic-angular-architect` → implementa con `feature-scaffold` |
+| Cambios de esquema Sheets, modelos TypeScript en `models/` | `google-sheets-architect` |
+| Tests unitarios (Karma/Jasmine) o E2E (Playwright) | `qa-automation` |
+| Builds, CI/CD, variables de entorno | `devops-cloud` |
+| Tareas de 1 archivo o configuración simple | orchestrator inline |
+
+El orchestrator asigna tareas a cada agente según la tabla. Cada agente lee las rules de su
+capa en `.claude/rules/` antes de tocar código.
+
+## Protocolo de implementación
+
+1. Leer spec → entender criterios de aceptación.
+2. Leer design → entender decisiones arquitectónicas (ADRs).
+3. Leer código existente → no asumir, verificar el estado actual.
+4. Implementar en orden de dependencias (modelos → effects → reducer → selectors → componente → template).
+5. Marcar cada tarea completada: `- [ ]` → `- [x]` en `tasks.md`.
+6. Actualizar `apply-progress.md` con lo implementado.
 7. Actualizar `state.md` → fase: `apply`.
 
-## Reglas de implementación
+## Reglas de implementación — MyFinance
 
-### Arquitectura (siempre verificar)
-- **Backend:** capas hexagonales estrictas. Ninguna `@Entity` sale del dominio. MapStruct para mappings.
-- **Frontend:** componentes standalone. `@if`/`@for` (nunca `*ngIf`/`*ngFor`). Signals para estado local.
-- **Contrato:** si toca API, actualizar `contracts/openapi.yaml` primero.
+Consultar `.claude/rules/` antes de generar cualquier artefacto:
 
-### Calidad (no negociable)
-- Cero `TODO`, `FIXME`, `MOCK` — todo debe quedar funcional.
-- Constructor Injection obligatorio en Spring (`@RequiredArgsConstructor`). Prohibido `@Autowired` en campos.
-- Colecciones paginadas con `Pageable`. Nunca `List<Entity>` en endpoints.
-- `@Transactional(readOnly = true)` en métodos de solo lectura.
+| Capa | Rule |
+|---|---|
+| TypeScript (interfaces, signals, constants) | `typescript.md` |
+| Angular (standalone, OnPush, inject, lazy) | `angular.md` |
+| HTML (control flow, bindings, event handlers) | `html.md` |
+| Ionic (componentes, modals, toasts) | `ionic.md` |
+| NgRx (actions, reducers funcionales, effects) | `ngrx.md` |
+| Sheets API, cifrado PII, ETag | `sheets-api.md` |
+| Tailwind CSS, estilos, SCSS | `tailwind.md` |
 
-### Desviaciones del design
+**No negociable:**
+- Cero `TODO`, `FIXME`, `MOCK` — todo entregado debe ser funcional.
+- `templateUrl` obligatorio — prohibido `template:` inline.
+- Effects con `{ functional: true }` — sin clases `@Injectable`.
+- `SPREADSHEET_ID` y tokens solo en `environment.ts`.
+- Si el requerimiento contradice una rule → señalar el conflicto y escalar antes de proceder.
+
+## Desviaciones del design
+
 Si la implementación se desvía del `design.md`, documentar el motivo en `apply-progress.md`.
+Nunca implementar en silencio algo diferente a lo diseñado.
 
 ## Formato de `apply-progress.md`
 
 ```markdown
-## Implementation Progress
+## Implementation Progress — {change-name}
 
-### Completed Tasks
-- [x] {descripción de tarea}
+### Tareas Completadas
+- [x] T-01.1 — {descripción}
 
-### Files Changed
-| File | Action | What Was Done |
-|------|--------|---------------|
-| `path/to/file` | Created/Modified | {descripción} |
+### Archivos Modificados
+| Archivo | Acción | Qué se hizo |
+|---------|--------|-------------|
+| `src/app/store/transactions/transactions.effects.ts` | Modified | Convertido a effect funcional |
 
-### Deviations from Design
-{Ninguna / o explicación de por qué se devió}
+### Desviaciones del Design
+Ninguna / o explicación de por qué se desvió.
 
-### Remaining Tasks
-- [ ] {próxima tarea}
+### Tareas Pendientes
+- [ ] T-02 — {descripción}
 
-### Status
+### Estado
 {N}/{total} tareas completas.
 ```

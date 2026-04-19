@@ -1,6 +1,7 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { WalletsState } from './wallets.reducer';
 import { selectAllTransactions } from '../transactions/transactions.selectors';
+import { TRANSACTION_TYPES } from '../../core/constants/transaction.constants';
 
 export const selectWalletsState = createFeatureSelector<WalletsState>('wallets');
 
@@ -27,7 +28,7 @@ export const selectBalanceForWallet = (walletId: string) =>
     transactions
       .filter(t => t.walletId === walletId)
       .reduce(
-        (balance, t) => (t.type === 'income' ? balance + t.amount : balance - t.amount),
+        (balance, t) => (t.type === TRANSACTION_TYPES.INCOME ? balance + t.amount : balance - t.amount),
         0,
       ),
   );

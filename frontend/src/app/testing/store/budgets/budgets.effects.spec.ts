@@ -5,7 +5,7 @@ import { provideMockActions } from '@ngrx/effects/testing';
 import { Subject } from 'rxjs';
 import { of } from 'rxjs';
 import { Action } from '@ngrx/store';
-import { BudgetsEffects } from '../../../store/budgets/budgets.effects';
+import * as budgetsEffects from '../../../store/budgets/budgets.effects';
 import { BudgetsActions } from '../../../store/budgets/budgets.actions';
 import { BudgetService } from '../../../features/budgets/services/budget.service';
 import { IBudget } from '../../../models/budget.model';
@@ -66,7 +66,6 @@ const INITIAL_STATE = {
 // ─────────────────────────────────────────────────────────────────────────────
 describe('BudgetsEffects (REQ-09 sc3 + REQ-10)', () => {
   let actions$: Subject<Action>;
-  let effects: BudgetsEffects;
   let store: MockStore;
   let budgetServiceSpy: jasmine.SpyObj<BudgetService>;
 
@@ -80,14 +79,12 @@ describe('BudgetsEffects (REQ-09 sc3 + REQ-10)', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        BudgetsEffects,
         provideMockActions(() => actions$.asObservable()),
         provideMockStore({ initialState: INITIAL_STATE }),
         { provide: BudgetService, useValue: budgetServiceSpy },
       ],
     });
 
-    effects = TestBed.inject(BudgetsEffects);
     store = TestBed.inject<MockStore>(Store as any);
   });
 
@@ -102,17 +99,16 @@ describe('BudgetsEffects (REQ-09 sc3 + REQ-10)', () => {
 
   // REQ-09 sc3: no existe presupuesto para esa categoría/período → EMPTY (no-op)
   it('recalculateBudget_shouldBeNoOp_whenNoBudgetExistsForCategoryAndPeriod', () => {
-    // Given: store sin presupuestos para cat-999
     store.setState(INITIAL_STATE);
     budgetServiceSpy.updateBudget.and.returnValue(of(null));
     const dispatchSpy = spyOn(store, 'dispatch').and.callThrough();
 
-    effects.recalculateBudget$.subscribe();
+    TestBed.runInInjectionContext(() => {
+      (budgetsEffects.recalculateBudget$ as any)().subscribe();
+    });
 
-    // When
     actions$.next(BudgetsActions.recalculateBudget({ categoryId: 'cat-999', period: '2026-04' }));
 
-    // Then: EMPTY → no llama a updateBudget ni dispatch recalculateBudgetSuccess
     expect(budgetServiceSpy.updateBudget).not.toHaveBeenCalled();
     expect(dispatchSpy).not.toHaveBeenCalledWith(
       jasmine.objectContaining({ type: BudgetsActions.recalculateBudgetSuccess.type }),
@@ -121,12 +117,9 @@ describe('BudgetsEffects (REQ-09 sc3 + REQ-10)', () => {
 
   // REQ-10: recalculateBudget$ calcula spentAmount correctamente (solo expenses del período)
   it('recalculateBudget_shouldCalculateSpentAmountAndDispatchSuccess_whenBudgetExists', () => {
-    // Given: presupuesto de 500 EUR para cat-food en 2026-04
     const budget = makeBudget('cat-food', '2026-04', 500, 0, 'ok');
-    // Dos expenses de la misma categoría: 150 + 80 = 230
     const tx1 = makeExpenseTx('tx1', 'cat-food', '2026-04-10', 150);
     const tx2 = makeExpenseTx('tx2', 'cat-food', '2026-04-15', 80);
-    // Income del mismo período no debe sumarse
     const incomeTx: ITransaction = { ...tx1, txId: 'tx3', type: 'income', amountBase: 999 };
 
     store.setState({
@@ -142,12 +135,12 @@ describe('BudgetsEffects (REQ-09 sc3 + REQ-10)', () => {
     budgetServiceSpy.updateBudget.and.returnValue(of(null));
     const dispatchSpy = spyOn(store, 'dispatch').and.callThrough();
 
-    effects.recalculateBudget$.subscribe();
+    TestBed.runInInjectionContext(() => {
+      (budgetsEffects.recalculateBudget$ as any)().subscribe();
+    });
 
-    // When
     actions$.next(BudgetsActions.recalculateBudget({ categoryId: 'cat-food', period: '2026-04' }));
 
-    // Then: spentAmount = 230, status = 'ok' (230/500 = 46%)
     expect(dispatchSpy).toHaveBeenCalledWith(
       jasmine.objectContaining({
         type: BudgetsActions.recalculateBudgetSuccess.type,
@@ -162,7 +155,6 @@ describe('BudgetsEffects (REQ-09 sc3 + REQ-10)', () => {
 
   // REQ-10: status 'warning' cuando spent ≥ 80%
   it('recalculateBudget_shouldSetStatusWarning_whenSpentIsAbove80Percent', () => {
-    // Given: 420/500 = 84% → warning
     const budget = makeBudget('cat-food', '2026-04', 500, 0, 'ok');
     const tx = makeExpenseTx('tx1', 'cat-food', '2026-04-10', 420);
 
@@ -174,7 +166,10 @@ describe('BudgetsEffects (REQ-09 sc3 + REQ-10)', () => {
     budgetServiceSpy.updateBudget.and.returnValue(of(null));
     const dispatchSpy = spyOn(store, 'dispatch').and.callThrough();
 
-    effects.recalculateBudget$.subscribe();
+    TestBed.runInInjectionContext(() => {
+      (budgetsEffects.recalculateBudget$ as any)().subscribe();
+    });
+
     actions$.next(BudgetsActions.recalculateBudget({ categoryId: 'cat-food', period: '2026-04' }));
 
     expect(dispatchSpy).toHaveBeenCalledWith(
@@ -190,17 +185,16 @@ describe('BudgetsEffects (REQ-09 sc3 + REQ-10)', () => {
 
   // REQ-10: saveBudget$ dispatch optimista saveBudgetSuccess antes de confirmar Sheets
   it('saveBudget_shouldDispatchSaveBudgetSuccess_optimistically', () => {
-    // Given
     const budget = makeBudget('cat-food', '2026-04', 500, 0, 'ok');
     budgetServiceSpy.saveBudget.and.returnValue(of(null));
     const dispatchSpy = spyOn(store, 'dispatch').and.callThrough();
 
-    effects.saveBudget$.subscribe();
+    TestBed.runInInjectionContext(() => {
+      (budgetsEffects.saveBudget$ as any)().subscribe();
+    });
 
-    // When
     actions$.next(BudgetsActions.saveBudget({ budget }));
 
-    // Then: dispatch optimista antes de que Sheets confirme
     expect(dispatchSpy).toHaveBeenCalledWith(BudgetsActions.saveBudgetSuccess({ budget }));
     expect(budgetServiceSpy.saveBudget).toHaveBeenCalledOnceWith(budget);
   });
@@ -211,7 +205,6 @@ describe('BudgetsEffects (REQ-09 sc3 + REQ-10)', () => {
 
   // REQ-10: deleteBudget$ dispatch optimista deleteBudgetSuccess
   it('deleteBudget_shouldDispatchDeleteBudgetSuccess_optimistically', () => {
-    // Given
     const budget = makeBudget('cat-food', '2026-04', 500, 0, 'ok');
     store.setState({
       ...INITIAL_STATE,
@@ -220,12 +213,12 @@ describe('BudgetsEffects (REQ-09 sc3 + REQ-10)', () => {
     budgetServiceSpy.deleteBudget.and.returnValue(of(null));
     const dispatchSpy = spyOn(store, 'dispatch').and.callThrough();
 
-    effects.deleteBudget$.subscribe();
+    TestBed.runInInjectionContext(() => {
+      (budgetsEffects.deleteBudget$ as any)().subscribe();
+    });
 
-    // When
     actions$.next(BudgetsActions.deleteBudget({ budgetId: budget.budgetId, rowNumber: 2 }));
 
-    // Then
     expect(dispatchSpy).toHaveBeenCalledWith(
       BudgetsActions.deleteBudgetSuccess({ budgetId: budget.budgetId }),
     );

@@ -1,38 +1,39 @@
-<ion-grid>
+<ion-grid class="p-0">
+
+  <!-- Fila 1: Ingresos y Gastos lado a lado -->
   <ion-row>
-    <ion-col size="12" size-sm="4">
-      <ion-card color="success">
-        <ion-card-header>
-          <ion-card-title>Ingresos</ion-card-title>
+    <ion-col size="6">
+      <ion-card color="success" class="m-1">
+        <ion-card-header class="pb-1">
+          <ion-card-title class="text-base">Ingresos</ion-card-title>
         </ion-card-header>
         <ion-card-content>
-          <p class="summary-amount">{{ summary.totalIncome | currencyFormat }}</p>
+          <p class="font-bold text-lg">{{ summary().totalIncome | currencyFormat }}</p>
         </ion-card-content>
       </ion-card>
     </ion-col>
-
-    <ion-col size="12" size-sm="4">
-      <ion-card color="danger">
-        <ion-card-header>
-          <ion-card-title>Gastos</ion-card-title>
+    <ion-col size="6">
+      <ion-card color="danger" class="m-1">
+        <ion-card-header class="pb-1">
+          <ion-card-title class="text-base">Gastos</ion-card-title>
         </ion-card-header>
         <ion-card-content>
-          <p class="summary-amount">{{ summary.totalExpenses | currencyFormat }}</p>
-        </ion-card-content>
-      </ion-card>
-    </ion-col>
-
-    <ion-col size="12" size-sm="4">
-      <ion-card [color]="balanceIsNegative ? 'warning' : 'primary'">
-        <ion-card-header>
-          <ion-card-title>Balance</ion-card-title>
-        </ion-card-header>
-        <ion-card-content>
-          <p class="summary-amount" [class.text-danger]="balanceIsNegative">
-            {{ summary.balance | currencyFormat }}
-          </p>
+          <p class="font-bold text-lg">{{ summary().totalExpenses | currencyFormat }}</p>
         </ion-card-content>
       </ion-card>
     </ion-col>
   </ion-row>
+
+  <!-- Fila 2: Balance full-width prominente -->
+  <ion-row>
+    <ion-col size="12">
+      <ion-card [color]="balanceIsNegative() ? 'warning' : 'primary'" class="m-1">
+        <ion-card-content class="flex items-center justify-between py-3">
+          <span class="text-white font-medium text-sm opacity-90">Balance del período</span>
+          <span class="text-white font-bold text-xl">{{ summary().balance | currencyFormat }}</span>
+        </ion-card-content>
+      </ion-card>
+    </ion-col>
+  </ion-row>
+
 </ion-grid>

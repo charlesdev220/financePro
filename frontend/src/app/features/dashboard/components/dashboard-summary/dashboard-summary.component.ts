@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
 import { CurrencyFormatPipe } from '../../../../shared/pipes/currency-format.pipe';
 import { DashboardSummary } from '../../services/dashboard.service';
@@ -6,15 +6,14 @@ import { DashboardSummary } from '../../services/dashboard.service';
 @Component({
   selector: 'app-dashboard-summary',
   templateUrl: 'dashboard-summary.component.html',
-  styleUrls: ['dashboard-summary.component.scss'],
+  styleUrls: [],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, CurrencyFormatPipe],
 })
 export class DashboardSummaryComponent {
-  @Input({ required: true }) summary!: DashboardSummary;
+  summary = input.required<DashboardSummary>();
 
-  get balanceIsNegative(): boolean {
-    return this.summary.balance < 0;
-  }
+  /** True cuando el balance del período activo es negativo. */
+  readonly balanceIsNegative = computed(() => this.summary().balance < 0);
 }

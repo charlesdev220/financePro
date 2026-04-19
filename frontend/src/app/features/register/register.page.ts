@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { 
@@ -19,9 +19,10 @@ import { AuthService } from '../../core/services/auth.service';
   standalone: true,
   imports: [IonContent, IonItem, IonInput, IonIcon, IonButton, FormsModule, RouterLink],
   templateUrl: './register.page.html',
-  styleUrls: ['./register.page.scss'],
+  styleUrls: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RegisterPage {
+export class RegisterPage implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly loadingCtrl = inject(LoadingController);
@@ -33,6 +34,12 @@ export class RegisterPage {
 
   constructor() {
     addIcons({ mailOutline, lockClosedOutline, personOutline, walletOutline, arrowBackOutline });
+  }
+
+  ngOnInit() {
+    if (this.authService.isAuthenticated()) {
+      this.router.navigate(['/tabs/dashboard'], { replaceUrl: true });
+    }
   }
 
   async handleRegister(): Promise<void> {

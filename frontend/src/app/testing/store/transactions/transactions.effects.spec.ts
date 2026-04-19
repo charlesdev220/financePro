@@ -5,7 +5,7 @@ import { provideMockActions } from '@ngrx/effects/testing';
 import { Subject } from 'rxjs';
 import { of } from 'rxjs';
 import { Action } from '@ngrx/store';
-import { TransactionsEffects } from '../../../store/transactions/transactions.effects';
+import * as transactionsEffects from '../../../store/transactions/transactions.effects';
 import { TransactionsActions } from '../../../store/transactions/transactions.actions';
 import { BudgetsActions } from '../../../store/budgets/budgets.actions';
 import { TransactionService } from '../../../features/transactions/services/transaction.service';
@@ -71,7 +71,6 @@ const INITIAL_STATE = {
 // ─────────────────────────────────────────────────────────────────────────────
 describe('TransactionsEffects (REQ-09)', () => {
   let actions$: Subject<Action>;
-  let effects: TransactionsEffects;
   let store: MockStore;
   let transactionServiceSpy: jasmine.SpyObj<TransactionService>;
   let conceptsServiceSpy: jasmine.SpyObj<ConceptsService>;
@@ -102,7 +101,6 @@ describe('TransactionsEffects (REQ-09)', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        TransactionsEffects,
         provideMockActions(() => actions$.asObservable()),
         provideMockStore({ initialState: INITIAL_STATE }),
         { provide: TransactionService, useValue: transactionServiceSpy },
@@ -111,7 +109,6 @@ describe('TransactionsEffects (REQ-09)', () => {
       ],
     });
 
-    effects = TestBed.inject(TransactionsEffects);
     store = TestBed.inject<MockStore>(Store as any);
   });
 
@@ -126,18 +123,17 @@ describe('TransactionsEffects (REQ-09)', () => {
 
   // REQ-09 sc1: nueva tx de tipo expense → dispatch recalculateBudget
   it('addTransaction_shouldDispatchRecalculateBudget_whenTransactionIsExpense', fakeAsync(() => {
-    // Given
     transactionServiceSpy.createTransaction.and.returnValue(Promise.resolve(EXPENSE_TX));
     transactionServiceSpy.saveTransaction.and.returnValue(of(null));
     const dispatchSpy = spyOn(store, 'dispatch').and.callThrough();
 
-    effects.addTransaction$.subscribe();
+    TestBed.runInInjectionContext(() => {
+      (transactionsEffects.addTransaction$ as any)().subscribe();
+    });
 
-    // When
     actions$.next(TransactionsActions.addTransaction({ draft: EXPENSE_DRAFT, userBaseCurrency: 'EUR' }));
-    tick(); // flush Promise.resolve(EXPENSE_TX)
+    tick();
 
-    // Then: recalculateBudget despachado con categoryId y period correctos
     expect(dispatchSpy).toHaveBeenCalledWith(
       BudgetsActions.recalculateBudget({ categoryId: 'cat-food', period: '2026-04' }),
     );
@@ -145,18 +141,17 @@ describe('TransactionsEffects (REQ-09)', () => {
 
   // REQ-09 sc2: nueva tx de tipo income → NO dispatch recalculateBudget
   it('addTransaction_shouldNotDispatchRecalculateBudget_whenTransactionIsIncome', fakeAsync(() => {
-    // Given
     transactionServiceSpy.createTransaction.and.returnValue(Promise.resolve(INCOME_TX));
     transactionServiceSpy.saveTransaction.and.returnValue(of(null));
     const dispatchSpy = spyOn(store, 'dispatch').and.callThrough();
 
-    effects.addTransaction$.subscribe();
+    TestBed.runInInjectionContext(() => {
+      (transactionsEffects.addTransaction$ as any)().subscribe();
+    });
 
-    // When
     actions$.next(TransactionsActions.addTransaction({ draft: INCOME_DRAFT, userBaseCurrency: 'EUR' }));
     tick();
 
-    // Then: no debe haberse despachado recalculateBudget
     expect(dispatchSpy).not.toHaveBeenCalledWith(
       jasmine.objectContaining({ type: BudgetsActions.recalculateBudget.type }),
     );
@@ -168,7 +163,6 @@ describe('TransactionsEffects (REQ-09)', () => {
 
   // REQ-09 sc4: delete expense → dispatch recalculateBudget con datos del tx eliminado
   it('deleteTransaction_shouldDispatchRecalculateBudget_whenDeletedTransactionIsExpense', fakeAsync(() => {
-    // Given: el store tiene el tx que va a ser eliminado
     store.setState({
       ...INITIAL_STATE,
       transactions: { items: [EXPENSE_TX], rowMap: { [EXPENSE_TX.txId]: 2 }, loading: false, error: null },
@@ -176,13 +170,13 @@ describe('TransactionsEffects (REQ-09)', () => {
     transactionServiceSpy.deleteTransaction.and.returnValue(of(null));
     const dispatchSpy = spyOn(store, 'dispatch').and.callThrough();
 
-    effects.deleteTransaction$.subscribe();
+    TestBed.runInInjectionContext(() => {
+      (transactionsEffects.deleteTransaction$ as any)().subscribe();
+    });
 
-    // When
     actions$.next(TransactionsActions.deleteTransaction({ txId: EXPENSE_TX.txId, rowNumber: 2 }));
     tick();
 
-    // Then
     expect(dispatchSpy).toHaveBeenCalledWith(
       BudgetsActions.recalculateBudget({ categoryId: EXPENSE_TX.categoryId, period: '2026-04' }),
     );
@@ -190,7 +184,6 @@ describe('TransactionsEffects (REQ-09)', () => {
 
   // REQ-09 sc2 (delete): delete income → NO dispatch recalculateBudget
   it('deleteTransaction_shouldNotDispatchRecalculateBudget_whenDeletedTransactionIsIncome', fakeAsync(() => {
-    // Given
     store.setState({
       ...INITIAL_STATE,
       transactions: { items: [INCOME_TX], rowMap: { [INCOME_TX.txId]: 2 }, loading: false, error: null },
@@ -198,11 +191,13 @@ describe('TransactionsEffects (REQ-09)', () => {
     transactionServiceSpy.deleteTransaction.and.returnValue(of(null));
     const dispatchSpy = spyOn(store, 'dispatch').and.callThrough();
 
-    effects.deleteTransaction$.subscribe();
+    TestBed.runInInjectionContext(() => {
+      (transactionsEffects.deleteTransaction$ as any)().subscribe();
+    });
+
     actions$.next(TransactionsActions.deleteTransaction({ txId: INCOME_TX.txId, rowNumber: 2 }));
     tick();
 
-    // Then
     expect(dispatchSpy).not.toHaveBeenCalledWith(
       jasmine.objectContaining({ type: BudgetsActions.recalculateBudget.type }),
     );

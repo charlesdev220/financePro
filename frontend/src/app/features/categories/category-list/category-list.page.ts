@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
@@ -26,8 +26,9 @@ import { BudgetIndicatorComponent } from '../../../shared/components/budget-indi
 @Component({
   selector: 'app-category-list',
   templateUrl: 'category-list.page.html',
-  styleUrls: ['category-list.page.scss'],
+  styleUrls: [],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     IonContent, IonHeader, IonTitle, IonToolbar,
     IonList, IonItem, IonLabel, IonBadge,
@@ -41,9 +42,12 @@ export class CategoryListPage implements OnInit {
   private readonly toastCtrl = inject(ToastController);
   private readonly authService = inject(AuthService);
 
+  /** Categorías activas del usuario para mostrar en la lista. */
   readonly categories = toSignal(this.store.select(selectActiveCategories), { initialValue: [] });
+  /** Mapa categoryId → rowNumber en Sheets, necesario para edición y borrado. */
   private readonly rowMap = toSignal(this.store.select(selectCategoriesRowMap), { initialValue: {} as Record<string, number> });
   private readonly currentPeriod = signal(new Date().toISOString().slice(0, 7));
+  /** Presupuestos del usuario para mostrar el indicador de gasto por categoría. */
   private readonly allBudgets = toSignal(
     this.store.select(selectAllBudgets),
     { initialValue: [] as IBudget[] },
@@ -68,7 +72,7 @@ export class CategoryListPage implements OnInit {
     const modal = await this.modalCtrl.create({
       component: CategoryFormComponent,
       componentProps: { userId: user.sub },
-      backdropDismiss: false,
+      backdropDismiss: true,
     });
     await modal.present();
   }
@@ -78,7 +82,7 @@ export class CategoryListPage implements OnInit {
     const modal = await this.modalCtrl.create({
       component: CategoryFormComponent,
       componentProps: { category: cat, rowNumber },
-      backdropDismiss: false,
+      backdropDismiss: true,
     });
     await modal.present();
   }

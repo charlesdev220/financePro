@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { SpendingItem } from '../../services/analytics.service';
 
@@ -7,10 +7,10 @@ import { SpendingItem } from '../../services/analytics.service';
   standalone: true,
   imports: [CurrencyPipe],
   templateUrl: './spending-ranking.component.html',
-  styleUrls: ['./spending-ranking.component.scss'],
+  styleUrls: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SpendingRankingComponent {
-  @Input() recurrentes: SpendingItem[] = [];
-  @Input() superfluos: SpendingItem[]  = [];
+  recurrentes = input<SpendingItem[]>([]);
+  superfluos  = input<SpendingItem[]>([]);
 }

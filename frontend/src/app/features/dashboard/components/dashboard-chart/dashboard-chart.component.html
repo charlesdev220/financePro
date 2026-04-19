@@ -1,7 +1,7 @@
-@if (chartData) {
-  <app-chart-pie [data]="chartData"></app-chart-pie>
+@if (chartData()) {
+  <app-chart-pie [data]="chartData()"></app-chart-pie>
 } @else {
-  <div class="chart-empty">
+  <div class="flex items-center justify-center h-40 text-[var(--ion-color-medium)] text-sm">
     <p>Sin gastos en este período</p>
   </div>
 }

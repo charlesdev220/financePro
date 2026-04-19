@@ -14,7 +14,7 @@ const BASE = {
 test.describe('Transaction List — estado vacío (REQ-E2E-07)', () => {
 
   test('sc1: sin transacciones → empty-state visible', async ({ page }) => {
-    await setupAndNavigate(page, '/transactions', { ...BASE });
+    await setupAndNavigate(page, '/tabs/transactions', { ...BASE });
 
     const emptyState = page.locator('.empty-state');
     await expect(emptyState).toBeVisible({ timeout: 8000 });
@@ -28,7 +28,7 @@ test.describe('Transaction List — estado vacío (REQ-E2E-07)', () => {
 test.describe('Transaction List — con datos (REQ-E2E-08)', () => {
 
   test('sc1: con transacciones → ion-list visible con ion-item-sliding', async ({ page }) => {
-    await setupAndNavigate(page, '/transactions', {
+    await setupAndNavigate(page, '/tabs/transactions', {
       ...BASE,
       transactions: buildMockTransactions(3),
     });
@@ -38,7 +38,7 @@ test.describe('Transaction List — con datos (REQ-E2E-08)', () => {
   });
 
   test('sc2: los 3 selectores de filtro son visibles en el header', async ({ page }) => {
-    await setupAndNavigate(page, '/transactions', {
+    await setupAndNavigate(page, '/tabs/transactions', {
       ...BASE,
       transactions: buildMockTransactions(3),
     });

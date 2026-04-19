@@ -18,6 +18,7 @@ describe('PeriodSelectorComponent', () => {
   });
 
   it('should create', () => {
+    fixture.componentRef.setInput('period', '2026-04');
     fixture.detectChanges();
     expect(component).toBeTruthy();
   });
@@ -25,7 +26,8 @@ describe('PeriodSelectorComponent', () => {
   // REQ-18 sc2: anterior desde 2026-04 → emite 2026-03
   it('previous_shouldEmitPreviousMonth_whenCalledFromApril2026', () => {
     // Given
-    component.period = '2026-04';
+    fixture.componentRef.setInput('period', '2026-04');
+    fixture.detectChanges();
     const emitSpy = spyOn(component.periodChange, 'emit');
 
     // When
@@ -38,7 +40,8 @@ describe('PeriodSelectorComponent', () => {
   // REQ-18 sc3: siguiente desde 2026-03 → emite 2026-04
   it('next_shouldEmitNextMonth_whenCalledFromMarch2026', () => {
     // Given
-    component.period = '2026-03';
+    fixture.componentRef.setInput('period', '2026-03');
+    fixture.detectChanges();
     const emitSpy = spyOn(component.periodChange, 'emit');
 
     // When
@@ -51,7 +54,8 @@ describe('PeriodSelectorComponent', () => {
   // Edge: enero → atrás → diciembre del año anterior
   it('previous_shouldEmitDecemberOfPreviousYear_whenCalledFromJanuary', () => {
     // Given: 2026-01 → retroceder → 2025-12
-    component.period = '2026-01';
+    fixture.componentRef.setInput('period', '2026-01');
+    fixture.detectChanges();
     const emitSpy = spyOn(component.periodChange, 'emit');
 
     // When
@@ -64,7 +68,8 @@ describe('PeriodSelectorComponent', () => {
   // Edge: diciembre → siguiente → enero del año siguiente
   it('next_shouldEmitJanuaryOfNextYear_whenCalledFromDecember', () => {
     // Given: 2025-12 → avanzar → 2026-01
-    component.period = '2025-12';
+    fixture.componentRef.setInput('period', '2025-12');
+    fixture.detectChanges();
     const emitSpy = spyOn(component.periodChange, 'emit');
 
     // When
@@ -74,13 +79,14 @@ describe('PeriodSelectorComponent', () => {
     expect(emitSpy).toHaveBeenCalledOnceWith('2026-01');
   });
 
-  // REQ-18 sc3: get label devuelve mes en español capitalizado
+  // REQ-18 sc3: computed label devuelve mes en español capitalizado
   it('label_shouldReturnCapitalizedSpanishMonthName_forApril2026', () => {
     // Given
-    component.period = '2026-04';
+    fixture.componentRef.setInput('period', '2026-04');
+    fixture.detectChanges();
 
     // When
-    const label = component.label;
+    const label = component.label();
 
     // Then: contiene 'abril' en español, incluye el año, y empieza con mayúscula
     expect(label.toLowerCase()).toContain('abril');
@@ -91,10 +97,11 @@ describe('PeriodSelectorComponent', () => {
   // REQ-18 sc3 (edge): enero → label 'Enero YYYY'
   it('label_shouldReturnCapitalizedSpanishMonthName_forJanuary', () => {
     // Given
-    component.period = '2026-01';
+    fixture.componentRef.setInput('period', '2026-01');
+    fixture.detectChanges();
 
     // When
-    const label = component.label;
+    const label = component.label();
 
     // Then
     expect(label.toLowerCase()).toContain('enero');

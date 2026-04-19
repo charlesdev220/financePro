@@ -4,6 +4,47 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Auditoría de Cumplimiento Arquitectónico — compliance-audit-fix):
+*Fase actual:* Fase: Alineación de código con reglas de arquitectura
+*Estado actual:* Completado ✅ | Archivado: 2026-04-19
+- ✔️ **Constantes tipadas globalizadas:** `TRANSACTION_TYPES` y `BUDGET_STATUS` reemplazan todos los string literals de comparación en `budgets.selectors.ts`, `wallets.selectors.ts`, `analytics.service.ts` y `dashboard.service.ts`.
+- ✔️ **Subscribe manual eliminado:** `wallet-list.page.ts` — `getBalance()` con `.pipe(take(1)).subscribe()` reemplazado por `balanceMap` (`computed()` sobre `allTransactions`). Reactivo, sin suscripción manual.
+- ✔️ **Lógica inline de templates extraída:** `transaction-list.page.html` — 3 handlers `ionChange` con `.set()` inline convertidos a métodos `onFilterWalletChange/Category/Period()` en el `.ts`. Comentario TODO eliminado.
+- ✔️ **Suite de tests corregida:** `tsc --noEmit` EXIT:0. Reescritos 6 specs: effects funcionales con `TestBed.runInInjectionContext`, chart components con `fixture.componentRef.setInput()`, transaction-form con `fixture` expuesto. Guard spec eliminado (guard no existe en routing).
+- ✔️ **Compliance total confirmada:** 24/24 componentes con OnPush, 0 `@Input/@Output` legacy, 0 effects con `@Injectable`, 0 inline templates, 0 SCSS vacíos, 0 TODO/FIXME en producción.
+*Próximos pasos:* Fase 5 — Notificaciones push y alertas basadas en proyecciones de presupuesto.
+*(Qué / Por qué / Dónde / Qué se aprendió):* Con efectos funcionales NgRx (`{ functional: true }`), los specs no pueden inyectar la clase como token DI — el efecto es un `const` con firma de función. La solución es `TestBed.runInInjectionContext(() => (effect$ as any)())`, que ejecuta la factory en el contexto de inyección del TestBed y permite mockear `Actions` via `provideMockActions`. Para inputs signal-based (`input()`), la asignación directa (`component.prop = value`) produce error TypeScript — la API correcta es `fixture.componentRef.setInput('prop', value)`. Ambos patrones son no obvios y propensos a confundir a futuros contribuidores.
+
+---
+
+### Qué hemos completado hasta ahora (Modernización y Cumplimiento — Signals + Tailwind + Auth Decoupling):
+*Fase actual:* Fase: Modernización de Arquitectura y Estilos
+*Estado actual:* Completado ✅ | Archivado: 2026-04-19
+- ✔️ **Migración a Signals completa:** El 100% de los componentes ahora usan `input()`, `output()`, `computed()` y `toSignal()`. Eliminados decoradores `@Input` y `@Output` legacy.
+- ✔️ **Adopción de Tailwind CSS 3:** Eliminados todos los archivos `.scss` redundantes. Migración masiva de estilos a utilidades de Tailwind con variables CSS de Ionic integradas.
+- ✔️ **Desacoplamiento de Seguridad:** Eliminados `authInterceptor` y `errorInterceptor`. La autenticación es ahora autogestionada por `SheetsApiService` inyectando headers manualmente vía `AuthService`.
+- ✔️ **Suite E2E Playwright estabilizada:** Corregidos selectores y rutas de navegación (ej. `/tabs/wallets`). Resultado: 32/32 tests pasados.
+- ✔️ **Limpieza de Estructura:** Remoción de metadatos `styleUrls: []` y archivos SCSS vacíos en todo el proyecto.
+*Próximos pasos:* Fase 5 — Notificaciones push y validación de performance con las nuevas Signals.
+*Qué se aprendió:* Las Signals de Angular 20 eliminan la necesidad de detectar cambios manuales complejos y reducen el boilerplate de RxJS en la capa de UI. El desacoplamiento de interceptores evita dependencias circulares difíciles de depurar en arquitecturas standalone. Corregir los paths de E2E (`/tabs/path`) fue la clave para la estabilidad de la suite.
+*Por qué se aprendió:* La suite E2E fallaba consistentemente debido a redirecciones silenciosas del router de Angular que llevaban al usuario al Dashboard en lugar de la página esperada en `/wallets`.
+*Dónde se aprendió:* Durante la fase de `sdd-verify` ejecutando `npx playwright test` con logs de depuración activados.
+
+---
+
+### Qué hemos completado hasta ahora (Consolidación de tooling — agentes, rules y commands):
+*Fase actual:* Mantenimiento: arquitectura de Claude Code
+*Estado actual:* Completado ✅ | Archivado: 2026-04-19
+- ✔️ **10 commands eliminados:** 5 duplicaban rules existentes (`angular-core`, `ionic-core`, `google-sheets-api`, `angular-forms`, `angular-performance`); 5 pertenecían a MyDayApp/Platzi y no a MyFinance (`angular-code-reviewer`, `angular-concepts-explainer`, `angular-routing-services-helper`, `angular-component-generator`, `angular-test-generator`).
+- ✔️ **`tailwind.md` creado:** Nueva rule en `.claude/rules/` que define Tailwind vs variables CSS de Ionic, clases prohibidas sobre componentes `Ion*`, responsive mobile-first, y criterios para la excepción SCSS.
+- ✔️ **`orchestrator.md` eliminado:** Contenido exclusivo (tabla Inline/Diferir, checklist del orquestador, formato de `state.md`) plegado en CLAUDE.md. El archivo actuaba de orchestrator implícito — ahora lo hace CLAUDE.md directamente.
+- ✔️ **`sdd-apply.md` y `sdd-verify.md` reescritos:** Eliminadas referencias a Spring/Java/Maven de otro proyecto. Añadida delegación explícita de agentes por fase: `ionic-angular-architect` + `feature-scaffold` para frontend, `google-sheets-architect` para esquema, `qa-automation` para verify.
+- ✔️ **`ionic-angular-architect.md` actualizado:** Sección "Skills que Aplico" reemplazada con herramientas reales del proyecto actual (sin referencias a commands borrados).
+*Próximos pasos:* `tooling-cleanup-phase2` — limpiar `skill-registry.md` (contenido de Spring/Java) y `settings.json` (permisos Maven que no aplican).
+*Qué se aprendió:* Los commands (skills) y las rules cumplen roles distintos: las rules son fuente de verdad de patrones de código (permanentes), los commands son instrucciones procedurales para flujos de trabajo (situacionales). Mezclarlos genera duplicación silenciosa que se desincroniza. El orchestrator como agente separado introduce una capa de indirección innecesaria cuando CLAUDE.md ya define todo el comportamiento de planificación.
+
+---
+
 ### Qué hemos completado hasta ahora (Nav Audit — Tab Bar + Guard + Routing):
 *Fase actual:* Mantenimiento transversal: navegación mobile
 *Estado actual:* Completado ✅ | Archivado: 2026-04-19

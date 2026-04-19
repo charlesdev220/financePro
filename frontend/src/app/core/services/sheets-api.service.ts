@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { AuthService } from './auth.service';
 
 export interface SheetValuesResponse {
   range: string;
@@ -13,7 +14,7 @@ export interface SheetValuesResponse {
  * SheetsApiService — única puerta de entrada a Google Sheets API v4.
  *
  * Llama directamente a la Sheets API REST usando el Bearer token OAuth2
- * del usuario (añadido por authInterceptor). Sin servidor Express intermedio.
+ * de la Service Account (obtenido via AuthService).
  *
  * Caché ETag: almacena el ETag de cada rango leído. En la siguiente llamada
  * envía If-None-Match — si Sheets responde 304 (sin cambios), retorna null
@@ -22,23 +23,18 @@ export interface SheetValuesResponse {
 @Injectable({ providedIn: 'root' })
 export class SheetsApiService {
   private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
   private readonly baseUrl = `https://sheets.googleapis.com/v4/spreadsheets/${environment.spreadsheetId}/values`;
   private readonly etagCache = new Map<string, string>();
 
   /**
    * Lee un rango de la Spreadsheet.
    * Retorna null si los datos no cambiaron (304 / ETag match).
-   * El authInterceptor añade el Bearer token automáticamente.
    */
   getRange(range: string): Observable<SheetValuesResponse | null> {
-    const headers: Record<string, string> = {};
-    if (this.etagCache.has(range)) {
-      headers['If-None-Match'] = this.etagCache.get(range)!;
-    }
-
     return this.http.get<SheetValuesResponse>(
       `${this.baseUrl}/${encodeURIComponent(range)}`,
-      { observe: 'response', headers: new HttpHeaders(headers) },
+      { observe: 'response', headers: this.getHeaders(range) },
     ).pipe(
       map(response => {
         const etag = response.headers.get('ETag');
@@ -58,6 +54,7 @@ export class SheetsApiService {
     return this.http.post(
       `${this.baseUrl}/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED`,
       { values },
+      { headers: this.getHeaders() }
     );
   }
 
@@ -69,6 +66,7 @@ export class SheetsApiService {
     return this.http.put(
       `${this.baseUrl}/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
       { values },
+      { headers: this.getHeaders() }
     );
   }
 
@@ -80,6 +78,17 @@ export class SheetsApiService {
     return this.http.post(
       `${this.baseUrl}/${encodeURIComponent(range)}:clear`,
       {},
+      { headers: this.getHeaders() }
     );
+  }
+
+  private getHeaders(range?: string): HttpHeaders {
+    let headers = new HttpHeaders({
+      'Authorization': `Bearer ${this.authService.getAccessToken() || ''}`
+    });
+    if (range && this.etagCache.has(range)) {
+      headers = headers.set('If-None-Match', this.etagCache.get(range)!);
+    }
+    return headers;
   }
 }

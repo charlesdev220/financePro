@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { concatMap, switchMap, map, catchError, tap, withLatestFrom, from, first } from 'rxjs';
@@ -9,25 +9,21 @@ import { TransactionService } from '../../features/transactions/services/transac
 import { ConceptsService } from '../../features/transactions/services/concepts.service';
 import { CurrencyApiService } from '../../core/services/currency-api.service';
 import { BudgetsActions } from '../budgets/budgets.actions';
+import { TRANSACTION_TYPES } from '../../core/constants/transaction.constants';
 
-@Injectable()
-export class TransactionsEffects {
-  private readonly actions$ = inject(Actions);
-  private readonly store = inject(Store);
-  private readonly transactionService = inject(TransactionService);
-  private readonly conceptsService = inject(ConceptsService);
-  private readonly currencyApi = inject(CurrencyApiService);
-
-  loadTransactions$ = createEffect(() =>
-    this.actions$.pipe(
+export const loadTransactions$ = createEffect(
+  (
+    actions$ = inject(Actions),
+    transactionService = inject(TransactionService),
+  ) =>
+    actions$.pipe(
       ofType(TransactionsActions.loadTransactions),
       switchMap(() =>
-        this.transactionService.loadTransactions().pipe(
+        transactionService.loadTransactions().pipe(
           map(({ transactions, rowMap }) => {
-            // Procesar recurrentes vencidas y generar nuevas
-            const newRecurring = this.transactionService.processRecurring(transactions);
+            const newRecurring = transactionService.processRecurring(transactions);
             newRecurring.forEach(tx => {
-              this.transactionService.saveTransaction(tx).subscribe();
+              transactionService.saveTransaction(tx).subscribe();
             });
             return TransactionsActions.loadTransactionsSuccess({
               transactions: [...transactions, ...newRecurring],
@@ -40,33 +36,35 @@ export class TransactionsEffects {
         ),
       ),
     ),
-  );
+  { functional: true },
+);
 
-  addTransaction$ = createEffect(() =>
-    this.actions$.pipe(
+export const addTransaction$ = createEffect(
+  (
+    actions$ = inject(Actions),
+    transactionService = inject(TransactionService),
+    conceptsService = inject(ConceptsService),
+    store = inject(Store),
+  ) =>
+    actions$.pipe(
       ofType(TransactionsActions.addTransaction),
-      withLatestFrom(this.store.select(selectAllTransactions)),
+      withLatestFrom(store.select(selectAllTransactions)),
       concatMap(([{ draft, userBaseCurrency }, prevItems]) => {
         const txId = crypto.randomUUID();
         return from(
-          this.transactionService.createTransaction(draft, txId, userBaseCurrency),
+          transactionService.createTransaction(draft, txId, userBaseCurrency),
         ).pipe(
           tap(transaction => {
-            // Actualización optimista: añadir al store ANTES de confirmar en Sheets
-            this.store.dispatch(
-              TransactionsActions.addTransactionSuccess({ transaction }),
-            );
+            store.dispatch(TransactionsActions.addTransactionSuccess({ transaction }));
           }),
           concatMap(transaction =>
-            this.transactionService.saveTransaction(transaction).pipe(
+            transactionService.saveTransaction(transaction).pipe(
               tap(() => {
-                // Upsert de concepto solo tras éxito confirmado (ADR-03)
-                this.conceptsService.upsertConcept(transaction).catch(err =>
-                  console.warn('[TransactionsEffects] Concept upsert failed:', err),
+                conceptsService.upsertConcept(transaction).catch(err =>
+                  console.warn('[addTransaction$] Concept upsert failed:', err),
                 );
-                // Recalcular presupuesto si es un gasto
-                if (transaction.type === 'expense') {
-                  this.store.dispatch(
+                if (transaction.type === TRANSACTION_TYPES.EXPENSE) {
+                  store.dispatch(
                     BudgetsActions.recalculateBudget({
                       categoryId: transaction.categoryId,
                       period: transaction.date.slice(0, 7),
@@ -75,7 +73,7 @@ export class TransactionsEffects {
                 }
               }),
               catchError(error => {
-                this.store.dispatch(
+                store.dispatch(
                   TransactionsActions.addTransactionFailure({
                     error: String(error),
                     prevItems,
@@ -88,16 +86,21 @@ export class TransactionsEffects {
         );
       }),
     ),
-    { dispatch: false },
-  );
+  { functional: true, dispatch: false },
+);
 
-  updateTransaction$ = createEffect(() =>
-    this.actions$.pipe(
+export const updateTransaction$ = createEffect(
+  (
+    actions$ = inject(Actions),
+    transactionService = inject(TransactionService),
+    currencyApi = inject(CurrencyApiService),
+    store = inject(Store),
+  ) =>
+    actions$.pipe(
       ofType(TransactionsActions.updateTransaction),
-      withLatestFrom(this.store.select(selectAllTransactions)),
+      withLatestFrom(store.select(selectAllTransactions)),
       concatMap(([{ transaction, rowNumber, userBaseCurrency }, prevItems]) =>
-        // REQ-05: recalcular amountBase con tasa vigente (in-memory cache → sin llamada extra si está fresca)
-        this.currencyApi.getRate(transaction.currency, userBaseCurrency).pipe(
+        currencyApi.getRate(transaction.currency, userBaseCurrency).pipe(
           first(),
           map(rate => ({
             ...transaction,
@@ -105,14 +108,13 @@ export class TransactionsEffects {
             updatedAt: new Date().toISOString(),
           })),
           tap(updated =>
-            this.store.dispatch(TransactionsActions.updateTransactionSuccess({ transaction: updated })),
+            store.dispatch(TransactionsActions.updateTransactionSuccess({ transaction: updated })),
           ),
           concatMap(updated =>
-            this.transactionService.updateTransaction(updated, rowNumber).pipe(
+            transactionService.updateTransaction(updated, rowNumber).pipe(
               tap(() => {
-                // Recalcular presupuesto si es un gasto
-                if (updated.type === 'expense') {
-                  this.store.dispatch(
+                if (updated.type === TRANSACTION_TYPES.EXPENSE) {
+                  store.dispatch(
                     BudgetsActions.recalculateBudget({
                       categoryId: updated.categoryId,
                       period: updated.date.slice(0, 7),
@@ -121,7 +123,7 @@ export class TransactionsEffects {
                 }
               }),
               catchError(error => {
-                this.store.dispatch(
+                store.dispatch(
                   TransactionsActions.updateTransactionFailure({ error: String(error), prevItems }),
                 );
                 return EMPTY;
@@ -131,24 +133,25 @@ export class TransactionsEffects {
         ),
       ),
     ),
-    { dispatch: false },
-  );
+  { functional: true, dispatch: false },
+);
 
-  deleteTransaction$ = createEffect(() =>
-    this.actions$.pipe(
+export const deleteTransaction$ = createEffect(
+  (
+    actions$ = inject(Actions),
+    transactionService = inject(TransactionService),
+    store = inject(Store),
+  ) =>
+    actions$.pipe(
       ofType(TransactionsActions.deleteTransaction),
-      withLatestFrom(this.store.select(selectAllTransactions)),
+      withLatestFrom(store.select(selectAllTransactions)),
       concatMap(([{ txId, rowNumber }, prevItems]) => {
-        // Actualización optimista
-        this.store.dispatch(
-          TransactionsActions.deleteTransactionSuccess({ txId }),
-        );
-        return this.transactionService.deleteTransaction(rowNumber).pipe(
+        store.dispatch(TransactionsActions.deleteTransactionSuccess({ txId }));
+        return transactionService.deleteTransaction(rowNumber).pipe(
           tap(() => {
-            // Recalcular presupuesto del tx eliminado si era un gasto
             const deletedTx = prevItems.find(t => t.txId === txId);
-            if (deletedTx?.type === 'expense') {
-              this.store.dispatch(
+            if (deletedTx?.type === TRANSACTION_TYPES.EXPENSE) {
+              store.dispatch(
                 BudgetsActions.recalculateBudget({
                   categoryId: deletedTx.categoryId,
                   period: deletedTx.date.slice(0, 7),
@@ -157,7 +160,7 @@ export class TransactionsEffects {
             }
           }),
           catchError(error => {
-            this.store.dispatch(
+            store.dispatch(
               TransactionsActions.deleteTransactionFailure({
                 error: String(error),
                 prevItems,
@@ -168,6 +171,5 @@ export class TransactionsEffects {
         );
       }),
     ),
-    { dispatch: false },
-  );
-}
+  { functional: true, dispatch: false },
+);

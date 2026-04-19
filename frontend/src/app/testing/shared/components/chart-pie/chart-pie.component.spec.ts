@@ -25,61 +25,42 @@ describe('ChartPieComponent', () => {
 
   // REQ-05 sc3: ngOnDestroy llama chart.destroy() para liberar la instancia Chart.js
   it('calls chart.destroy() on ngOnDestroy when chart exists', () => {
-    // Given: inyectamos data para que ngAfterViewInit cree el Chart
     const destroySpy = spyOn(Chart.prototype, 'destroy').and.callThrough();
 
-    component.data = {
+    fixture.componentRef.setInput('data', {
       labels: ['A', 'B'],
       datasets: [{ data: [10, 20] }],
-    };
-    fixture.detectChanges(); // dispara ngAfterViewInit → createChart()
+    });
+    fixture.detectChanges(); // dispara ngAfterViewInit → effect → createChart()
 
-    // When
     component.ngOnDestroy();
 
-    // Then
     expect(destroySpy).toHaveBeenCalled();
   });
 
-  // REQ-05 sc3 edge: ngOnDestroy no lanza cuando chart es null (componente destruido sin datos)
+  // REQ-05 sc3 edge: ngOnDestroy no lanza cuando chart es null
   it('does not throw on ngOnDestroy when chart is null', () => {
-    // Given: no se setea data → chart permanece null
-    fixture.detectChanges();
+    fixture.detectChanges(); // data null → chart permanece null
 
-    // When / Then
     expect(() => component.ngOnDestroy()).not.toThrow();
   });
 
-  // ngOnChanges destruye y re-crea el chart cuando data cambia después de inicializar
-  it('calls chart.destroy() on ngOnChanges when data changes after initialization', () => {
-    // Given: creamos el Chart inicial
-    component.data = {
+  // efecto destruye y re-crea el chart cuando data cambia
+  it('destroys and re-creates chart when data input changes', () => {
+    fixture.componentRef.setInput('data', {
       labels: ['X'],
       datasets: [{ data: [100] }],
-    };
-    fixture.detectChanges(); // Ejecuta AfterViewInit: initialized = true, chart creado
+    });
+    fixture.detectChanges();
 
     const destroySpy = spyOn(component['chart'] as any, 'destroy').and.callThrough();
 
-    // When: cambiamos data → ngOnChanges → destroy + re-create
-    // Usamos SimpleChange para simular el cambio de entrada si es necesario, 
-    // pero fixture.detectChanges() debería detectarlo si la referencia cambia.
-    component.data = {
+    fixture.componentRef.setInput('data', {
       labels: ['Y', 'Z'],
       datasets: [{ data: [50, 50] }],
-    };
-    
-    // Forzamos el trigger de cambios manualmente si detectChanges es perezoso con OnPush
-    component.ngOnChanges({
-      data: {
-        currentValue: component.data,
-        previousValue: null,
-        firstChange: false,
-        isFirstChange: () => false
-      } as any
     });
+    fixture.detectChanges();
 
-    // Then
     expect(destroySpy).toHaveBeenCalled();
   });
 });

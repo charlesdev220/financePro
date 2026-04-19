@@ -30,23 +30,20 @@ describe('ChartBarComponent', () => {
 
   // REQ-05 sc1: renderiza tipo bar sin errores
   it('should create a bar chart when type is bar', () => {
-    component.datasets = sampleDatasets as any;
-    component.labels   = sampleLabels;
-    component.type     = 'bar';
-
-    const createSpy = spyOn(Chart.prototype, 'constructor' as any).and.callThrough();
-    fixture.detectChanges(); // dispara ngAfterViewInit
+    fixture.componentRef.setInput('datasets', sampleDatasets);
+    fixture.componentRef.setInput('labels', sampleLabels);
+    fixture.componentRef.setInput('type', 'bar');
+    fixture.detectChanges();
 
     expect(component).toBeTruthy();
-    // El chart privado debe existir
     expect((component as any).chart).toBeTruthy();
   });
 
   // REQ-05 sc2: renderiza tipo line sin errores
   it('should create a line chart when type is line', () => {
-    component.datasets = sampleDatasets as any;
-    component.labels   = sampleLabels;
-    component.type     = 'line';
+    fixture.componentRef.setInput('datasets', sampleDatasets);
+    fixture.componentRef.setInput('labels', sampleLabels);
+    fixture.componentRef.setInput('type', 'line');
     fixture.detectChanges();
 
     expect((component as any).chart).toBeTruthy();
@@ -55,8 +52,8 @@ describe('ChartBarComponent', () => {
 
   // REQ-05 sc3: ngOnDestroy llama chart.destroy()
   it('calls chart.destroy() on ngOnDestroy when chart exists', () => {
-    component.datasets = sampleDatasets as any;
-    component.labels   = sampleLabels;
+    fixture.componentRef.setInput('datasets', sampleDatasets);
+    fixture.componentRef.setInput('labels', sampleLabels);
     fixture.detectChanges();
 
     const destroySpy = spyOn((component as any).chart, 'destroy').and.callThrough();
@@ -73,26 +70,18 @@ describe('ChartBarComponent', () => {
     expect(() => component.ngOnDestroy()).not.toThrow();
   });
 
-  // REQ-05 sc4: ngOnChanges destruye y re-crea chart cuando datasets cambia
-  it('calls chart.destroy() on ngOnChanges when datasets change after initialization', () => {
-    component.datasets = sampleDatasets as any;
-    component.labels   = sampleLabels;
+  // REQ-05 sc4: efecto destruye y re-crea chart cuando datasets cambia
+  it('destroys and re-creates chart when datasets input changes', () => {
+    fixture.componentRef.setInput('datasets', sampleDatasets);
+    fixture.componentRef.setInput('labels', sampleLabels);
     fixture.detectChanges();
 
     const destroySpy = spyOn((component as any).chart, 'destroy').and.callThrough();
 
-    component.datasets = [
+    fixture.componentRef.setInput('datasets', [
       { label: 'Gastos', data: [50, 80, 120], backgroundColor: '#FF6384' },
-    ] as any;
-
-    component.ngOnChanges({
-      datasets: {
-        currentValue: component.datasets,
-        previousValue: sampleDatasets,
-        firstChange: false,
-        isFirstChange: () => false,
-      },
-    });
+    ]);
+    fixture.detectChanges();
 
     expect(destroySpy).toHaveBeenCalled();
   });

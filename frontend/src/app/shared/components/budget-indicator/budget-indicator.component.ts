@@ -1,28 +1,28 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { IonProgressBar, IonNote } from '@ionic/angular/standalone';
 import { IBudget } from '../../../models/budget.model';
+import { BUDGET_STATUS } from '../../../core/constants/budget.constants';
 
 @Component({
   selector: 'app-budget-indicator',
   standalone: true,
   imports: [IonProgressBar, IonNote, DecimalPipe],
   templateUrl: './budget-indicator.component.html',
-  styleUrls: ['./budget-indicator.component.scss'],
+  styleUrls: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BudgetIndicatorComponent {
-  @Input({ required: true }) budget!: IBudget;
+  budget = input.required<IBudget>();
 
-  get percentage(): number {
-    return Math.min(100, Math.round((this.budget.spentAmount / this.budget.budgetAmount) * 100));
-  }
+  /** Porcentaje de gasto sobre el presupuesto asignado, limitado a 100. */
+  readonly percentage = computed(() =>
+    Math.min(100, Math.round((this.budget().spentAmount / this.budget().budgetAmount) * 100)),
+  );
 
-  get color(): string {
-    return this.budget.status === 'ok'
-      ? 'success'
-      : this.budget.status === 'warning'
-        ? 'warning'
-        : 'danger';
-  }
+  /** Color Ionic del progress bar según el estado del presupuesto. */
+  readonly color = computed(() => {
+    const s = this.budget().status;
+    return s === BUDGET_STATUS.OK ? 'success' : s === BUDGET_STATUS.WARNING ? 'warning' : 'danger';
+  });
 }

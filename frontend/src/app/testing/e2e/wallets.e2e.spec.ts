@@ -10,7 +10,7 @@ const BASE = { users: buildMockUsers() };
 test.describe('Wallet List — estado vacío (REQ-E2E-11)', () => {
 
   test('sc1: sin carteras → mensaje de estado vacío visible', async ({ page }) => {
-    await setupAndNavigate(page, '/wallets', { ...BASE });
+    await setupAndNavigate(page, '/tabs/wallets', { ...BASE });
 
     await expect(page.locator('text=No hay carteras creadas')).toBeVisible({ timeout: 8000 });
   });
@@ -22,7 +22,7 @@ test.describe('Wallet List — estado vacío (REQ-E2E-11)', () => {
 test.describe('Wallet List — con datos (REQ-E2E-12)', () => {
 
   test('sc1: con carteras → ion-list visible con nombres', async ({ page }) => {
-    await setupAndNavigate(page, '/wallets', {
+    await setupAndNavigate(page, '/tabs/wallets', {
       ...BASE,
       wallets: buildMockWallets(),
       transactions: buildMockTransactions(3),
@@ -35,7 +35,7 @@ test.describe('Wallet List — con datos (REQ-E2E-12)', () => {
   });
 
   test('sc2: balance formateado visible en ion-item', async ({ page }) => {
-    await setupAndNavigate(page, '/wallets', {
+    await setupAndNavigate(page, '/tabs/wallets', {
       ...BASE,
       wallets: buildMockWallets(),
       transactions: buildMockTransactions(3),

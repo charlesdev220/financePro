@@ -157,8 +157,9 @@ onRefresh(event: CustomEvent) {
 
 ## Variables CSS y Theming
 
-- Usar variables CSS de Ionic para colores semánticos, no clases Tailwind de color directamente en componentes Ionic.
-- Tailwind para layout y espaciado; variables Ionic para color de componentes Ionic.
+> Reglas completas de estilos en `.claude/rules/tailwind.md`.
+
+Resumen: variables CSS de Ionic para colores de componentes `Ion*`; Tailwind para layout y espaciado en contenedores propios.
 
 ```css
 /* Correcto: override de variable Ionic */
@@ -166,9 +167,6 @@ ion-button {
   --background: var(--ion-color-primary);
   --border-radius: 8px;
 }
-
-/* Correcto: Tailwind para layout */
-.transaction-list { @apply flex flex-col gap-2 px-4; }
 ```
 
 ## Restricciones

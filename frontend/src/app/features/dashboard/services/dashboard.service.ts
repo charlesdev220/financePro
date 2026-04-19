@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { ITransaction } from '../../../models/transaction.model';
 import { ICategory } from '../../../models/category.model';
+import { TRANSACTION_TYPES } from '../../../core/constants/transaction.constants';
 
 export interface DashboardSummary {
   totalIncome: number;
@@ -24,10 +25,10 @@ export class DashboardService {
   calculateSummary(transactions: ITransaction[], period: string): DashboardSummary {
     const periodTxs = transactions.filter(t => t.date.startsWith(period));
     const totalIncome = periodTxs
-      .filter(t => t.type === 'income')
+      .filter(t => t.type === TRANSACTION_TYPES.INCOME)
       .reduce((sum, t) => sum + t.amountBase, 0);
     const totalExpenses = periodTxs
-      .filter(t => t.type === 'expense')
+      .filter(t => t.type === TRANSACTION_TYPES.EXPENSE)
       .reduce((sum, t) => sum + t.amountBase, 0);
     return {
       totalIncome,
@@ -47,7 +48,7 @@ export class DashboardService {
     period: string,
   ): CategoryBreakdown[] {
     const expenseTxs = transactions.filter(
-      t => t.type === 'expense' && t.date.startsWith(period),
+      t => t.type === TRANSACTION_TYPES.EXPENSE && t.date.startsWith(period),
     );
 
     if (expenseTxs.length === 0) return [];

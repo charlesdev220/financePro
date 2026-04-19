@@ -1,42 +1,58 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 import {
   IonContent, IonHeader, IonTitle, IonToolbar,
   IonList, IonItem, IonLabel, IonNote,
-  IonFab, IonFabButton, IonIcon, IonButton, IonButtons, IonBadge,
+  IonFab, IonFabButton, IonIcon, IonButton, IonButtons,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { addOutline, trashOutline, createOutline } from 'ionicons/icons';
 import { WalletsActions } from '../../../store/wallets/wallets.actions';
-import { selectAllWallets, selectWalletsRowMap, selectBalanceForWallet } from '../../../store/wallets/wallets.selectors';
+import { selectAllWallets, selectWalletsRowMap } from '../../../store/wallets/wallets.selectors';
+import { selectAllTransactions } from '../../../store/transactions/transactions.selectors';
 import { IWallet } from '../../../models/wallet.model';
 import { AuthService } from '../../../core/services/auth.service';
 import { WalletFormComponent } from '../wallet-form/wallet-form.component';
 import { CurrencyFormatPipe } from '../../../shared/pipes/currency-format.pipe';
 import { AppState } from '../../../store/app.state';
+import { TRANSACTION_TYPES } from '../../../core/constants/transaction.constants';
 
 @Component({
   selector: 'app-wallet-list',
   templateUrl: 'wallet-list.page.html',
-  styleUrls: ['wallet-list.page.scss'],
+  styleUrls: [],
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     IonContent, IonHeader, IonTitle, IonToolbar,
     IonList, IonItem, IonLabel, IonNote,
-    IonFab, IonFabButton, IonIcon, IonButton, IonButtons, IonBadge,
+    IonFab, IonFabButton, IonIcon, IonButton, IonButtons,
     CurrencyFormatPipe,
   ],
 })
 export class WalletListPage implements OnInit {
-  private readonly store = inject(Store<AppState>);
-  private readonly modalCtrl = inject(ModalController);
-  private readonly toastCtrl = inject(ToastController);
+  private readonly store       = inject(Store<AppState>);
+  private readonly modalCtrl   = inject(ModalController);
+  private readonly toastCtrl   = inject(ToastController);
   private readonly authService = inject(AuthService);
 
-  readonly wallets = toSignal(this.store.select(selectAllWallets), { initialValue: [] });
+  /** Carteras del usuario para renderizar la lista. */
+  readonly wallets  = toSignal(this.store.select(selectAllWallets),  { initialValue: [] });
+  /** Mapa walletId → rowNumber en Sheets, necesario para edición y borrado. */
   private readonly rowMap = toSignal(this.store.select(selectWalletsRowMap), { initialValue: {} as Record<string, number> });
+  /** Todas las transacciones del store, base para calcular balances por cartera. */
+  private readonly allTransactions = toSignal(this.store.select(selectAllTransactions), { initialValue: [] });
+
+  /** Balance acumulado por cartera (walletId → número): income suma, expense resta en divisa nativa. */
+  readonly balanceMap = computed(() =>
+    this.allTransactions().reduce((map, t) => {
+      const current = map[t.walletId] ?? 0;
+      map[t.walletId] = t.type === TRANSACTION_TYPES.INCOME ? current + t.amount : current - t.amount;
+      return map;
+    }, {} as Record<string, number>),
+  );
 
   constructor() {
     addIcons({ addOutline, trashOutline, createOutline });
@@ -47,9 +63,7 @@ export class WalletListPage implements OnInit {
   }
 
   getBalance(walletId: string): number {
-    let balance = 0;
-    this.store.select(selectBalanceForWallet(walletId)).subscribe(b => (balance = b)).unsubscribe();
-    return balance;
+    return this.balanceMap()[walletId] ?? 0;
   }
 
   async openAddModal(): Promise<void> {
@@ -58,7 +72,7 @@ export class WalletListPage implements OnInit {
     const modal = await this.modalCtrl.create({
       component: WalletFormComponent,
       componentProps: { userId: user.sub },
-      backdropDismiss: false,
+      backdropDismiss: true,
     });
     await modal.present();
   }
@@ -68,7 +82,7 @@ export class WalletListPage implements OnInit {
     const modal = await this.modalCtrl.create({
       component: WalletFormComponent,
       componentProps: { wallet, rowNumber },
-      backdropDismiss: false,
+      backdropDismiss: true,
     });
     await modal.present();
   }

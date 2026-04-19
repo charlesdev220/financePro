@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-button (click)="cancel()" color="medium">Cancelar</ion-button>
     </ion-buttons>
-    <ion-title>{{ isEditMode ? 'Editar cartera' : 'Nueva cartera' }}</ion-title>
+    <ion-title>{{ isEditMode() ? 'Editar cartera' : 'Nueva cartera' }}</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="save()" [disabled]="form.invalid" color="primary" strong="true">
         Guardar
@@ -12,9 +12,9 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
+<ion-content style="--background: var(--ion-color-light)">
   <form [formGroup]="form">
-    <ion-list inset="true">
+    <ion-list inset="true" class="mt-4">
 
       <ion-item>
         <ion-label position="stacked">Nombre</ion-label>
@@ -25,7 +25,7 @@
       </ion-item>
 
       <ion-item>
-        <ion-label>Divisa</ion-label>
+        <ion-label position="stacked">Divisa</ion-label>
         <ion-select formControlName="currency" interface="action-sheet">
           @for (c of currencies; track c) {
             <ion-select-option [value]="c">{{ c }}</ion-select-option>
@@ -34,7 +34,7 @@
       </ion-item>
 
       <ion-item>
-        <ion-label>Icono</ion-label>
+        <ion-label position="stacked">Icono</ion-label>
         <ion-select formControlName="icon" interface="action-sheet">
           @for (icon of icons; track icon) {
             <ion-select-option [value]="icon">{{ icon }}</ion-select-option>
@@ -42,20 +42,39 @@
         </ion-select>
       </ion-item>
 
-      <ion-item>
-        <ion-label>Color</ion-label>
-        <ion-select formControlName="color" interface="action-sheet">
-          @for (color of colors; track color) {
-            <ion-select-option [value]="color">{{ color }}</ion-select-option>
-          }
-        </ion-select>
-      </ion-item>
+    </ion-list>
 
+    <!-- Color picker visual — nunca mostrar el código hex al usuario -->
+    <ion-list inset="true" class="mt-2">
+      <ion-item lines="none">
+        <ion-label position="stacked" class="mb-3">Color de la cartera</ion-label>
+        <div class="flex flex-wrap gap-3 py-2 w-full">
+          @for (color of colors; track color) {
+            <button
+              type="button"
+              class="w-10 h-10 rounded-full border-2 flex items-center justify-center transition-transform duration-150"
+              [style.background-color]="color"
+              [style.border-color]="form.get('color')?.value === color ? '#111827' : 'transparent'"
+              [style.transform]="form.get('color')?.value === color ? 'scale(1.2)' : 'scale(1)'"
+              (click)="onColorSelect(color)"
+            >
+              @if (form.get('color')?.value === color) {
+                <svg class="w-4 h-4 text-white drop-shadow" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+              }
+            </button>
+          }
+        </div>
+      </ion-item>
+    </ion-list>
+
+    <ion-list inset="true" class="mt-2">
       <ion-item>
         <ion-label>Cartera principal</ion-label>
         <ion-toggle formControlName="isDefault" slot="end"></ion-toggle>
       </ion-item>
-
     </ion-list>
+
   </form>
 </ion-content>

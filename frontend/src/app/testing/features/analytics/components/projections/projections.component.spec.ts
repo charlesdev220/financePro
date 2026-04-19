@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { ChartDataset } from 'chart.js';
 import { By } from '@angular/platform-browser';
 import { ProjectionsComponent } from '../../../../../features/analytics/components/projections/projections.component';
@@ -12,10 +12,10 @@ import { MonthlyTotal } from '../../../../../features/analytics/services/analyti
   template: '<canvas aria-label="stub"></canvas>',
 })
 class ChartBarStubComponent {
-  @Input() datasets: ChartDataset[] = [];
-  @Input() labels: string[] = [];
-  @Input() type: 'bar' | 'line' = 'bar';
-  @Input() ariaLabel = '';
+  datasets  = input<ChartDataset[]>([]);
+  labels    = input<string[]>([]);
+  type      = input<'bar' | 'line'>('bar');
+  ariaLabel = input('');
 }
 
 function buildMonthlyTotals(count: number): MonthlyTotal[] {
@@ -47,6 +47,7 @@ describe('ProjectionsComponent', () => {
   });
 
   it('should create', () => {
+    fixture.componentRef.setInput('data', []);
     fixture.detectChanges();
     expect(component).toBeTruthy();
   });
@@ -54,7 +55,7 @@ describe('ProjectionsComponent', () => {
   // REQ-07 sc1: < 3 meses → mensaje visible, canvas oculto
   it('should show informative message when data has fewer than 3 months', () => {
     // Given
-    component.data = buildMonthlyTotals(2);
+    fixture.componentRef.setInput('data', buildMonthlyTotals(2));
     fixture.detectChanges();
 
     // Then
@@ -68,7 +69,7 @@ describe('ProjectionsComponent', () => {
   // REQ-07 sc2: exactamente 3 meses → canvas visible, sin mensaje
   it('should show chart when data has exactly 3 months', () => {
     // Given
-    component.data = buildMonthlyTotals(3);
+    fixture.componentRef.setInput('data', buildMonthlyTotals(3));
     fixture.detectChanges();
 
     // Then
@@ -81,8 +82,8 @@ describe('ProjectionsComponent', () => {
   // REQ-07 sc3: ≥ 3 meses con horizon=6 → labels incluye 6 períodos proyectados
   it('should include projected periods in labels when horizon is 6', () => {
     // Given
-    component.data    = buildMonthlyTotals(4);
-    component.horizon = 6;
+    fixture.componentRef.setInput('data', buildMonthlyTotals(4));
+    fixture.componentRef.setInput('horizon', 6);
     fixture.detectChanges();
 
     // Then: labels = 4 históricos + 6 proyectados = 10
@@ -91,13 +92,13 @@ describe('ProjectionsComponent', () => {
 
   // hasEnoughData getter
   it('hasEnoughData should be false when data length < 3', () => {
-    component.data = buildMonthlyTotals(2);
+    fixture.componentRef.setInput('data', buildMonthlyTotals(2));
     fixture.detectChanges();
     expect(component.hasEnoughData()).toBeFalse();
   });
 
   it('hasEnoughData should be true when data length >= 3', () => {
-    component.data = buildMonthlyTotals(3);
+    fixture.componentRef.setInput('data', buildMonthlyTotals(3));
     fixture.detectChanges();
     expect(component.hasEnoughData()).toBeTrue();
   });

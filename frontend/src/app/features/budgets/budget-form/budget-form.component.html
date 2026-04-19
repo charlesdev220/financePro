@@ -5,7 +5,7 @@
     </ion-buttons>
     <ion-title>{{ isEditMode() ? 'Editar presupuesto' : 'Nuevo presupuesto' }}</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="save()" [disabled]="form?.invalid">Guardar</ion-button>
+      <ion-button (click)="save()" [disabled]="form.invalid">Guardar</ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>

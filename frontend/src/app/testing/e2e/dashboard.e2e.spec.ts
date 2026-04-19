@@ -22,7 +22,7 @@ test.describe('Dashboard — sin errores críticos (REQ-E2E-04)', () => {
       if (msg.type() === 'error') criticalErrors.push(msg.text());
     });
 
-    await setupAndNavigate(page, '/dashboard', {
+    await setupAndNavigate(page, '/tabs/dashboard', {
       ...BASE_DATA,
       budgets: buildMockBudgets(CURRENT_PERIOD),
     });
@@ -41,7 +41,7 @@ test.describe('Dashboard — sin errores críticos (REQ-E2E-04)', () => {
 test.describe('Dashboard — summary y chart (REQ-E2E-05)', () => {
 
   test('sc1: app-dashboard-summary visible con datos', async ({ page }) => {
-    await setupAndNavigate(page, '/dashboard', {
+    await setupAndNavigate(page, '/tabs/dashboard', {
       ...BASE_DATA,
       budgets: buildMockBudgets(CURRENT_PERIOD),
     });
@@ -50,7 +50,7 @@ test.describe('Dashboard — summary y chart (REQ-E2E-05)', () => {
   });
 
   test('sc2: canvas del doughnut chart visible', async ({ page }) => {
-    await setupAndNavigate(page, '/dashboard', {
+    await setupAndNavigate(page, '/tabs/dashboard', {
       ...BASE_DATA,
       budgets: buildMockBudgets(CURRENT_PERIOD),
     });
@@ -66,7 +66,7 @@ test.describe('Dashboard — summary y chart (REQ-E2E-05)', () => {
 test.describe('Dashboard — exceeded-banner (REQ-E2E-06)', () => {
 
   test('sc1: banner visible cuando hay presupuesto excedido', async ({ page }) => {
-    await setupAndNavigate(page, '/dashboard', {
+    await setupAndNavigate(page, '/tabs/dashboard', {
       ...BASE_DATA,
       budgets: buildMockBudgets(CURRENT_PERIOD, { includeExceeded: true }),
     });
@@ -77,7 +77,7 @@ test.describe('Dashboard — exceeded-banner (REQ-E2E-06)', () => {
   });
 
   test('sc2: banner no visible cuando todos los presupuestos están ok', async ({ page }) => {
-    await setupAndNavigate(page, '/dashboard', {
+    await setupAndNavigate(page, '/tabs/dashboard', {
       ...BASE_DATA,
       budgets: buildMockBudgets(CURRENT_PERIOD, { includeExceeded: false }),
     });

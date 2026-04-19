@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { ChartDataset } from 'chart.js';
 import { AnalyticsChartComponent } from '../../../../../features/analytics/components/analytics-chart/analytics-chart.component';
 import { MonthlyTotal } from '../../../../../features/analytics/services/analytics.service';
@@ -11,10 +11,10 @@ import { MonthlyTotal } from '../../../../../features/analytics/services/analyti
   template: '<canvas></canvas>',
 })
 class ChartBarStubComponent {
-  @Input() datasets: ChartDataset[] = [];
-  @Input() labels: string[] = [];
-  @Input() type: 'bar' | 'line' = 'bar';
-  @Input() ariaLabel = '';
+  datasets  = input<ChartDataset[]>([]);
+  labels    = input<string[]>([]);
+  type      = input<'bar' | 'line'>('bar');
+  ariaLabel = input('');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -38,6 +38,7 @@ describe('AnalyticsChartComponent', () => {
   });
 
   it('should create', () => {
+    fixture.componentRef.setInput('data', []);
     fixture.detectChanges();
     expect(component).toBeTruthy();
   });
@@ -52,7 +53,7 @@ describe('AnalyticsChartComponent', () => {
     ];
 
     // When
-    component.data = data;
+    fixture.componentRef.setInput('data', data);
     fixture.detectChanges();
 
     // Then
@@ -65,7 +66,7 @@ describe('AnalyticsChartComponent', () => {
   // REQ-06 sc2: array vacío → datasets vacíos, sin errores
   it('should render with empty datasets when data is empty array', () => {
     // Given / When
-    component.data = [];
+    fixture.componentRef.setInput('data', []);
     fixture.detectChanges();
 
     // Then

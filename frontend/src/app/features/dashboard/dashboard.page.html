@@ -15,9 +15,17 @@
 </ion-header>
 
 <ion-content class="ion-padding">
-  @if (exceededBudgets().length > 0) {
-    <div class="exceeded-banner">
-      ⚠️ {{ exceededBudgets().length }} categoría(s) superaron su presupuesto
+
+  <!-- Alerta de presupuestos excedidos — solo si hay datos reales en el período -->
+  @if (exceededBudgets().length > 0 && hasDataInPeriod()) {
+    <div class="rounded-xl p-3 px-4 mb-4 text-sm font-medium flex items-start gap-2"
+         style="background: var(--ion-color-danger-tint); color: var(--ion-color-danger-shade)">
+      <span>⚠️</span>
+      <span>
+        Tenés {{ exceededBudgets().length }} presupuesto{{ exceededBudgets().length > 1 ? 's' : '' }}
+        excedido{{ exceededBudgets().length > 1 ? 's' : '' }} este mes.
+        <button class="underline ml-1 font-semibold" (click)="navigateToBudgets()">Ver detalle</button>
+      </span>
     </div>
   }
 
@@ -30,7 +38,8 @@
 
   <app-dashboard-chart [breakdown]="breakdown()"></app-dashboard-chart>
 
-  <div class="quick-actions">
+  <!-- Acciones rápidas -->
+  <div class="flex flex-col gap-2 my-4">
     <ion-button expand="block" color="danger" (click)="openAddModal('expense')">
       <ion-icon slot="start" name="trending-down-outline"></ion-icon>
       Nuevo gasto
@@ -41,7 +50,32 @@
     </ion-button>
   </div>
 
+  <!-- Presupuestos del mes -->
+  @if (currentPeriodBudgets().length > 0) {
+    <div class="mb-4">
+      <div class="flex items-center justify-between mb-2 px-1">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Presupuestos del mes</h2>
+        <button class="text-xs font-medium" style="color: var(--ion-color-primary)" (click)="navigateToBudgets()">
+          Administrar →
+        </button>
+      </div>
+      <ion-list class="rounded-xl overflow-hidden">
+        @for (budget of currentPeriodBudgets(); track budget.budgetId) {
+          <ion-item>
+            <ion-label>
+              <app-budget-indicator [budget]="budget"></app-budget-indicator>
+            </ion-label>
+          </ion-item>
+        }
+      </ion-list>
+    </div>
+  }
+
+  <!-- Últimas transacciones -->
   @if (recentTransactions().length > 0) {
+    <div class="mb-2 px-1">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Últimos movimientos</h2>
+    </div>
     <ion-list>
       @for (tx of recentTransactions(); track tx.txId) {
         <ion-item>
@@ -56,4 +90,5 @@
       }
     </ion-list>
   }
+
 </ion-content>

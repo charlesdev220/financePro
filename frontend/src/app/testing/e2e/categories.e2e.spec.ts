@@ -10,7 +10,7 @@ const BASE = { wallets: buildMockWallets(), users: buildMockUsers() };
 test.describe('Category List — estado vacío (REQ-E2E-09)', () => {
 
   test('sc1: sin categorías → mensaje de estado vacío visible', async ({ page }) => {
-    await setupAndNavigate(page, '/categories', { ...BASE });
+    await setupAndNavigate(page, '/tabs/categories', { ...BASE });
 
     await expect(page.locator('text=No hay categorías activas')).toBeVisible({ timeout: 8000 });
   });
@@ -22,7 +22,7 @@ test.describe('Category List — estado vacío (REQ-E2E-09)', () => {
 test.describe('Category List — con datos (REQ-E2E-10)', () => {
 
   test('sc1: con categorías → ion-list visible con ítems', async ({ page }) => {
-    await setupAndNavigate(page, '/categories', {
+    await setupAndNavigate(page, '/tabs/categories', {
       ...BASE,
       categories: buildMockCategories(),
     });
@@ -32,7 +32,7 @@ test.describe('Category List — con datos (REQ-E2E-10)', () => {
   });
 
   test('sc2: ion-badge con símbolo de tipo visible', async ({ page }) => {
-    await setupAndNavigate(page, '/categories', {
+    await setupAndNavigate(page, '/tabs/categories', {
       ...BASE,
       categories: buildMockCategories(),
     });

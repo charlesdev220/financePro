@@ -1,62 +1,58 @@
 import {
+  ChangeDetectionStrategy,
   Component,
-  Input,
-  Output,
-  EventEmitter,
+  effect,
+  input,
+  output,
   signal,
-  OnInit,
-  OnDestroy,
 } from '@angular/core';
-import { Observable, Subscription } from 'rxjs';
+import { toSignal, toObservable } from '@angular/core/rxjs-interop';
+import { Observable, switchMap } from 'rxjs';
 import { IonInput, IonList, IonItem, IonLabel } from '@ionic/angular/standalone';
-import { AsyncPipe } from '@angular/common';
 
 /**
  * Componente shared de autocompletado — agnóstico al dominio (ADR-05).
  * Recibe sugerencias como Observable y emite el valor seleccionado.
- *
- * @Input  suggestions$ — Observable<string[]> de sugerencias (ya filtradas por el caller)
- * @Output selected     — emite el texto elegido (por sugerencia O por valor libre)
  */
 @Component({
   selector: 'app-autocomplete-input',
   templateUrl: 'autocomplete-input.component.html',
   standalone: true,
-  imports: [IonInput, IonList, IonItem, IonLabel, AsyncPipe],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IonInput, IonList, IonItem, IonLabel],
 })
-export class AutocompleteInputComponent implements OnInit, OnDestroy {
-  @Input({ required: true }) suggestions$!: Observable<string[]>;
-  @Input() placeholder = '';
-  @Input() value = '';
+export class AutocompleteInputComponent {
+  suggestions$ = input.required<Observable<string[]>>();
+  placeholder  = input<string>('');
+  value        = input<string>('');
 
-  @Output() selected = new EventEmitter<string>();
-  @Output() inputChange = new EventEmitter<string>();
+  selected    = output<string>();
+  inputChange = output<string>();
 
   readonly showDropdown = signal(false);
-  readonly currentSuggestions = signal<string[]>([]);
 
-  private sub: Subscription | null = null;
+  /** Sugerencias aplanadas desde el Observable externo, reactivas al signal suggestions$. */
+  readonly currentSuggestions = toSignal(
+    toObservable(this.suggestions$).pipe(switchMap(obs$ => obs$)),
+    { initialValue: [] as string[] },
+  );
 
-  ngOnInit(): void {
-    this.sub = this.suggestions$.subscribe(s => {
-      this.currentSuggestions.set(s);
-      this.showDropdown.set(s.length > 0);
-    });
-  }
+  protected readonly _value = signal('');
 
-  ngOnDestroy(): void {
-    this.sub?.unsubscribe();
+  constructor() {
+    effect(() => { this._value.set(this.value()); });
+    effect(() => { this.showDropdown.set(this.currentSuggestions().length > 0); });
   }
 
   onInput(event: Event): void {
     const val = (event as CustomEvent).detail.value ?? '';
-    this.value = val;
+    this._value.set(val);
     this.inputChange.emit(val);
     if (!val) this.showDropdown.set(false);
   }
 
   selectSuggestion(text: string): void {
-    this.value = text;
+    this._value.set(text);
     this.showDropdown.set(false);
     this.selected.emit(text);
   }
@@ -65,7 +61,7 @@ export class AutocompleteInputComponent implements OnInit, OnDestroy {
     // Pequeño delay para permitir el click en la sugerencia antes de cerrar
     setTimeout(() => {
       this.showDropdown.set(false);
-      this.selected.emit(this.value);
+      this.selected.emit(this._value());
     }, 200);
   }
 }

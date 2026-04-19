@@ -3,11 +3,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  Input,
-  OnChanges,
   OnDestroy,
-  SimpleChanges,
   ViewChild,
+  effect,
+  input,
+  signal,
 } from '@angular/core';
 import {
   BarController,
@@ -40,35 +40,36 @@ Chart.register(
   standalone: true,
   imports: [],
   templateUrl: './chart-bar.component.html',
-  styleUrls: ['./chart-bar.component.scss'],
+  styleUrls: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ChartBarComponent implements AfterViewInit, OnChanges, OnDestroy {
-  @Input() datasets: ChartDataset[] = [];
-  @Input() labels: string[] = [];
-  @Input() type: 'bar' | 'line' = 'bar';
-  @Input() ariaLabel = 'Gráfico';
+export class ChartBarComponent implements AfterViewInit, OnDestroy {
+  datasets  = input<ChartDataset[]>([]);
+  labels    = input<string[]>([]);
+  type      = input<'bar' | 'line'>('bar');
+  ariaLabel = input<string>('Gráfico');
 
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
 
   private chart: Chart | null = null;
-  private initialized = false;
+  private readonly initialized = signal(false);
 
-  ngAfterViewInit(): void {
-    this.initialized = true;
-    if (this.datasets.length) {
-      this.createChart();
-    }
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if ((changes['datasets'] || changes['labels'] || changes['type']) && this.initialized) {
+  constructor() {
+    effect(() => {
+      const datasets = this.datasets();
+      const labels   = this.labels();
+      const type     = this.type();
+      if (!this.initialized()) return;
       this.chart?.destroy();
       this.chart = null;
-      if (this.datasets.length) {
-        this.createChart();
+      if (datasets.length) {
+        this.createChart(datasets, labels, type);
       }
-    }
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this.initialized.set(true);
   }
 
   ngOnDestroy(): void {
@@ -76,19 +77,14 @@ export class ChartBarComponent implements AfterViewInit, OnChanges, OnDestroy {
     this.chart = null;
   }
 
-  private createChart(): void {
+  private createChart(datasets: ChartDataset[], labels: string[], type: 'bar' | 'line'): void {
     this.chart = new Chart(this.canvasRef.nativeElement, {
-      type: this.type,
-      data: {
-        labels: this.labels,
-        datasets: this.datasets,
-      },
+      type,
+      data: { labels, datasets },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'bottom' },
-        },
+        plugins: { legend: { position: 'bottom' } },
       },
     });
   }

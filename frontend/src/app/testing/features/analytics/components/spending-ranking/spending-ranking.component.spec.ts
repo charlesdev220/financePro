@@ -24,6 +24,8 @@ describe('SpendingRankingComponent', () => {
   });
 
   it('should create', () => {
+    fixture.componentRef.setInput('recurrentes', []);
+    fixture.componentRef.setInput('superfluos', []);
     fixture.detectChanges();
     expect(component).toBeTruthy();
   });
@@ -31,8 +33,8 @@ describe('SpendingRankingComponent', () => {
   // REQ-08 sc1: listas con datos → ítems visibles en ambas secciones
   it('should render items in both sections when data is provided', () => {
     // Given
-    component.recurrentes = [item('Netflix', 15), item('Gym', 30)];
-    component.superfluos  = [item('Cena restaurante', 120)];
+    fixture.componentRef.setInput('recurrentes', [item('Netflix', 15), item('Gym', 30)]);
+    fixture.componentRef.setInput('superfluos', [item('Cena restaurante', 120)]);
     fixture.detectChanges();
 
     // Then
@@ -43,8 +45,8 @@ describe('SpendingRankingComponent', () => {
   // REQ-08 sc2: superfluos vacío → mensaje @empty en esa sección
   it('should show empty message in superfluos section when superfluos is empty', () => {
     // Given
-    component.recurrentes = [item('Netflix', 15)];
-    component.superfluos  = [];
+    fixture.componentRef.setInput('recurrentes', [item('Netflix', 15)]);
+    fixture.componentRef.setInput('superfluos', []);
     fixture.detectChanges();
 
     // Then
@@ -56,8 +58,8 @@ describe('SpendingRankingComponent', () => {
   // REQ-08 sc3: ambas listas vacías → dos mensajes @empty, sin errores de template
   it('should show two empty messages and no errors when both lists are empty', () => {
     // Given
-    component.recurrentes = [];
-    component.superfluos  = [];
+    fixture.componentRef.setInput('recurrentes', []);
+    fixture.componentRef.setInput('superfluos', []);
     fixture.detectChanges();
 
     // Then
@@ -69,8 +71,8 @@ describe('SpendingRankingComponent', () => {
   // Verifica que los conceptos se renderizan en el DOM
   it('should display concept names in the list items', () => {
     // Given
-    component.recurrentes = [item('Spotify', 10)];
-    component.superfluos  = [item('Vuelo vacaciones', 800)];
+    fixture.componentRef.setInput('recurrentes', [item('Spotify', 10)]);
+    fixture.componentRef.setInput('superfluos', [item('Vuelo vacaciones', 800)]);
     fixture.detectChanges();
 
     // Then

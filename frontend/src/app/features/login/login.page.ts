@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { 
@@ -19,9 +19,10 @@ import { AuthService } from '../../core/services/auth.service';
   standalone: true,
   imports: [IonContent, IonItem, IonInput, IonIcon, IonButton, FormsModule, RouterLink],
   templateUrl: './login.page.html',
-  styleUrls: ['./login.page.scss'],
+  styleUrls: [],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly loadingCtrl = inject(LoadingController);
@@ -32,6 +33,12 @@ export class LoginPage {
 
   constructor() {
     addIcons({ mailOutline, lockClosedOutline, walletOutline });
+  }
+
+  ngOnInit() {
+    if (this.authService.isAuthenticated()) {
+      this.router.navigate(['/tabs/dashboard'], { replaceUrl: true });
+    }
   }
 
   async handleLogin(): Promise<void> {

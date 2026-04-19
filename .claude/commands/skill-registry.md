@@ -1,71 +1,67 @@
-# Skill Registry
+# Skill Registry — MyFinance
 
-Generá o actualizá el registro de skills disponibles en el proyecto.  
-Recibís: **$ARGUMENTS** (opcional: acción específica "update" o "list").
+Lista todos los commands y agentes disponibles en el proyecto.
+Recibís: **$ARGUMENTS** (opcional: "list" para solo listar, "update" para regenerar).
 
-## Cuándo ejecutar
+## Commands disponibles — `.claude/commands/`
 
-- Después de instalar o crear nuevos skills/commands.
-- Cuando el orchestrator necesita saber qué skills están disponibles.
-- Al iniciar una nueva sesión de trabajo compleja.
-
-## Qué hacer
-
-### 1. Escanear `.claude/commands/`
-
-Listar todos los archivos `.md` y extraer su propósito:
-
-| Command | Propósito |
+### SDD Workflow
+| Command | Cuándo usarlo |
 |---|---|
 | `sdd-explore` | Investigar alternativas antes de proponer |
-| `sdd-propose` | Proponer diseño (pausa para aprobación) |
+| `sdd-propose` | Proponer diseño — pausa para aprobación |
 | `sdd-spec` | Escribir especificaciones BDD |
 | `sdd-design` | Diseño técnico y ADRs |
-| `sdd-tasks` | Mapa de tareas atómicas (pausa para aprobación) |
-| `sdd-apply` | Implementar tareas |
-| `sdd-verify` | Validar implementación contra specs |
-| `sdd-archive` | Cerrar cambio, actualizar historial |
-| `sdd-init` | Inicializar contexto SDD |
-| `generate-liquibase` | Generar changelog Liquibase tras cambiar @Entity |
-| `generate-api-client` | Regenerar cliente TypeScript desde openapi.yaml |
-| `mock-data-seeder` | Generar datos realistas para dev |
-| `angular-core` | Componentes, signals, inject |
-| `angular-forms` | Reactive forms con validación |
-| `angular-performance` | @defer, NgOptimizedImage, lazy loading |
-| `angular-defer-optimizer` | Optimizar bundle inicial con @defer |
-| `web-design-guidelines` | Design system y accesibilidad |
-| `api-test-generator` | Tests de integración desde OpenAPI |
-| `java-springboot` | Patterns Spring Boot |
-| `java-junit` | Tests JUnit 5 + Mockito |
-| `java-refactoring` | Refactoring extract method |
-| `spring-boot-architecture` | Arquitectura hexagonal Spring |
-| `spring-boot-core` | Manejo errores, contract-first |
-| `spring-boot-database` | JPA performance, PostGIS |
-| `dockerize-app` | Dockerizar servicios |
-| `wf-feature-fullstack` | Feature DB → Backend → Frontend |
-| `wf-code-review` | Auditoría antes de merge |
-| `wf-database-migration` | Cambios de esquema |
-| `skill-creator` | Crear nuevos skills |
-| `playwright-e2e` | Testing E2E con MCP Playwright (flujos, auth, mapas, favoritos) |
+| `sdd-tasks` | Mapa de tareas atómicas — pausa para aprobación |
+| `sdd-apply` | Implementar las tareas (con delegación de agentes) |
+| `sdd-verify` | Validar implementación contra specs (qa-automation) |
+| `sdd-archive` | Cerrar cambio y actualizar historial |
+| `sdd-init` | Inicializar contexto SDD en una nueva sesión |
 
-### 2. Escanear `.claude/agents/`
-
-| Agente | Propósito |
+### Workflows de proyecto
+| Command | Cuándo usarlo |
 |---|---|
-| `orchestrator` | Lead developer, coordina todo |
-| `sdd-orchestrator` | Motor SDD, manejo de fases |
-| `spring-architect` | Backend Java 21 + Hexagonal |
-| `angular-architect` | Frontend Angular 17+ Standalone |
-| `qa-automation` | JUnit, Mockito, Cypress |
-| `devops-cloud` | Docker, CI/CD, infraestructura |
-| `persona-gentleman` | Personalidad y tono |
-| `output-style-gentleman` | Estilo de respuesta |
+| `wf-feature-fullstack` | Nueva feature Sheets → service → page |
+| `wf-code-review` | Auditoría de código antes de merge |
+| `wf-database-migration` | Cambios de esquema en Google Sheets |
+| `mock-data-seeder` | Generar datos realistas en Sheets para dev |
 
-### 3. Reportar
+### Herramientas especializadas
+| Command | Cuándo usarlo |
+|---|---|
+| `google-apps-script` | Lógica de servidor en Apps Script (.gs) |
+| `sync-clasp` | Sincronizar código local ↔ Apps Script nube |
+| `api-test-generator` | Generar tests de integración para servicios |
+| `playwright-e2e` | Tests E2E con MCP Playwright |
+| `angular-defer-optimizer` | Optimizar bundle inicial con `@defer` |
+| `web-design-guidelines` | Design system y accesibilidad |
+| `dockerize-app` | Dockerizar servicios si aplica |
+| `skill-creator` | Crear nuevos commands/skills |
+| `skill-registry` | Este archivo — listar herramientas disponibles |
 
-Devolver el registro completo como tabla y confirmar cuántos skills y agentes están disponibles.
+## Agentes disponibles — `.claude/agents/`
+
+| Agente | Responsabilidad |
+|---|---|
+| `feature-scaffold` | Implementa artefactos Angular/Ionic (page, component, effect, reducer, selector, model) |
+| `ionic-angular-architect` | Diseño frontend — Ionic 8 + Angular 20 + NgRx v21 |
+| `google-sheets-architect` | Esquema Sheets, modelos TypeScript, Apps Script |
+| `qa-automation` | Tests unitarios Karma/Jasmine + E2E Playwright |
+| `devops-cloud` | GitHub Actions, Capacitor build, CI/CD |
+
+## Rules disponibles — `.claude/rules/`
+
+| Rule | Qué define |
+|---|---|
+| `typescript.md` | Interfaces, strict mode, inject(), signals, constants, aliases |
+| `angular.md` | Standalone, OnPush, input()/output(), toSignal(), lazy loading |
+| `html.md` | @if/@for, bindings, event handlers, pipes |
+| `ionic.md` | Componentes individuales, tabs, modals, toasts, alerts |
+| `ngrx.md` | Actions, reducers puros, effects funcionales, selectors |
+| `sheets-api.md` | SheetsApiService, ETag, cifrado PII, lógica de negocio |
+| `tailwind.md` | Tailwind vs variables Ionic CSS, responsive, excepción SCSS |
 
 ## Reglas
 
-- No modificar ningún archivo de skill ni agent — solo leer y reportar.
-- Si faltan skills esperados, indicarlos como "pendientes de crear".
+- No modificar ningún archivo de command, agent ni rule — solo leer y reportar.
+- Si falta un command esperado, indicarlo como "pendiente de crear".

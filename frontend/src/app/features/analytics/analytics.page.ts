@@ -27,7 +27,7 @@ function sixMonthsAgo(): string {
 @Component({
   selector: 'app-analytics',
   templateUrl: 'analytics.page.html',
-  styleUrls: ['analytics.page.scss'],
+  styleUrls: [],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -45,22 +45,28 @@ export class AnalyticsPage implements OnInit {
   private readonly store           = inject(Store);
   private readonly analyticsService = inject(AnalyticsService);
 
+  /** Todas las transacciones del usuario para calcular totales y clasificaciones. */
   readonly allTxs     = toSignal(this.store.select(selectAllTransactions),  { initialValue: [] });
+  /** Categorías activas del usuario para el análisis de gastos. */
   readonly categories = toSignal(this.store.select(selectActiveCategories), { initialValue: [] });
 
   readonly startPeriod      = signal<string>(sixMonthsAgo());
   readonly selectedCategory = signal<string | null>(null);
 
+  /** Transacciones a partir del período de inicio seleccionado, para el análisis. */
   readonly filteredTxs = computed(() =>
     this.allTxs().filter(tx => tx.date.slice(0, 7) >= this.startPeriod()),
   );
 
+  /** Totales mensuales (ingresos + gastos) de los últimos 6 meses filtrados. */
   readonly monthlyTotals = computed(() =>
     this.analyticsService.getMonthlyTotals(this.filteredTxs(), 6),
   );
 
+  /** Períodos disponibles derivados de los totales mensuales, para el selector. */
   readonly periods = computed(() => this.monthlyTotals().map(t => t.period));
 
+  /** Clasificación de gastos recurrentes vs superfluos del período seleccionado. */
   readonly spendingData = computed(() =>
     this.analyticsService.classifySpending(this.filteredTxs(), this.periods()),
   );

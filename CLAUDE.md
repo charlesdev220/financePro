@@ -19,7 +19,7 @@ Senior Architect, 15+ años, GDE & MVP. Mentor apasionado. Frustrás cuando algu
 ## 📏 Reglas Globales
 
 - **Ante una nueva petición:** leer `HISTORIAL_IMPLEMENTACION.md` → preparar plan en `MyFinance_Implementation_Plan.md` → continuar con el flujo SDD.
-- **Para un nuevo desarrollo:** activar el agente `/orchestrator`, verificar estado en `.sdd/changes/` y retomar si hay trabajo pendiente.
+- **Para un nuevo desarrollo:** verificar estado en `.sdd/changes/` y retomar si hay trabajo pendiente; si no, iniciar con `/sdd-new <cambio>`.
 - **Nunca** añadir Co-Authored-By ni atribución IA a commits.
 - **Nunca** ejecutar build tras cambios salvo petición explícita.
 - **Nunca** usar `cat`, `grep`, `find`, `sed`, `ls` en Bash — usar las herramientas nativas (Read, Grep, Glob, Edit, Write).
@@ -90,19 +90,65 @@ src/app/
 
 ```
 Prompt
-  └── CLAUDE.md                    ← QUÉ construir y por qué (este archivo)
-        └── orchestrator           ← CÓMO planificar: dirige el flujo SDD, delega y valida
-              ├── ionic-angular-architect   ← implementa frontend
-              │     └── lee: typescript · angular · html · ionic · ngrx
-              ├── google-sheets-architect   ← mantiene el esquema de datos y los modelos
-              │     └── lee: sheets-api
-              ├── qa-automation             ← escribe tests contra spec.md
-              │     └── lee: angular · ngrx + spec.md del cambio activo
-              └── devops-cloud              ← builds, CI/CD, secrets
-                    └── lee: CLAUDE.md (sección Stack)
+  └── CLAUDE.md                    ← QUÉ construir y por qué (este archivo, actúa como orchestrator)
+        ├── ionic-angular-architect   ← implementa frontend
+        │     ├── lee: typescript · angular · html · ionic · ngrx · tailwind
+        │     └── delega implementación atómica → feature-scaffold
+        ├── google-sheets-architect   ← mantiene el esquema de datos y los modelos
+        │     └── lee: sheets-api
+        ├── qa-automation             ← escribe y ejecuta tests contra spec.md
+        │     └── lee: angular · ngrx + spec.md del cambio activo
+        ├── playwright-inspector      ← inspección visual/funcional en navegador real → bug-report.md
+        │     └── lee: ux-ui · ionic · tailwind · HISTORIAL_IMPLEMENTACION
+        └── devops-cloud              ← builds, CI/CD, secrets
+              └── lee: CLAUDE.md (sección Stack)
 ```
 
-**Regla de cadena:** Ningún agente escribe código sin haber leído el archivo de reglas de su capa. Si un requerimiento contradice una regla → señalar el conflicto y escalar al orchestrator antes de proceder.
+**Regla de cadena:** Ningún agente escribe código sin haber leído el archivo de reglas de su capa. Si un requerimiento contradice una regla → señalar el conflicto antes de proceder.
+
+---
+
+## 🔀 Decisión Inline vs Diferir
+
+Antes de ejecutar algo, preguntate: **¿esto infla mi contexto sin necesidad?**
+
+| Acción | Inline | Diferir / Delegar |
+|--------|--------|------------------|
+| Leer 1-3 archivos para decidir/verificar | ✅ | — |
+| Leer 4+ archivos para explorar | — | ✅ fase sdd-explore |
+| Escribir un archivo atómico (ya sé qué) | ✅ | — |
+| Escribir feature en múltiples archivos | — | ✅ fase sdd-apply |
+| Bash para estado (git, gh) | ✅ | — |
+| Bash para ejecución (test, build) | — | ✅ fase sdd-verify |
+
+---
+
+## ✅ Checklist del Orquestador
+
+- **Planificación SDD obligatoria** para features nuevas o cambios multi-archivo. Prohibido escribir código complejo sin `tasks.md` previo. (Excepción: tareas atómicas de 1 archivo).
+- **Pausar siempre** después de `propose` y después de `tasks` — esperar aprobación del usuario.
+- **Si la implementación se desvía del `design.md`**: documentar el motivo en `apply-progress.md`.
+- **Nunca implementar tareas que no fueron asignadas.**
+- **Antes de generar código**: consultar la regla de capa relevante en `.claude/rules/`.
+- **Cada fase devuelve:** `status`, resumen ejecutivo, artefactos generados, siguiente fase recomendada, riesgos.
+
+### Formato estándar de `state.md`
+
+```markdown
+## Estado del Cambio: {change-name}
+
+**Fase actual:** {fase}
+**Estado:** En Proceso / Esperando Aprobación / Completado
+
+### Fases completadas
+- [x] explore
+
+### Fase actual
+- [ ] propose
+
+### Pendientes
+- [ ] spec · design · tasks · apply · verify · archive
+```
 
 ---
 
@@ -118,15 +164,17 @@ Prompt
 | Ionic | `.claude/rules/ionic.md` | Componentes individuales, tabs, modals, toasts, alerts |
 | NgRx | `.claude/rules/ngrx.md` | Actions, reducers puros, effects funcionales, selectors, `toSignal()` |
 | Sheets API + Seguridad | `.claude/rules/sheets-api.md` | Esquema, `SheetsApiService`, ETag, cifrado PII, lógica de negocio |
+| Estilos / Tailwind | `.claude/rules/tailwind.md` | Tailwind vs variables Ionic, responsive, SCSS excepciones |
+| UX / UI | `.claude/rules/ux-ui.md` | Usabilidad, datos por defecto, selects, contraste, navegación entre pantallas, onboarding |
 
 ---
 
 ## 🛠️ Comandos Disponibles
 
-### Implementación guiada
-| Comando | Cuándo usarlo |
-|---------|--------------|
-| `/feature-scaffold` | Protocolo + plantillas para implementar cualquier artefacto |
+### Agente de implementación
+| Agente | Cuándo usarlo |
+|--------|--------------|
+| `feature-scaffold` | Implementar cualquier artefacto Angular/Ionic (page, component, effect, reducer…) |
 
 ### SDD Workflow — artefactos en `.sdd/changes/{change-name}/`
 | Comando | Cuándo usarlo |
