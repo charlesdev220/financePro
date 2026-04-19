@@ -12,6 +12,7 @@ function currentMonth(): string {
   standalone: true,
   imports: [IonButton, IonIcon],
   templateUrl: './period-selector.component.html',
+  styleUrls: ['./period-selector.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PeriodSelectorComponent {

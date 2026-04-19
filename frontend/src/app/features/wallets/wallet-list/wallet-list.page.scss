@@ -1,0 +1,19 @@
+.wallet-item-end {
+  display: flex;
+  align-items: center;
+  gap: var(--app-space-2);
+}
+
+.wallet-balance {
+  font-weight: 600;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+  gap: var(--app-space-4);
+  color: var(--ion-color-medium);
+}

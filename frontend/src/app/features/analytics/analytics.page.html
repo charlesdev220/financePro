@@ -4,4 +4,29 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content></ion-content>
+<ion-content class="ion-padding">
+
+  <app-period-selector
+    [period]="startPeriod()"
+    (periodChange)="onPeriodChange($event)"
+  />
+
+  <section class="analytics-section">
+    <h2 class="section-title">Ingresos vs Gastos</h2>
+    <app-analytics-chart [data]="monthlyTotals()" />
+  </section>
+
+  <section class="analytics-section">
+    <h2 class="section-title">Proyección de tendencia</h2>
+    <app-projections [data]="monthlyTotals()" [horizon]="3" />
+  </section>
+
+  <section class="analytics-section">
+    <h2 class="section-title">Ranking de gastos</h2>
+    <app-spending-ranking
+      [recurrentes]="spendingData().recurrentes"
+      [superfluos]="spendingData().superfluos"
+    />
+  </section>
+
+</ion-content>

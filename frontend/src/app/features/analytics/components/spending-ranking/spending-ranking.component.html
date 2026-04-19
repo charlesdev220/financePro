@@ -1,0 +1,27 @@
+<section class="ranking-section">
+  <h3 class="ranking-title">Gastos Recurrentes</h3>
+  <ul class="ranking-list">
+    @for (item of recurrentes; track item.concept) {
+      <li class="ranking-item">
+        <span class="ranking-concept">{{ item.concept }}</span>
+        <span class="ranking-amount">{{ item.amountBase | currency:'USD':'symbol':'1.2-2' }}</span>
+      </li>
+    } @empty {
+      <li class="ranking-empty">Sin datos suficientes</li>
+    }
+  </ul>
+</section>
+
+<section class="ranking-section">
+  <h3 class="ranking-title">Gastos Superfluos</h3>
+  <ul class="ranking-list">
+    @for (item of superfluos; track item.concept) {
+      <li class="ranking-item">
+        <span class="ranking-concept">{{ item.concept }}</span>
+        <span class="ranking-amount">{{ item.amountBase | currency:'USD':'symbol':'1.2-2' }}</span>
+      </li>
+    } @empty {
+      <li class="ranking-empty">Sin datos suficientes</li>
+    }
+  </ul>
+</section>

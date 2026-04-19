@@ -231,4 +231,21 @@ export class AuthService {
     }
     return this.accessToken;
   }
+
+  /**
+   * Verifica si un email ya está registrado en la hoja USERS.
+   * Compara el SHA-256 del email con la columna email_hash (col B).
+   * Retorna true si existe, false si no. Propaga errores de red.
+   */
+  async checkEmailExists(email: string): Promise<boolean> {
+    await this.signIn();
+
+    const sheetsService = this.injector.get(SheetsApiService);
+    const response = await firstValueFrom(sheetsService.getRange('USERS!A:H'));
+
+    if (!response?.values || response.values.length < 2) return false;
+
+    const emailHash = await this.cryptoService.hashEmail(email);
+    return response.values.slice(1).some(row => row[1] === emailHash);
+  }
 }

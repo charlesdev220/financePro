@@ -59,6 +59,7 @@ export class BudgetListPage implements OnInit {
     const modal = await this.modalCtrl.create({
       component: BudgetFormComponent,
       componentProps: { period: this.currentPeriod() },
+      backdropDismiss: false,
     });
     await modal.present();
   }
@@ -67,6 +68,7 @@ export class BudgetListPage implements OnInit {
     const modal = await this.modalCtrl.create({
       component: BudgetFormComponent,
       componentProps: { budget, rowNumber: this.rowMap()[budget.budgetId] },
+      backdropDismiss: false,
     });
     await modal.present();
   }

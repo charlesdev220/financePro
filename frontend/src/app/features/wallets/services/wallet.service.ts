@@ -17,7 +17,7 @@ export function rowToWallet(row: unknown[]): IWallet {
     balance:   0, // calculado en store NgRx, no se lee de Sheets (ADR-04)
     color:     String(row[5] ?? '#4CAF50'),
     icon:      String(row[6] ?? '💳'),
-    isDefault: String(row[7] ?? 'false') === 'true' || row[7] === true,
+    isDefault: row[7] === true || String(row[7] ?? 'false').toLowerCase() === 'true',
     createdAt: String(row[8] ?? new Date().toISOString()),
   };
 }

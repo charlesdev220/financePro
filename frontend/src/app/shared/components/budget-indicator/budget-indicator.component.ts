@@ -8,6 +8,7 @@ import { IBudget } from '../../../models/budget.model';
   standalone: true,
   imports: [IonProgressBar, IonNote, DecimalPipe],
   templateUrl: './budget-indicator.component.html',
+  styleUrls: ['./budget-indicator.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BudgetIndicatorComponent {

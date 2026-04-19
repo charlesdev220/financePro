@@ -6,6 +6,7 @@ import { CategoryBreakdown } from '../../services/dashboard.service';
 @Component({
   selector: 'app-dashboard-chart',
   templateUrl: 'dashboard-chart.component.html',
+  styleUrls: ['dashboard-chart.component.scss'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ChartPieComponent],

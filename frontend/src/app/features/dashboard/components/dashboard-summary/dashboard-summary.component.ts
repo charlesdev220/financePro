@@ -6,6 +6,7 @@ import { DashboardSummary } from '../../services/dashboard.service';
 @Component({
   selector: 'app-dashboard-summary',
   templateUrl: 'dashboard-summary.component.html',
+  styleUrls: ['dashboard-summary.component.scss'],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol, CurrencyFormatPipe],

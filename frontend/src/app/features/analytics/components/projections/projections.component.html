@@ -1,0 +1,10 @@
+@if (hasEnoughData()) {
+  <app-chart-bar
+    [datasets]="datasets()"
+    [labels]="labels()"
+    type="line"
+    ariaLabel="Proyección de tendencia de gastos"
+  />
+} @else {
+  <p class="no-data-msg">Se necesitan al menos 3 meses de datos para proyectar</p>
+}

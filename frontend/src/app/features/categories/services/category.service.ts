@@ -19,7 +19,7 @@ export function rowToCategory(row: unknown[]): ICategory {
     type:         (String(row[5] ?? 'expense') as 'income' | 'expense'),
     budgetAmount: budgetRaw ? Number(budgetRaw) : null,
     budgetPeriod: (String(row[7] ?? 'monthly') as 'monthly' | 'weekly' | 'custom'),
-    isActive:     String(row[8] ?? 'true') === 'true' || row[8] === true,
+    isActive:     row[8] === true || String(row[8] ?? 'true').toLowerCase() === 'true',
     createdAt:    String(row[9] ?? new Date().toISOString()),
   };
 }

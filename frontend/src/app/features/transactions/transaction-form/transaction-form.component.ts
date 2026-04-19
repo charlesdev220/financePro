@@ -1,4 +1,5 @@
-import { Component, Input, OnInit, inject, computed } from '@angular/core';
+import { Component, Input, OnInit, inject, computed, signal, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -48,6 +49,7 @@ export class TransactionFormComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly modalCtrl = inject(ModalController);
   private readonly conceptsService = inject(ConceptsService);
+  private readonly destroyRef = inject(DestroyRef);
 
   form!: FormGroup;
   readonly currencies = SUPPORTED_CURRENCIES;
@@ -71,10 +73,11 @@ export class TransactionFormComponent implements OnInit {
   );
   readonly wallets = toSignal(this.store.select(selectAllWallets), { initialValue: [] });
 
-  readonly filteredCategories = computed(() => {
-    const type = this.form?.get('type')?.value;
-    return type === 'income' ? this.incomeCategories() : this.expenseCategories();
-  });
+  private readonly typeValue = signal<'income' | 'expense'>('expense');
+
+  readonly filteredCategories = computed(() =>
+    this.typeValue() === 'income' ? this.incomeCategories() : this.expenseCategories(),
+  );
 
   getActiveBudget(): IBudget | null {
     const catId = this.form?.get('categoryId')?.value as string;
@@ -96,8 +99,9 @@ export class TransactionFormComponent implements OnInit {
 
   ngOnInit(): void {
     const tx = this.transaction;
+    const initialType = tx?.type ?? this.initialType ?? 'expense';
     this.form = this.fb.group({
-      type:           [tx?.type ?? this.initialType ?? 'expense', Validators.required],
+      type:           [initialType, Validators.required],
       amount:         [tx?.amount ?? null, [Validators.required, Validators.min(0.01)]],
       currency:       [tx?.currency ?? this.userBaseCurrency ?? 'EUR', Validators.required],
       walletId:       [tx?.walletId ?? '', Validators.required],
@@ -108,6 +112,10 @@ export class TransactionFormComponent implements OnInit {
       recurrenceRule: [tx?.recurrenceRule ?? null],
       notes:          [tx?.notes ?? ''],
     });
+    this.typeValue.set(initialType as 'income' | 'expense');
+    this.form.get('type')!.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(v => this.typeValue.set(v as 'income' | 'expense'));
   }
 
   onConceptInput(prefix: string): void {

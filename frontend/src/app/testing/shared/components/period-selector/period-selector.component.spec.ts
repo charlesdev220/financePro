@@ -73,4 +73,32 @@ describe('PeriodSelectorComponent', () => {
     // Then
     expect(emitSpy).toHaveBeenCalledOnceWith('2026-01');
   });
+
+  // REQ-18 sc3: get label devuelve mes en español capitalizado
+  it('label_shouldReturnCapitalizedSpanishMonthName_forApril2026', () => {
+    // Given
+    component.period = '2026-04';
+
+    // When
+    const label = component.label;
+
+    // Then: contiene 'abril' en español, incluye el año, y empieza con mayúscula
+    expect(label.toLowerCase()).toContain('abril');
+    expect(label).toContain('2026');
+    expect(label.charAt(0)).toBe(label.charAt(0).toUpperCase());
+  });
+
+  // REQ-18 sc3 (edge): enero → label 'Enero YYYY'
+  it('label_shouldReturnCapitalizedSpanishMonthName_forJanuary', () => {
+    // Given
+    component.period = '2026-01';
+
+    // When
+    const label = component.label;
+
+    // Then
+    expect(label.toLowerCase()).toContain('enero');
+    expect(label).toContain('2026');
+    expect(label.charAt(0)).toBe(label.charAt(0).toUpperCase());
+  });
 });

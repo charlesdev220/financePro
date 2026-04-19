@@ -1,2 +1,24 @@
-// For information on how to create your own theme, please refer to:
-// https://ionicframework.com/docs/theming/
+// Design tokens — MyFinance
+// Convención: Tailwind para layout/spacing, SCSS por componente para lógica visual.
+// Colores Ionic se usan via var(--ion-color-*); colores custom via estos tokens.
+
+:root {
+  // Brand
+  --app-color-brand:       #6366f1; // indigo-500
+  --app-color-brand-dark:  #9333ea; // purple-600
+
+  // Backgrounds (dark mode)
+  --app-color-surface: #1e1e2f;
+  --app-color-bg:      #121212;
+
+  // Spacing scale (base-8)
+  --app-space-1: 0.25rem;  //  4px
+  --app-space-2: 0.5rem;   //  8px
+  --app-space-3: 0.75rem;  // 12px
+  --app-space-4: 1rem;     // 16px
+  --app-space-6: 1.5rem;   // 24px
+  --app-space-8: 2rem;     // 32px
+
+  // Chart
+  --app-chart-height: 280px;
+}

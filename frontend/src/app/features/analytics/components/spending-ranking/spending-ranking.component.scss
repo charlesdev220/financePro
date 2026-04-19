@@ -1,0 +1,48 @@
+.ranking-section {
+  margin-bottom: var(--app-space-6);
+
+  .ranking-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--ion-color-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 var(--app-space-2);
+  }
+
+  .ranking-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .ranking-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--app-space-2) 0;
+    border-bottom: 1px solid var(--ion-color-light-shade);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .ranking-concept {
+    font-size: 0.9375rem;
+    color: var(--ion-text-color);
+  }
+
+  .ranking-amount {
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--ion-color-danger);
+  }
+
+  .ranking-empty {
+    font-size: 0.875rem;
+    color: var(--ion-color-medium);
+    text-align: center;
+    padding: var(--app-space-4) 0;
+  }
+}

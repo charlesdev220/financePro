@@ -26,6 +26,7 @@ import { BudgetIndicatorComponent } from '../../../shared/components/budget-indi
 @Component({
   selector: 'app-category-list',
   templateUrl: 'category-list.page.html',
+  styleUrls: ['category-list.page.scss'],
   standalone: true,
   imports: [
     IonContent, IonHeader, IonTitle, IonToolbar,
@@ -67,6 +68,7 @@ export class CategoryListPage implements OnInit {
     const modal = await this.modalCtrl.create({
       component: CategoryFormComponent,
       componentProps: { userId: user.sub },
+      backdropDismiss: false,
     });
     await modal.present();
   }
@@ -76,6 +78,7 @@ export class CategoryListPage implements OnInit {
     const modal = await this.modalCtrl.create({
       component: CategoryFormComponent,
       componentProps: { category: cat, rowNumber },
+      backdropDismiss: false,
     });
     await modal.present();
   }

@@ -12,6 +12,8 @@ import { logOutOutline, addOutline, trendingUpOutline, trendingDownOutline, sett
 import { AuthService } from '../../core/services/auth.service';
 import { TransactionsActions } from '../../store/transactions/transactions.actions';
 import { BudgetsActions } from '../../store/budgets/budgets.actions';
+import { WalletsActions } from '../../store/wallets/wallets.actions';
+import { CategoriesActions } from '../../store/categories/categories.actions';
 import { selectAllTransactions } from '../../store/transactions/transactions.selectors';
 import { selectActiveCategories } from '../../store/categories/categories.selectors';
 import { selectAllBudgets } from '../../store/budgets/budgets.selectors';
@@ -29,6 +31,7 @@ import { IBudget } from '../../models/budget.model';
 @Component({
   selector: 'app-dashboard',
   templateUrl: 'dashboard.page.html',
+  styleUrls: ['dashboard.page.scss'],
   standalone: true,
   imports: [
     IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonButton, IonIcon,
@@ -72,6 +75,8 @@ export class DashboardPage implements OnInit {
   ngOnInit(): void {
     this.store.dispatch(TransactionsActions.loadTransactions());
     this.store.dispatch(BudgetsActions.loadBudgets());
+    this.store.dispatch(WalletsActions.loadWallets());
+    this.store.dispatch(CategoriesActions.loadCategories());
   }
 
   onPeriodChange(p: string): void {
@@ -84,12 +89,13 @@ export class DashboardPage implements OnInit {
     const modal = await this.modalCtrl.create({
       component: TransactionFormComponent,
       componentProps: { userId: user.sub, userBaseCurrency: 'EUR', initialType },
+      backdropDismiss: false,
     });
     await modal.present();
   }
 
   navigateToSettings(): void {
-    this.router.navigate(['/settings']);
+    this.router.navigate(['/tabs/settings']);
   }
 
   async handleSignOut(): Promise<void> {

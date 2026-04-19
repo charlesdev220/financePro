@@ -1,4 +1,7 @@
-import { calculateStatus, rowToBudget } from '../../../../features/budgets/services/budget.service';
+import { TestBed } from '@angular/core/testing';
+import { of } from 'rxjs';
+import { calculateStatus, rowToBudget, BudgetService } from '../../../../features/budgets/services/budget.service';
+import { SheetsApiService } from '../../../../core/services/sheets-api.service';
 import { IBudget } from '../../../../models/budget.model';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -126,5 +129,76 @@ describe('rowToBudget', () => {
     expect(budget.budgetAmount).toBe(0);
     expect(budget.spentAmount).toBe(0);
     expect(budget.status).toBe('ok'); // default fallback
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BudgetService.loadBudgets — REQ-11 sc2: hoja vacía → []
+// ─────────────────────────────────────────────────────────────────────────────
+describe('BudgetService.loadBudgets', () => {
+  let service: BudgetService;
+  let sheetsApiSpy: jasmine.SpyObj<SheetsApiService>;
+
+  beforeEach(() => {
+    sheetsApiSpy = jasmine.createSpyObj('SheetsApiService', [
+      'getRange', 'appendRow', 'updateRow', 'deleteRow',
+    ]);
+    TestBed.configureTestingModule({
+      providers: [
+        BudgetService,
+        { provide: SheetsApiService, useValue: sheetsApiSpy },
+      ],
+    });
+    service = TestBed.inject(BudgetService);
+  });
+
+  // REQ-11 sc2: hoja solo con encabezados (1 fila) → {budgets:[], rowMap:{}}
+  it('loadBudgets_shouldReturnEmpty_whenSheetHasOnlyHeaderRow', done => {
+    // Given: Sheets devuelve solo la fila de encabezados
+    sheetsApiSpy.getRange.and.returnValue(
+      of({
+        range: 'BUDGETS!A:H',
+        majorDimension: 'ROWS',
+        values: [['budget_id', 'user_id', 'category_id', 'period', 'budget_amount', 'spent_amount', 'status', 'last_updated']],
+      }),
+    );
+
+    // When
+    service.loadBudgets().subscribe(result => {
+      // Then
+      expect(result.budgets).toEqual([]);
+      expect(result.rowMap).toEqual({});
+      done();
+    });
+  });
+
+  // REQ-11 sc2 (edge): respuesta null → vacío sin error
+  it('loadBudgets_shouldReturnEmpty_whenResponseIsNull', done => {
+    // Given: respuesta null de Sheets (hoja nueva sin datos)
+    sheetsApiSpy.getRange.and.returnValue(of(null));
+
+    // When
+    service.loadBudgets().subscribe(result => {
+      // Then
+      expect(result.budgets).toEqual([]);
+      expect(result.rowMap).toEqual({});
+      done();
+    });
+  });
+
+  // REQ-11 sc2 (edge): values array vacío → vacío sin error
+  it('loadBudgets_shouldReturnEmpty_whenValuesArrayIsEmpty', done => {
+    // Given
+    sheetsApiSpy.getRange.and.returnValue(
+      of({ range: 'BUDGETS!A:H', majorDimension: 'ROWS', values: [] }),
+    );
+
+    // When
+    service.loadBudgets().subscribe(result => {
+      // Then
+      expect(result.budgets).toEqual([]);
+      expect(result.rowMap).toEqual({});
+      done();
+    });
   });
 });

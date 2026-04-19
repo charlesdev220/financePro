@@ -4,9 +4,121 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Nav Audit — Tab Bar + Guard + Routing):
+*Fase actual:* Mantenimiento transversal: navegación mobile
+*Estado actual:* Completado ✅ | Archivado: 2026-04-19
+- ✔️ **P1 — Tab Bar implementado:** Creada `TabsPage` (`features/tabs/tabs.page.ts/.html`) con `ion-tabs` + `ion-tab-bar` de 5 tabs: Inicio (`dashboard`), Movimientos (`transactions`), Presupuestos (`budgets`), Analytics (`analytics`), Más (`more`). Creado `tabs.routes.ts` con lazy loading de todas las rutas hijas. `app.routes.ts` reestructurado: rutas protegidas bajo `/tabs` con un solo `canActivate: [authGuard]` en el padre; `/login` y `/register` quedan fuera del outlet de tabs.
+- ✔️ **P2 — Back button en Settings:** `settings.page.html` ahora incluye `<ion-back-button defaultHref="/tabs/more">` en el toolbar. `IonBackButton` e `IonButtons` añadidos a los imports del componente.
+- ✔️ **P3 — Wrappers huérfanos eliminados:** Borrados 6 archivos vacíos que nunca estuvieron conectados al router: `transactions.page.ts/.html`, `wallets.page.ts/.html`, `categories.page.ts/.html`. Las rutas ya apuntaban directamente a las `*-list` pages.
+- ✔️ **P4 — Guard completo:** `auth.guard.ts` refactorizado: detecta rutas públicas (`login`, `register`) via `route.routeConfig?.path` y redirige usuarios autenticados a `/tabs`. Usuarios no autenticados en ruta protegida → `/login`. Strings en constante `PUBLIC_ROUTES`.
+- ✔️ **P5 — Dashboard dispatch completo:** `DashboardPage.ngOnInit()` ahora despacha `WalletsActions.loadWallets()` y `CategoriesActions.loadCategories()` además de transactions y budgets. Evita selects vacíos al abrir el modal "Nuevo gasto/ingreso" desde dashboard.
+- ✔️ **Creada `MorePage`** (`features/more/more.page.ts/.html`): agrupador de Categorías, Carteras y Configuración con `ion-list` + `[routerLink]` hacia `/tabs/categories`, `/tabs/wallets`, `/tabs/settings`.
+- ✔️ **`navigateToSettings()`** en dashboard actualizado: `/settings` → `/tabs/settings`.
+*Próximos pasos:* Actualizar rutas en E2E helpers (`setupAndNavigate`) de `/dashboard` → `/tabs/dashboard`. Fase 5 — Notificaciones push / alertas basadas en proyecciones.
+*(Qué / Por qué / Dónde / Qué se aprendió):* En Ionic, el `ion-tab-bar` se declara dentro de `ion-tabs` en el HTML de la TabsPage — el router outlet de cada tab lo gestiona Ionic internamente. `loadComponent` + `loadChildren` en la misma ruta permiten tener un componente raíz (TabsPage) con rutas hijas lazy. El guard debe manejar tanto rutas públicas como protegidas en el mismo `CanActivateFn` para que el redirect de usuario autenticado en `/login` funcione correctamente. `ion-back-button` en Ionic usa el `IonRouterOutlet` para detectar historial — `defaultHref` actúa como fallback cuando no hay historial en el outlet.
+
+---
+
+### Qué hemos completado hasta ahora (Auditoría y actualización de agentes — CLAUDE.md alignment):
+*Fase actual:* Mantenimiento de agentes y convenciones del proyecto
+*Estado actual:* Completado ✅ | Archivado: 2026-04-19
+- ✔️ **Auditoría CLAUDE.md vs `ionic-angular-architect`:** Detectados 4 conflictos directos: versión Ionic "7+" (debía ser 8+), Angular "17+" (debía ser 20+), NgRx sin versión (v21), y referencia a `AppsScriptService` que viola la regla explícita de CLAUDE.md "no existe Apps Script". Detectadas también 4 adiciones del agente no documentadas en CLAUDE.md: `ChangeDetectionStrategy.OnPush`, prohibición de constructor injection, strings de comparación en constantes, descripción JSDoc por función/clase.
+- ✔️ **`ionic-angular-architect.md` reescrito completo:** Versiones corregidas (Ionic 8, Angular 20, NgRx v21). Eliminado `AppsScriptService`. Añadido bloque de APIs modernas desde `angular_concepts_guide.md`: `input()` / `output()` signal-based, `computed()`, `toSignal()`, `withComponentInputBinding()`, `loadComponent()` con dynamic imports. Añadida sección de relación con los otros 3 agentes (orchestrator, google-sheets-architect, qa-automation, devops-cloud) con flujos de entrega/consumo explícitos. Añadido checklist de entrega de 10 ítems.
+- ✔️ **`orchestrator.md` actualizado:** Línea de subagentes corregida: "Ionic 7 + Angular 17" → "Ionic 8 + Angular 20 + NgRx v21".
+- ✔️ **`qa-automation.md` reescrito completo:** Estaba contaminado de otro proyecto (PropTech — Java/JUnit/Spring/Cypress). Reescrito para MyFinance: stack TypeScript, Karma + Jasmine para unitarios, Playwright para E2E. Estrategia de testing por capa (NgRx Effects/Reducers → Services → Components → E2E). Reglas de mocking para `SheetsApiService` y `CryptoService`. Estructura de carpetas `src/app/testing/` documentada. Formato de veredicto de auditoría adaptado.
+- ✔️ **`devops-cloud.md` reescrito completo:** Estaba contaminado de otro proyecto (PropTech — AWS EKS/RDS/Spring/Docker). Reescrito para MyFinance: GitHub Actions + Capacitor 8 + Firebase Hosting. Sin Docker, sin PostgreSQL, sin Spring. Variables de entorno alineadas con CLAUDE.md (`CLIENT_ID`, `SPREADSHEET_ID`, `CURRENCY_API_KEY`). Relación con `ionic-angular-architect` (build web) y `qa-automation` (gate de CI) documentada.
+- ✔️ **`angular_concepts_guide.md` integrado:** Conceptos de la guía incorporados al agente: `input.required<T>()` y `output<T>()` marcados como API moderna obligatoria (deprecando `@Input()`/`@Output()`), `withComponentInputBinding()` para route params como inputs signal, tokens de constantes para strings de comparación.
+*Próximos pasos:* Aplicar las mismas reglas de modernización a componentes existentes que aún usen `@Input()`/`@Output()` decoradores (`PeriodSelectorComponent`, `SpendingRankingComponent`, `DashboardSummaryComponent`, etc.).
+*(Qué / Por qué / Dónde / Qué se aprendió):* Los agentes de Claude Code son archivos `.md` en `.claude/agents/` — actúan como system prompts especializados y se degradan silenciosamente si contienen información desactualizada o contradictoria con CLAUDE.md. La auditoría cruzada (CLAUDE.md ↔ agente) es una práctica necesaria al evolucionar el stack. Los agentes `qa-automation` y `devops-cloud` habían sido copiados de un proyecto Java (PropTech) sin adaptar — llevaban configuraciones completamente inaplicables al stack MyFinance.
+
+---
+
+### Qué hemos completado hasta ahora (CSS Audit — Unificación de estilos y tokens de diseño):
+*Fase actual:* Mantenimiento transversal: sistema de estilos
+*Estado actual:* Completado ✅ | Archivado: 2026-04-19
+- ✔️ **tailwind.config.js — tokens custom:** Añadidos `app-surface: #1e1e2f` y `app-bg: #121212` en `theme.extend.colors.app`. Elimina los colores hex hardcodeados arbitrarios en templates.
+- ✔️ **theme/variables.scss — rellenado:** Define CSS custom properties del dominio: colores de marca (`--app-color-brand`, `--app-color-brand-dark`), fondos dark (`--app-color-surface/bg`), escala de espaciado base-8 (`--app-space-1/2/3/4/6/8`) y altura de chart (`--app-chart-height: 280px`). Era un archivo vacío con comentario.
+- ✔️ **11 archivos SCSS creados** para componentes con clases huérfanas: `spending-ranking.component.scss` (`.ranking-*`), `analytics.page.scss` (`.analytics-section`, `.section-title`), `dashboard.page.scss` (`.exceeded-banner`, `.quick-actions`), `dashboard-chart.component.scss` (`.chart-empty`), `dashboard-summary.component.scss` (`.summary-amount`), `period-selector.component.scss` (`.period-selector`, `.period-label`), `budget-indicator.component.scss` (`.budget-indicator`), `chart-bar.component.scss` (`.chart-container`), `wallet-list.page.scss` (`.wallet-item-end`, `.wallet-balance`, `.empty-state`), `category-list.page.scss` (`.empty-state`). Todos usan `var(--app-space-*)` y `var(--ion-color-*)`.
+- ✔️ **10 componentes .ts actualizados** con `styleUrls`: `spending-ranking`, `analytics.page`, `dashboard.page`, `dashboard-chart`, `dashboard-summary`, `period-selector`, `budget-indicator`, `chart-bar`, `wallet-list.page`, `category-list.page`. ViewEncapsulation scoped aplicado a todos.
+- ✔️ **Inline styles eliminados** de 4 archivos HTML: `chart-bar` (`height:280px` → `.chart-container`), `wallet-list` (flex hardcodeado → `.wallet-item-end` / `.empty-state`), `category-list` (flex hardcodeado → `.empty-state`), `login` (`from-[#1e1e2f] to-[#121212]` → `from-app-surface to-app-bg`).
+- ✔️ **Agentes actualizados:** `ionic-angular-architect` reescrito con versiones correctas (Ionic 8, Angular 20, NgRx v21), sin referencia a Apps Script, APIs modernas de Angular (`input()`, `output()`, `toSignal()`, `computed()`, `withComponentInputBinding()`, `loadComponent()`), relación con los 4 agentes del equipo y checklist de entrega. `orchestrator`, `qa-automation` y `devops-cloud` reescritos para MyFinance (eliminada contaminación de proyecto PropTech).
+*Próximos pasos:* Verificar renderizado visual con `ng serve`. Fase 5 — Notificaciones push / alertas basadas en proyecciones.
+*(Qué / Por qué / Dónde / Qué se aprendió):* Las clases huérfanas (definidas en HTML sin SCSS) no generan error de compilación — pasan silenciosamente sin aplicar ningún estilo, lo que produce regresiones visuales difíciles de detectar sin auditoría explícita. La convención elegida: Tailwind para layout/spacing en templates, SCSS por componente para lógica visual (colores condicionales, dimensiones fijas, estados). Los tokens en `tailwind.config.js` y `variables.scss` son el único lugar canónico para valores de diseño. El `from-[#1e1e2f]` de Tailwind es sintaxis de color arbitrario — funcional pero no reutilizable; reemplazado por token semántico.
+
+---
+
+### Qué hemos completado hasta ahora (Testing Funcional E2E Live — Bugs & Datos):
+*Fase actual:* Testing funcional interactivo contra app real + Google Sheets real
+*Estado actual:* Completado ✅ | Archivado: 2026-04-18
+- ✔️ **Bug fix — loadWallets/Categories en TransactionListPage:** `ngOnInit` solo despachaba `loadTransactions`; sin dispatch de wallets/categories, los selects del form modal quedaban vacíos. Fix: agregar `WalletsActions.loadWallets()` y `CategoriesActions.loadCategories()` en ngOnInit.
+- ✔️ **Bug fix — ion-select action-sheet vs alert:** Los selects dinámicos (wallets, categories, filters) con `interface="action-sheet"` capturan opciones una sola vez al crear el sheet — si NgRx aún no cargó, quedan vacíos. Fix: cambiar todos los selects dinámicos a `interface="alert"` (re-lee opciones en cada apertura).
+- ✔️ **Bug fix — isActive/isDefault boolean uppercase:** Google Sheets serializa `true` JS como `"TRUE"` (mayúsculas). El check `=== 'true'` siempre fallaba. Fix: `.toLowerCase()` antes de comparar en `category.service.ts` y `wallet.service.ts`.
+- ✔️ **Bug fix — filteredCategories computed no reactivo:** `computed()` de Angular solo trackea signal reads; `FormControl.value` es propiedad JS plana, no signal. Fix: introducir `private typeValue = signal<'income'|'expense'>()` y suscribir `form.get('type').valueChanges` con `takeUntilDestroyed(destroyRef)` en `ngOnInit` de `transaction-form.component.ts`.
+- ✔️ **Datos de prueba reales en Sheets:** 9 transacciones en 3 meses (Feb/Mar/Abr 2026): 3 salarios 2500 EUR + 3 Alimentación (320/410/380) + 3 Transporte (85/120/95). Datos creados vía dispatch NgRx directo.
+- ✔️ **Dashboard verificado live:** Summary cards Ingresos/Gastos/Balance con datos reales; doughnut Chart.js renderiza (colores grises = default #9E9E9E en datos de prueba, no bug funcional).
+- ✔️ **Analytics verificado live:** Bar chart Ingresos vs Gastos por mes (Feb/Mar/Abr); proyección OLS tendencia a May-Jul; ranking gastos superfluos Supermercado.
+- ✔️ **Presupuesto con exceeded verificado:** Budget indicator muestra barra roja + "380.00 / 300.00 EUR".
+- ✔️ **Bug fix — alert dismiss cierra ion-modal padre:** Al confirmar un `ion-select interface="alert"` dentro de `ion-modal`, el dismiss del alert propagaba al backdrop del modal y lo cerraba. Fix: `backdropDismiss: false` en los 5 `modalCtrl.create()` afectados (transaction-list ×2, dashboard, wallet-list ×2, category-list ×2, budget-list ×2). Verificado live: Cartera seleccionable sin cerrar el modal.
+*Próximos pasos:* Investigar bug ion-alert→ion-modal dismiss propagation. Fase 5 — Notificaciones push / alertas proyecciones.
+*(Qué / Por qué / Dónde / Qué se aprendió):* `ng.getComponent(el)` permite acceso directo al componente Angular en dev mode — invaluable para testing cuando el shadow DOM de Ionic bloquea Playwright. Dispatch NgRx directo con `{ type: '[Feature] Action Type', ...props }` permite crear datos masivos sin pasar por UI. `ion-select interface="alert"` dentro de `ion-modal` sin `backdropDismiss: false`: el click del OK del alert, al propagarse, llega al backdrop del modal padre y lo cierra. Solución definitiva: `backdropDismiss: false` en todos los `modalCtrl.create()` que contengan formularios con selects.
+
+---
+
+### Qué hemos completado hasta ahora (E2E Full Regression Suite — Fases 1-4):
+*Fase actual:* E2E Full Regression: Auth, Dashboard, Transactions, Categories, Wallets, Budgets, Analytics
+*Estado actual:* Completado ✅ | Archivado: 2026-04-16
+- ✔️ **helpers/mock-data.ts:** Builders para las 5 hojas de Sheets (`buildMockCategories`, `buildMockWallets`, `buildMockTransactions(months)`, `buildMockTransactionsTwoMonths`, `buildMockBudgets(period, opts)`, `buildMockUsers`). Formato nativo `string[][]` con headers incluidos.
+- ✔️ **helpers/auth-helpers.ts:** `injectAuthSession` (addInitScript localStorage), `mockOAuthToken` (mock SA token), `mockSheetsApi` (enruta por nombre de hoja, vacío para las no especificadas), `setupAndNavigate` (orquesta todo + goto + waitForTimeout(3000)).
+- ✔️ **auth.e2e.spec.ts (7 tests):** Guard redirect sin sesión; acceso con sesión; formulario login; toast error credenciales (fix shadow DOM: `input[name]` en lugar de host `ion-input`); login exitoso; formulario register; validación campos vacíos.
+- ✔️ **dashboard.e2e.spec.ts (5 tests):** Sin errores críticos de consola; `app-dashboard-summary` visible; canvas doughnut visible; `.exceeded-banner` con presupuesto excedido; banner ausente sin presupuestos excedidos.
+- ✔️ **transactions.e2e.spec.ts (3 tests):** Empty-state sin datos; `ion-list` con `ion-item-sliding` con datos; 3 selectores de filtro visibles.
+- ✔️ **categories.e2e.spec.ts (3 tests):** Empty-state; `ion-list` con ítems; `ion-badge` con símbolo tipo (↑/↓).
+- ✔️ **wallets.e2e.spec.ts (3 tests):** Empty-state; `ion-list` con nombre de cartera; balance formateado.
+- ✔️ **budgets.e2e.spec.ts (3 tests):** Empty-state; `app-budget-indicator` visible; period-selector navegación (fix: selector específico `app-period-selector .period-label`).
+- ✔️ **analytics.e2e.spec.ts refactorizado:** Elimina helpers inline, importa desde `testing/e2e/helpers/`. 8/8 tests siguen pasando.
+- ✔️ **Suite completa: 32/32 tests passing** en una sola ejecución. `npx playwright test` → EXIT:0.
+*Próximos pasos:* Fase 5 — Notificaciones push / alertas basadas en proyecciones. Suite E2E de CRUD modal (transaction-form, wallet-form, etc.) pendiente para iteración futura.
+*(Qué / Por qué / Dónde / Qué se aprendió):* `ion-input` Ionic expone el host element y el native `input` en shadow DOM — Playwright's `fill()` falla en el host; usar `input[name="email"]` que perfora shadow DOM vía CSS. `getByPlaceholder()` de Playwright devuelve strict mode violation cuando matchea tanto el host como el nativo. Selectores con coma (`.a, .b`) eligen el primer match en el DOM completo — para period-selector usar `app-period-selector .period-label` para evitar capturar `span` vacíos de Ionic. El patrón `setupAndNavigate` con `waitForTimeout(3000)` es suficiente para hidratar el store NgRx en todos los casos de la suite.
+
+---
+
+### Qué hemos completado hasta ahora (Fase 4 — Analytics y Proyecciones):
+*Fase actual:* Fase 4: Analytics, Proyecciones, Ranking de Gastos
+*Estado actual:* Completado ✅ | Archivado: 2026-04-16
+- ✔️ **AnalyticsService:** Servicio puro sin HTTP. `getMonthlyTotals()`, `getCategoryTotals()`, `linearRegression()` (OLS), `classifySpending()` (recurrentes + superfluos P75). Interfaces `MonthlyTotal`, `CategoryTotal`, `SpendingItem`.
+- ✔️ **ChartBarComponent:** Wrapper Chart.js para `bar` y `line`. Registra controllers localmente (tree-shaking). Patrón `AfterViewInit+OnChanges+OnDestroy` idéntico a `ChartPieComponent`. Contenedor con `height:280px` + `maintainAspectRatio:false`.
+- ✔️ **AnalyticsChartComponent:** Bar chart histórico ingresos/gastos. Dos datasets (azul/rojo) + labels desde `MonthlyTotal[]`.
+- ✔️ **ProjectionsComponent:** Line chart con OLS. `@if (hasEnoughData())` (≥3 meses) o mensaje informativo. Horizonte 3/6/12 meses configurable.
+- ✔️ **SpendingRankingComponent:** Dos secciones `@for/@empty` (recurrentes + superfluos). `CurrencyPipe` para formateo.
+- ✔️ **AnalyticsPage reescrita:** `toSignal()` + `computed()` puros. `ngOnInit` despacha `loadTransactions` + `loadCategories`. `startPeriod` signal inicializado a 6 meses atrás.
+- ✔️ **AuthService.checkEmailExists():** `async Promise<boolean>`. Lee USERS!A:H, compara `SHA-256(email)` con col B. Consistente con `login()`/`register()`.
+- ✔️ **Tests unitarios (5 specs, ~35 scenarios):** REQ-01→REQ-08 cubiertos. Stubs de `ChartBarComponent` para aislar Chart.js en tests de componentes.
+- ✔️ **E2E Playwright (8 tests, 8/8 passing):** Auth bypass via `addInitScript(localStorage)`. Mock OAuth2 + Sheets API con `page.route()`. Verifica canvas, proyección, ranking y regresiones.
+*Próximos pasos:* Fase 5 — Notificaciones push / alertas basadas en proyecciones. Pendiente: tests unitarios de `checkEmailExists` en `auth.service.spec.ts` (WARNING de verify).
+*(Qué / Por qué / Dónde / Qué se aprendió):* `AnalyticsPage` debe despachar `loadTransactions` en `ngOnInit` — el store no se popula solo al navegar directo a la ruta. Chart.js `responsive:true` sin contenedor dimensionado produce `canvas[width=0]` invisible en Playwright — fix: `div` con `height:280px` + `maintainAspectRatio:false`. `addInitScript()` en Playwright debe llamarse ANTES de `page.goto()` para que el `localStorage` esté disponible cuando Angular inicializa el `AuthService`.
+
+---
+
+### Qué hemos completado hasta ahora (Fase 4 — Analytics y Proyecciones) [apply]:
+*Fase actual:* Fase 4: AnalyticsService, ChartBarComponent, componentes de analytics, checkEmailExists
+*Estado actual:* Supersedido por entrada anterior ↑
+- ✔️ **AnalyticsService:** Servicio puro sin HTTP. `getMonthlyTotals()` (agrupa amountBase por YYYY-MM), `getCategoryTotals()` (con filtro opcional), `linearRegression()` (OLS manual ~15 líneas, retorna `{slope, intercept}`), `classifySpending()` (recurrentes por isRecurring || ≥3 períodos; superfluos por P75, requiere ≥4 gastos). Interfaces exportadas: `MonthlyTotal`, `CategoryTotal`, `SpendingItem`.
+- ✔️ **ChartBarComponent:** Wrapper Chart.js para tipos `bar` y `line`. Registra sus propios controllers localmente (tree-shaking). `@Input() type`, `datasets`, `labels`, `ariaLabel`. Patrón AfterViewInit+OnChanges+OnDestroy idéntico a `ChartPieComponent`.
+- ✔️ **AnalyticsChartComponent:** Recibe `MonthlyTotal[]`, construye 2 datasets (income azul / expense rojo), delega a `ChartBarComponent type="bar"`.
+- ✔️ **ProjectionsComponent:** Recibe `MonthlyTotal[]` + `@Input() horizon: 3|6|12`. Computed `hasEnoughData` (≥3 meses). Calcula tendencia con `analyticsService.linearRegression()`, proyecta horizon puntos. `@if/else` para chart vs mensaje informativo.
+- ✔️ **SpendingRankingComponent:** `@Input() recurrentes` + `@Input() superfluos`. Dos secciones con `@for/@empty`. Usa `CurrencyPipe` para formatear montos.
+- ✔️ **AnalyticsPage reescrita:** Store → `toSignal()`. Signals locales: `startPeriod` (sixMonthsAgo()), `selectedCategory`. Computeds: `filteredTxs`, `monthlyTotals`, `periods`, `spendingData`. Orquesta los 3 componentes + `PeriodSelectorComponent`.
+- ✔️ **AuthService.checkEmailExists():** `async Promise<boolean>`. Lee USERS!A:H, compara SHA-256(email) con col B. Consistente con login()/register().
+- ✔️ **Unit Tests (5 nuevos specs, ~35 scenarios):** `analytics.service.spec` (REQ-01 a REQ-04), `chart-bar.component.spec` (REQ-05), `analytics-chart.component.spec` (REQ-06), `projections.component.spec` (REQ-07), `spending-ranking.component.spec` (REQ-08). Componentes de UI usan stubs de ChartBarComponent para aislar Chart.js.
+- ✔️ **E2E Playwright (analytics.e2e.spec.ts):** 8 scenarios REQ-11 con `page.route()` para interceptar Sheets API. Pendiente instalación de `@playwright/test` en el proyecto.
+*Próximos pasos:* sdd-verify (compliance matrix REQ-01→REQ-11) + sdd-archive Fase 4. Instalar Playwright para correr E2E.
+*(Qué se aprendió):* `ChartBarComponent` debe registrar sus controllers localmente (no en `Chart.register()` global) para tree-shaking correcto. `toSignal()` con `{ initialValue: [] }` evita el tipo `T | undefined` en computeds. `classifySpending` usa P75 del historial completo (no solo el filtrado) — consistente con ADR-05. Playwright no estaba en el proyecto: el spec está listo pero requiere `npm install @playwright/test` + `playwright.config.ts`.
+
+---
+
 ### Qué hemos completado hasta ahora (Fase 3 — Dashboard + Sistema de Presupuestos):
 *Fase actual:* Fase 3: Dashboard, Chart.js, Presupuestos CRUD, alertas y badge de estado
-*Estado actual:* Completado ✅
+*Estado actual:* Completado ✅ | Archivado: 2026-04-15
 - ✔️ **IBudget model + BUDGETS sheet schema:** Hoja `BUDGETS` con 8 columnas (`budget_id | user_id | category_id | period | budget_amount | spent_amount | status | last_updated`). `calculateStatus()` puro exportado (ok < 80%, warning 80-99%, exceeded ≥ 100%).
 - ✔️ **NgRx budgets/ slice completo:** actions CRUD (save/update/delete/recalculate), reducer con patrón optimista + rollback, selectors: `selectAllBudgets`, `selectBudgetsRowMap`, `selectBudgetForCategory(catId,period)`, `selectBudgetsForPeriod(period)`, `selectExceededBudgets(period)`.
 - ✔️ **BudgetsEffects:** `loadBudgets$`, `saveBudget$`, `updateBudget$`, `deleteBudget$`, `recalculateBudget$` (recalcula `spentAmount` de transacciones del store + persiste en Sheets).

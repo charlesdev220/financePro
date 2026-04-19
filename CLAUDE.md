@@ -18,165 +18,179 @@ Senior Architect, 15+ años, GDE & MVP. Mentor apasionado. Frustrás cuando algu
 
 ## 📏 Reglas Globales
 
-- **Ante una nueva peticion** lee referencias de dicho tema en `/HISTORIAL_IMPLEMENTACION.md`, con dicho conocimiento prepara un plan de implementacion en `/MyFinance_Implementation_Plan.md` y continua con los desarrollos si no estan terminados siguiendo los pasos sdd.
-- **Para un nuevo desarrollo** siempre utiliza el `/orchestrator`, verifica el estado actual en `.ssd/changes` y continua con los desarrollos si no estan terminados.
+- **Ante una nueva petición:** leer `HISTORIAL_IMPLEMENTACION.md` → preparar plan en `MyFinance_Implementation_Plan.md` → continuar con el flujo SDD.
+- **Para un nuevo desarrollo:** activar el agente `/orchestrator`, verificar estado en `.sdd/changes/` y retomar si hay trabajo pendiente.
 - **Nunca** añadir Co-Authored-By ni atribución IA a commits.
-- **Nunca** ejecutar build tras cambios salvo que se pida explícitamente.
+- **Nunca** ejecutar build tras cambios salvo petición explícita.
 - **Nunca** usar `cat`, `grep`, `find`, `sed`, `ls` en Bash — usar las herramientas nativas (Read, Grep, Glob, Edit, Write).
-- **Nunca** ejecutar las aplicaciones sin consultar, si te dan acceso siempre terminar con esas ejecuciones
-- **Nunca** añadas imagenes o recursos que en el futuro no se van a utilizar
+- **Nunca** ejecutar las aplicaciones sin consultar; si se da acceso, siempre terminar esas ejecuciones.
+- **Nunca** añadir imágenes o recursos que no se vayan a utilizar.
 - **Cero código a medias:** prohibido `TODO`, `FIXME`, `MOCK`. Todo entregado debe ser funcional.
 - **Zero Secrets:** tokens y contraseñas solo en variables de entorno, nunca en código.
 
 ---
 
-## 🏗️ Stack
+## 🏗️ Stack de Decisiones Arquitectónicas
 
-| Capa | Tecnología | Versión |
-|---|---|---|
-| Framework móvil | Ionic Framework | v8.x |
-| Framework web | Angular | v20.x (standalone APIs) |
-| Lenguaje | TypeScript | v5.x (strict mode) |
-| Backend / BBDD | Google Sheets API v4 | REST + OAuth2 usuario |
-| Auth | Google Identity Services (GIS) | --- |
-| Cifrado PII | Web Crypto API | nativa (AES-GCM + PBKDF2) |
-| Tasas de cambio | ExchangeRate-API | REST |
-| Gráficas | Chart.js | v4.x |
-| Nativo | Capacitor | v8.x |
-| Estado global | NgRx | v21.x |
+> Solo decisiones estructurales. Las reglas de implementación están en `.claude/rules/`.
+
+| Capa | Tecnología | Versión | Por qué esta elección |
+|------|-----------|---------|----------------------|
+| Framework móvil | Ionic | v8.x | Híbrido iOS/Android con una sola base de código |
+| Framework web | Angular | v20.x standalone | APIs modernas sin NgModule |
+| Lenguaje | TypeScript | v5.x strict | Tipado fuerte, sin `any` |
+| Backend / BBDD | Google Sheets API v4 | REST + OAuth2 | El usuario es dueño de sus datos; sin servidor intermedio |
+| Auth | Google Identity Services | — | OAuth2 estándar; el token nunca sale del cliente |
+| Cifrado PII | Web Crypto API | nativa | AES-GCM + PBKDF2 sin dependencias externas |
+| Tasas de cambio | ExchangeRate-API | REST | Tasa en tiempo real al insertar; se persiste para auditoría |
+| Gráficas | Chart.js | v4.x | Ligero, sin framework de UI propio |
+| Nativo | Capacitor | v8.x | Bridge Angular ↔ iOS/Android |
+| Estado colecciones | NgRx | v21.x | Flujo unidireccional + caché ETag centralizado |
+| Estado local/UI | Angular Signals | — | Sin overhead de NgRx para estado efímero |
+| Estilos | Tailwind CSS 3 | — | Sin SCSS, sin librerías UI, sin estilos de componente |
+| Fechas | date-fns | — | Inmutable, tree-shakeable |
+| Tests | Karma/Jasmine + Playwright | — | Unitarios por capa + E2E por flujo crítico |
 
 ---
 
-## ⚙️ Reglas de Arquitectura
+## 🗂️ Arquitectura de Carpetas
 
-### Separación de plantillas — REGLA INAMOVIBLE
-- **Los archivos `.ts` nunca contienen HTML.** Cada componente tiene su propio `.html` independiente.
-- Esta regla no admite excepciones: ni para componentes pequeños, ni de prueba, ni inline templates.
-- Cualquier PR que viole esta norma será rechazado en revisión de código.
+```
+src/app/
+├── core/       → Singletons que viven toda la sesión: Auth, Guards, SheetsApiService, CryptoService
+├── shared/     → Artefactos usados por 2 o más features: componentes dumb, pipes, directivas
+├── features/   → Una carpeta por área de negocio; dentro, una por página navegable
+├── models/     → Interfaces TypeScript — fuente de verdad de tipos del dominio
+├── store/      → NgRx por feature: actions · reducer · effects · selectors
+└── testing/    → Todos los .spec.ts con la misma jerarquía que el código fuente
+    └── fixtures.ts
+```
 
-### Capa de datos — Sheets API directa, sin servidor intermedio
-- El usuario se autentica con Google OAuth2 (scopes: `openid`, `email`, `spreadsheets`).
-- **`SheetsApiService`** es la única puerta de entrada a Sheets API v4. Ningún componente ni feature service la llama directamente.
-- Angular usa el Bearer token del usuario en cada request a Sheets API.
-- No existe `server/`, no existe Service Account, no existe Google Apps Script.
-- El `SPREADSHEET_ID` vive exclusivamente en `environment.ts`. Nunca en código ni en la UI.
+**Regla de clasificación — en este orden:**
+1. ¿Lo usan 2 o más features? → `shared/`
+2. ¿Es singleton de sesión? → `core/`
+3. ¿Es página navegable? → `features/{feature}/{nombre}/` + ruta lazy en `app.routes.ts`
+4. ¿Es estado de colección? → `store/{feature}/`
 
-### Lógica de negocio — 100% en Angular
-- `amount_base`: lo calcula `transaction.service.ts` al insertar, usando tasa en tiempo real de `currency-api.service.ts`. Se persiste en Sheets.
-- `status` de presupuesto (`ok` / `warning` / `exceeded`): lo calcula y persiste `budget.service.ts` al guardar cada transacción.
-- Upsert de conceptos: `concepts.service.ts` al confirmar cada transacción.
-- Transacciones recurrentes: `transaction.service.ts` las detecta y genera al arranque de la app.
+**Rutas de navegación:**
+```
+/login
+/tabs/dashboard
+/tabs/transactions
+/tabs/wallets
+/tabs/budgets
+/tabs/settings
+```
 
-### Cifrado de PII — REGLA INAMOVIBLE
-- `email` y `display_name` se cifran con **AES-GCM** antes de escribirse en Sheets y se descifran al leer.
-- La clave se deriva del `sub` de Google del usuario mediante **PBKDF2** (Web Crypto API).
-- **`crypto.service.ts`** es el único servicio autorizado para cifrar y descifrar. Ningún otro servicio accede a datos PII en texto plano.
-- El access_token **nunca se persiste** — solo in-memory.
-- El `user_id` (`sub`) no se cifra: es la clave de derivación y la FK de todas las tablas.
+---
 
-### Caché — ETag + NgRx
-- `SheetsApiService` almacena el ETag de cada rango leído.
-- En cada lectura envía `If-None-Match: <etag>` → HTTP 304 usa store NgRx sin tocar Sheets; HTTP 200 actualiza store y ETag.
+## 🔗 Cadena de Delegación
 
-### Seguridad
-- PII nunca a APIs de IA externas.
-- Tokens OAuth2 de Google: **solo in-memory**. Nunca en `localStorage`, nunca en Sheets sin cifrar.
-- `CLIENT_ID`, `SPREADSHEET_ID` y `CURRENCY_API_KEY` solo en `environment.ts`. Nunca hardcodeados.
-- Prohibido `innerHTML` sin `DomSanitizer`.
+> Esta es la cadena completa. Cada eslabón sabe exactamente qué leer antes de actuar.
 
-### Frontend — Ionic v8 + Angular v20 Standalone
-- **Standalone obligatorio:** `standalone: true`. Prohibido `NgModule` en componentes nuevos.
-- **Carpetas Feature-First:** `/core` (singletons, guards, interceptors), `/shared` (dumb components, pipes, directives), `/features` (pages + feature services).
-- **Control flow:** `@if`, `@for` exclusivamente. Prohibido `*ngIf`, `*ngFor`.
-- **Estado:** NgRx para colecciones grandes (transacciones, categorías, carteras). `BehaviorSubject` en servicios para configuración y preferencias. `toSignal()` para consumir observables en plantillas.
-- **Lazy loading obligatorio:** cada feature se carga bajo demanda (`loadComponent()`).
-- Los reducers de NgRx son funciones puras sin efectos secundarios. Los effects son el único lugar donde se llama a `SheetsApiService`.
+```
+Prompt
+  └── CLAUDE.md                    ← QUÉ construir y por qué (este archivo)
+        └── orchestrator           ← CÓMO planificar: dirige el flujo SDD, delega y valida
+              ├── ionic-angular-architect   ← implementa frontend
+              │     └── lee: typescript · angular · html · ionic · ngrx
+              ├── google-sheets-architect   ← mantiene el esquema de datos y los modelos
+              │     └── lee: sheets-api
+              ├── qa-automation             ← escribe tests contra spec.md
+              │     └── lee: angular · ngrx + spec.md del cambio activo
+              └── devops-cloud              ← builds, CI/CD, secrets
+                    └── lee: CLAUDE.md (sección Stack)
+```
+
+**Regla de cadena:** Ningún agente escribe código sin haber leído el archivo de reglas de su capa. Si un requerimiento contradice una regla → señalar el conflicto y escalar al orchestrator antes de proceder.
+
+---
+
+## 📐 Reglas de Implementación
+
+> Los detalles de código viven aquí — no en este archivo. Cada agente consulta solo lo que necesita.
+
+| Capa | Archivo | Lo que define |
+|------|---------|--------------|
+| TypeScript | `.claude/rules/typescript.md` | Interfaces, strict mode, `inject()`, signals, constants, aliases |
+| Angular | `.claude/rules/angular.md` | Standalone, OnPush, `input()`/`output()`, `toSignal()`, lazy loading |
+| HTML | `.claude/rules/html.md` | `@if`/`@for`, bindings, event handlers, pipes |
+| Ionic | `.claude/rules/ionic.md` | Componentes individuales, tabs, modals, toasts, alerts |
+| NgRx | `.claude/rules/ngrx.md` | Actions, reducers puros, effects funcionales, selectors, `toSignal()` |
+| Sheets API + Seguridad | `.claude/rules/sheets-api.md` | Esquema, `SheetsApiService`, ETag, cifrado PII, lógica de negocio |
 
 ---
 
 ## 🛠️ Comandos Disponibles
 
-### SDD Workflow (Spec-Driven Development)
-Los artefactos se persisten en `.sdd/changes/{change-name}/`.
-
+### Implementación guiada
 | Comando | Cuándo usarlo |
-|---|---|
+|---------|--------------|
+| `/feature-scaffold` | Protocolo + plantillas para implementar cualquier artefacto |
+
+### SDD Workflow — artefactos en `.sdd/changes/{change-name}/`
+| Comando | Cuándo usarlo |
+|---------|--------------|
 | `/sdd-explore` | Investigar alternativas antes de proponer |
-| `/sdd-propose` | Proponer diseño (pausa para aprobación) |
+| `/sdd-propose` | Proponer diseño — pausa para aprobación |
 | `/sdd-spec` | Escribir especificaciones BDD |
 | `/sdd-design` | Diseño técnico y ADRs |
-| `/sdd-tasks` | Mapa de tareas atómicas (pausa para aprobación) |
+| `/sdd-tasks` | Mapa de tareas atómicas — pausa para aprobación |
 | `/sdd-apply` | Implementar las tareas |
 | `/sdd-verify` | Validar implementación contra specs |
 | `/sdd-archive` | Cerrar el cambio, actualizar historial |
 
 **Flujo:**
-
 ```
-explore → proposal -> specs --> tasks -> apply -> verify -> archive
-             ^
-             |
-           design
+explore → propose → spec → tasks → apply → verify → archive
+                 ↑
+               design
 ```
 
-**Meta-comandos** (los ejecuto inline, no son archivos de skill):
-- `/sdd-new <cambio>` → ejecutar explore + propose, pausar para aprobación
-- `/sdd-continue <cambio>` → leer `state.md` y ejecutar la siguiente fase pendiente
-- `/sdd-ff <cambio>` → fast-forward: proposal → spec → design → tasks (secuencial con pausas)
+**Meta-comandos inline:**
+- `/sdd-new <cambio>` → explore + propose, pausar.
+- `/sdd-continue <cambio>` → leer `state.md`, ejecutar siguiente fase.
+- `/sdd-ff <cambio>` → propose → spec → design → tasks (con pausas).
 
-### Google / Mobile
+### Datos y Workflows
 | Comando | Cuándo usarlo |
-|---|---|
-| `/mock-data-seeder` | Generar datos realistas en Google Sheets para dev |
-
-### Workflows
-| Comando | Cuándo usarlo |
-|---|---|
-| `/wf-feature-fullstack` | Nueva feature Sheets → Angular service → Ionic page |
-| `/wf-code-review` | Auditoría antes de merge (valida separación HTML/TS, cifrado PII) |
-| `/wf-database-migration` | Cambios de esquema en hojas de Google Sheets |
+|---------|--------------|
+| `/mock-data-seeder` | Generar datos realistas en Sheets para dev |
+| `/wf-feature-fullstack` | Nueva feature Sheets → service → page |
+| `/wf-code-review` | Auditoría antes de merge |
+| `/wf-database-migration` | Cambios de esquema en Sheets |
 
 ---
 
-## 📖 Plan de Implementación
+## 📖 Documentos del Proyecto
 
-`MyFinance_Implementation_Plan.md` es un **journal append-only**, es una guía por fases para su implementación.
-`MyFinance_Plan_WBS.md` Este documento constituye el Plan de Trabajo completo y la Work Breakdown Structure (WBS).
+| Documento | Qué es |
+|-----------|--------|
+| `MyFinance_Implementation_Plan.md` | Plan por fases — append-only |
+| `MyFinance_Plan_WBS.md` | Work Breakdown Structure completo |
+| `HISTORIAL_IMPLEMENTACION.md` | Log de implementaciones completadas — append-only, insertar al principio |
 
-
-## 📖 Historial de Implementación
-
-`HISTORIAL_IMPLEMENTACION.md` es un **journal append-only**, tras cada finalizacion de implementacion.
-
-1. **Insertar siempre al principio** (después del encabezado). Nunca sobrescribir.
-2. Estructura obligatoria:
-
-```markdown
+**Entrada estándar en `HISTORIAL_IMPLEMENTACION.md`:**
+```markdown}
 ### Qué hemos completado hasta ahora ({Título}):
 *Fase actual:* Fase X: ...
 *Estado actual:* Completado / En Proceso
 - ✔️ **{Nombre}:** {Descripción técnica en 1 línea}
 *Próximos pasos:* {...}
-*(Qué / Por qué / Dónde / Qué se aprendió):* {...}
+*Qué se aprendió:* {...}
+*Por qué se aprendió:* {...}
+*Dónde se aprendió:* {...}
 
-```
-
----
-
-## 🗺️ Estado Actual
-
-**Rama:** `feature/fase1` | **Fase:** 1.1 completada — Setup del entorno base
-**Próximos pasos:** Fase 1.2 — Google Cloud Console (OAuth2, Sheets API v4), Fase 1.3 — `auth.service.ts` + `crypto.service.ts`
 
 ---
 
-## 🔒 Lecciones Aprendidas
+## 🔒 Lección crítica de Git
 
-| Lección | Regla |
-|---|---|
-| Secretos en Git | Si Push Protection bloquea: eliminar secreto + `git reset --soft` + amend. Nunca forzar push. |
-| HTML inline | Prohibido `template: \`...\`` en decoradores. Todo HTML va en su `.html`. Sin excepciones. |
-| Acceso a Sheets | Angular llama directo a Sheets API v4 con Bearer token OAuth2. Sin servidor intermedio. Sin Apps Script. |
-| OAuth2 tokens | Nunca en `localStorage`. Solo in-memory. Si se necesita persistencia futura: cifrado AES-GCM antes de guardar. |
-| Lógica de negocio | Nunca delegar a terceros (Apps Script, servidor). Todo en servicios Angular. |
-| PII en Sheets | `email` y `display_name` siempre cifrados con AES-GCM + PBKDF2 antes de escribir. `crypto.service.ts` es el único punto de cifrado. |
+> Las lecciones de código están en `.claude/rules/`. Esta es la única que vive aquí porque no es código — es un procedimiento de emergencia.
+
+**Si Push Protection bloquea un secreto:**
+1. `git reset --soft HEAD~1` — deshacer el commit (no el trabajo)
+2. Eliminar el secreto del archivo
+3. Mover el valor a `environment.ts`
+4. Nuevo commit limpio
+5. Nunca `git push --force` sobre main.

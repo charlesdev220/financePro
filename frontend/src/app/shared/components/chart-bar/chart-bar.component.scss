@@ -1,0 +1,9 @@
+.chart-container {
+  position: relative;
+  height: var(--app-chart-height);
+  width: 100%;
+
+  canvas {
+    display: block;
+  }
+}

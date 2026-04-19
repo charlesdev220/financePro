@@ -5,6 +5,8 @@ import {
   IonHeader,
   IonTitle,
   IonToolbar,
+  IonButtons,
+  IonBackButton,
   IonList,
   IonItem,
   IonLabel,
@@ -20,7 +22,7 @@ import { AuthService } from '../../core/services/auth.service';
   selector: 'app-settings',
   templateUrl: 'settings.page.html',
   standalone: true,
-  imports: [IonContent, IonHeader, IonTitle, IonToolbar, IonList, IonItem, IonLabel, IonIcon, IonNote],
+  imports: [IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonList, IonItem, IonLabel, IonIcon, IonNote],
 })
 export class SettingsPage {
   private readonly authService = inject(AuthService);

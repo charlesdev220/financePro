@@ -32,7 +32,9 @@ import {
   selectTransactionsRowMap,
   selectTransactionsError,
 } from '../../../store/transactions/transactions.selectors';
+import { WalletsActions } from '../../../store/wallets/wallets.actions';
 import { selectAllWallets } from '../../../store/wallets/wallets.selectors';
+import { CategoriesActions } from '../../../store/categories/categories.actions';
 import { selectActiveCategories } from '../../../store/categories/categories.selectors';
 import { AuthService } from '../../../core/services/auth.service';
 import { ITransaction } from '../../../models/transaction.model';
@@ -72,10 +74,12 @@ export class TransactionListPage implements OnInit, OnDestroy {
   private readonly allTransactions = toSignal(
     this.store.select(selectAllTransactions), { initialValue: [] },
   );
+  // TODO : siempre añadir un comentarios en los toSignal - para que sirven y el objetivo de los mismos y si se modifica, actualizar este comentario
   readonly wallets = toSignal(this.store.select(selectAllWallets), { initialValue: [] });
   readonly categories = toSignal(this.store.select(selectActiveCategories), { initialValue: [] });
   private readonly rowMap = toSignal(this.store.select(selectTransactionsRowMap), { initialValue: {} as Record<string, number> });
 
+  // TODO : siempre añadir un comentarios en los computed - para que sirven y el objetivo de los mismos y si se modifica, actualizar este comentario
   readonly transactions = computed(() => {
     const userId = this.authService.getUser()?.sub ?? '';
     let txs = this.allTransactions().filter(t => t.userId === userId);
@@ -106,6 +110,8 @@ export class TransactionListPage implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.store.dispatch(TransactionsActions.loadTransactions());
+    this.store.dispatch(WalletsActions.loadWallets());
+    this.store.dispatch(CategoriesActions.loadCategories());
     // REQ-06 sc2: mostrar toast de error cuando una operación falla (después del rollback)
     this.errorSub = this.store
       .select(selectTransactionsError)
@@ -130,6 +136,7 @@ export class TransactionListPage implements OnInit, OnDestroy {
     const modal = await this.modalCtrl.create({
       component: TransactionFormComponent,
       componentProps: { userId: user.sub, userBaseCurrency: 'EUR' },
+      backdropDismiss: false,
     });
     await modal.present();
   }
@@ -146,6 +153,7 @@ export class TransactionListPage implements OnInit, OnDestroy {
         userBaseCurrency: 'EUR',
         rowNumber: rowMap[tx.txId],
       },
+      backdropDismiss: false,
     });
     await modal.present();
   }

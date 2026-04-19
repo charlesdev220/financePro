@@ -1,0 +1,149 @@
+# Reglas Angular 20 — MyFinance
+
+## Componentes — estructura obligatoria
+
+Todo componente es standalone con `OnPush`. Sin `NgModule`.
+
+```typescript
+@Component({
+  selector: 'app-{nombre}',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IonContent, IonHeader, AsyncPipe, ...],  // solo lo que usa el template
+  templateUrl: './{nombre}.page.html',               // siempre archivo externo
+})
+export class {Nombre}Page {}
+```
+
+- `templateUrl` obligatorio — prohibido `template: \`...\`` inline.
+- `styleUrls` o `styles: []` vacío si no hay estilos propios (Tailwind en HTML).
+- `changeDetection: ChangeDetectionStrategy.OnPush` en todos los componentes.
+- Nunca `NgModule` en componentes nuevos.
+
+## Separación de plantillas — REGLA DE ORO
+
+- **Los archivos `.ts` NUNCA contienen HTML.**
+- Cada componente tiene su `.html` individual — sin excepciones.
+- Cualquier PR que use `template:` inline será rechazado.
+
+## Smart vs Dumb
+
+| Tipo | Carpeta | Responsabilidad |
+|------|---------|----------------|
+| Page (smart) | `features/{feature}/{nombre}/` | Inyecta store/servicios, gestiona estado |
+| Component (dumb) | `shared/components/` | Solo `input()` / `output()`, sin lógica de negocio |
+
+## Input / Output — API moderna (Angular 17+)
+
+```typescript
+// ✅ signal-based — obligatorio en código nuevo
+// añade comentarios SIEMPRE quien lo utiliza y para que
+nombre     = input.required<string>();
+categoria  = input<string>('all');           // con default
+seleccionado = output<Transaction>();
+
+// ❌ obsoleto — no usar en código nuevo
+@Input() nombre: string;
+@Output() seleccionado = new EventEmitter<Transaction>();
+```
+
+## Inyección de dependencias
+
+```typescript
+// ✅
+private store  = inject(Store);
+private router = inject(Router);
+
+// ❌
+constructor(private store: Store) {}
+```
+
+## Estado — Signals + NgRx
+
+```typescript
+// Estado local (UI) — signal directo
+loading = signal<boolean>(false);
+
+// Colecciones (transacciones, categorías, carteras) — NgRx via toSignal()
+// Comentario OBLIGATORIO: qué selector usa y qué representa en este componente
+/** Lista completa de transacciones del usuario actual desde el store NgRx. */
+readonly allTransactions = toSignal(
+  this.store.select(selectAllTransactions),
+  { initialValue: [] }
+);
+
+// Derivados — computed() con comentario OBLIGATORIO
+/** Transacciones filtradas por cartera, categoría y periodo activos. */
+readonly transactions = computed(() =>
+  this.allTransactions().filter(t => t.walletId === this.filterWallet())
+);
+```
+
+### Reglas de comentarios — toSignal() y computed()
+
+- **`toSignal()`**: siempre una línea JSDoc encima explicando qué selector conecta y qué representa en el componente. Si se cambia el selector, actualizar el comentario.
+- **`computed()`**: siempre una línea JSDoc encima explicando qué deriva y por qué. Si se modifica la lógica, actualizar el comentario.
+- Estos son los únicos casos donde se escribe comentario en un `.ts` — la regla general "cero comentarios" no aplica aquí.
+
+```typescript
+// ✅ correcto
+/** Carteras activas del usuario para poblar el selector de filtro. */
+readonly wallets = toSignal(this.store.select(selectAllWallets), { initialValue: [] });
+
+/** Balance neto: suma de ingresos menos egresos en moneda base. */
+readonly balance = computed(() =>
+  this.transactions().reduce((sum, t) =>
+    t.type === TRANSACTION_TYPES.INCOME ? sum + t.amount_base : sum - t.amount_base, 0)
+);
+
+// ❌ sin comentario
+readonly wallets = toSignal(this.store.select(selectAllWallets), { initialValue: [] });
+```
+
+- `NgRx` para colecciones grandes: transacciones, categorías, carteras, presupuestos.
+- `BehaviorSubject` en servicios solo para config/preferencias de usuario.
+- `toSignal()` para consumir selectores NgRx en plantillas — sin `async pipe`.
+
+## Lazy loading — obligatorio
+
+```typescript
+// app.routes.ts — loadComponent siempre
+{
+  path: 'transactions',
+  loadComponent: () =>
+    import('./features/transactions/transaction-list/transaction-list.page')
+      .then(m => m.TransactionListPage),
+},
+```
+
+## Parámetros de URL como Inputs
+
+`withComponentInputBinding()` debe estar en `provideRouter()` — sin él, los route params no llegan como `input()`.
+
+```typescript
+// app.config.ts
+provideRouter(routes, withComponentInputBinding())
+
+// En el componente de la ruta — no hace falta ActivatedRoute
+transactionId = input<string>();       // :transactionId del path
+filter        = input<string>('all'); // ?filter=... query param
+```
+
+## Lifecycle hooks — orden correcto
+
+1. `ngOnInit` — dispatch de acciones NgRx, setup inicial.
+2. `ngOnChanges` — reaccionar a cambios de `input()` (route params que cambian en el mismo componente), y eventos como (click) u otros.
+3. `ngAfterViewInit` — acceso a `@ViewChild`, inicializar Chart.js.
+4. `ngOnDestroy` — cleanup de subscripciones manuales (si las hay).
+
+## Restricciones
+
+- No `NgModule` en componentes nuevos.
+- No `async pipe` — usar `toSignal()`.
+- No `*ngIf` / `*ngFor` — usar `@if` / `@for`.
+- No constructor injection — usar `inject()`.
+- No `@Input()` / `@Output()` legacy — usar `input()` / `output()` en código nuevo.
+- No `ChangeDetectionStrategy.Default` — siempre `OnPush`.
+- No guards ni resolvers de routing — la lógica de acceso va en `AuthService` + redirect en `ngOnInit`.
+- No interceptores HTTP — las cabeceras de auth las construye `SheetsApiService` directamente.
+- No llamadas directas a Sheets API desde componentes — solo vía Effects → `SheetsApiService`.

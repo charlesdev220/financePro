@@ -20,6 +20,7 @@ import { AppState } from '../../../store/app.state';
 @Component({
   selector: 'app-wallet-list',
   templateUrl: 'wallet-list.page.html',
+  styleUrls: ['wallet-list.page.scss'],
   standalone: true,
   imports: [
     IonContent, IonHeader, IonTitle, IonToolbar,
@@ -57,6 +58,7 @@ export class WalletListPage implements OnInit {
     const modal = await this.modalCtrl.create({
       component: WalletFormComponent,
       componentProps: { userId: user.sub },
+      backdropDismiss: false,
     });
     await modal.present();
   }
@@ -66,6 +68,7 @@ export class WalletListPage implements OnInit {
     const modal = await this.modalCtrl.create({
       component: WalletFormComponent,
       componentProps: { wallet, rowNumber },
+      backdropDismiss: false,
     });
     await modal.present();
   }

@@ -2,48 +2,34 @@
   <ion-toolbar>
     <ion-title>Transacciones</ion-title>
     @if (activeFilters()) {
-      <ion-buttons slot="end">
-        <ion-button (click)="clearFilters()" color="medium" size="small">
-          Limpiar filtros
-        </ion-button>
-      </ion-buttons>
+    <ion-buttons slot="end">
+      <ion-button (click)="clearFilters()" color="medium" size="small">
+        Limpiar filtros
+      </ion-button>
+    </ion-buttons>
     }
   </ion-toolbar>
   <ion-toolbar>
-    <ion-select
-      [value]="filterWallet()"
-      (ionChange)="filterWallet.set($event.detail.value)"
-      placeholder="Todas las carteras"
-      interface="action-sheet"
-      style="margin: 0 8px"
-    >
+    <!--  TODO: nunca: (ionChange)="filterWallet.set($event.detail.value)"  debe estar en el ts "filterWallet.set($event.detail.value)"-->
+    <ion-select [value]="filterWallet()" (ionChange)="filterWallet.set($event.detail.value)"
+      placeholder="Todas las carteras" interface="alert" style="margin: 0 8px">
       <ion-select-option value="">Todas las carteras</ion-select-option>
       @for (wallet of wallets(); track wallet.walletId) {
-        <ion-select-option [value]="wallet.walletId">{{ wallet.name }}</ion-select-option>
+      <ion-select-option [value]="wallet.walletId">{{ wallet.name }}</ion-select-option>
       }
     </ion-select>
-    <ion-select
-      [value]="filterCategory()"
-      (ionChange)="filterCategory.set($event.detail.value)"
-      placeholder="Todas las categorías"
-      interface="action-sheet"
-      style="margin: 0 8px"
-    >
+    <ion-select [value]="filterCategory()" (ionChange)="filterCategory.set($event.detail.value)"
+      placeholder="Todas las categorías" interface="alert" style="margin: 0 8px">
       <ion-select-option value="">Todas las categorías</ion-select-option>
       @for (cat of categories(); track cat.categoryId) {
-        <ion-select-option [value]="cat.categoryId">{{ cat.icon }} {{ cat.name }}</ion-select-option>
+      <ion-select-option [value]="cat.categoryId">{{ cat.icon }} {{ cat.name }}</ion-select-option>
       }
     </ion-select>
-    <ion-select
-      [value]="filterPeriod()"
-      (ionChange)="filterPeriod.set($event.detail.value)"
-      placeholder="Todos los períodos"
-      interface="action-sheet"
-      style="margin: 0 8px"
-    >
+    <ion-select [value]="filterPeriod()" (ionChange)="filterPeriod.set($event.detail.value)"
+      placeholder="Todos los períodos" interface="alert" style="margin: 0 8px">
       <ion-select-option value="">Todos los períodos</ion-select-option>
       @for (period of availablePeriods(); track period) {
-        <ion-select-option [value]="period">{{ period }}</ion-select-option>
+      <ion-select-option [value]="period">{{ period }}</ion-select-option>
       }
     </ion-select>
   </ion-toolbar>
@@ -51,43 +37,40 @@
 
 <ion-content>
   @if (hasTransactions()) {
-    <ion-list>
-      @for (tx of transactions(); track tx.txId) {
-        <ion-item-sliding>
-          <ion-item>
-            <ion-label>
-              <h3>{{ tx.concept || getCategoryName(tx.categoryId) }}</h3>
-              <p>{{ getCategoryName(tx.categoryId) }} · {{ getWalletName(tx.walletId) }}</p>
-              <p><ion-note>{{ tx.date | relativeDate }}</ion-note></p>
-            </ion-label>
-            <div slot="end" [class]="tx.type === 'income' ? 'tx-income' : 'tx-expense'">
-              <ion-icon
-                [name]="tx.type === 'income' ? 'arrow-up-outline' : 'arrow-down-outline'"
-                size="small"
-              ></ion-icon>
-              {{ tx.amount | currencyFormat:tx.currency }}
-            </div>
-          </ion-item>
+  <ion-list>
+    @for (tx of transactions(); track tx.txId) {
+    <ion-item-sliding>
+      <ion-item>
+        <ion-label>
+          <h3>{{ tx.concept || getCategoryName(tx.categoryId) }}</h3>
+          <p>{{ getCategoryName(tx.categoryId) }} · {{ getWalletName(tx.walletId) }}</p>
+          <p><ion-note>{{ tx.date | relativeDate }}</ion-note></p>
+        </ion-label>
+        <div slot="end" [class]="tx.type === 'income' ? 'tx-income' : 'tx-expense'">
+          <ion-icon [name]="tx.type === 'income' ? 'arrow-up-outline' : 'arrow-down-outline'" size="small"></ion-icon>
+          {{ tx.amount | currencyFormat:tx.currency }}
+        </div>
+      </ion-item>
 
-          <ion-item-options side="end">
-            <ion-item-option color="primary" (click)="openEditModal(tx)">
-              <ion-icon slot="icon-only" name="create-outline"></ion-icon>
-            </ion-item-option>
-            <ion-item-option color="danger" (click)="deleteTransaction(tx)">
-              <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
-            </ion-item-option>
-          </ion-item-options>
-        </ion-item-sliding>
-      }
-    </ion-list>
+      <ion-item-options side="end">
+        <ion-item-option color="primary" (click)="openEditModal(tx)">
+          <ion-icon slot="icon-only" name="create-outline"></ion-icon>
+        </ion-item-option>
+        <ion-item-option color="danger" (click)="deleteTransaction(tx)">
+          <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+        </ion-item-option>
+      </ion-item-options>
+    </ion-item-sliding>
+    }
+  </ion-list>
   } @else {
-    <div class="empty-state">
-      <p>No hay transacciones para los filtros seleccionados</p>
-      <ion-button fill="outline" (click)="openAddModal()">
-        <ion-icon slot="start" name="add-outline"></ion-icon>
-        Nueva transacción
-      </ion-button>
-    </div>
+  <div class="empty-state">
+    <p>No hay transacciones para los filtros seleccionados</p>
+    <ion-button fill="outline" (click)="openAddModal()">
+      <ion-icon slot="start" name="add-outline"></ion-icon>
+      Nueva transacción
+    </ion-button>
+  </div>
   }
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">

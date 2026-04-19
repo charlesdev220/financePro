@@ -56,7 +56,7 @@
       <!-- Cartera -->
       <ion-item>
         <ion-label>Cartera</ion-label>
-        <ion-select formControlName="walletId" interface="action-sheet" placeholder="Seleccioná una cartera">
+        <ion-select formControlName="walletId" interface="alert" placeholder="Seleccioná una cartera">
           @for (wallet of wallets(); track wallet.walletId) {
             <ion-select-option [value]="wallet.walletId">{{ wallet.icon }} {{ wallet.name }}</ion-select-option>
           }
@@ -69,7 +69,7 @@
       <!-- Categoría (filtrada por tipo) -->
       <ion-item>
         <ion-label>Categoría</ion-label>
-        <ion-select formControlName="categoryId" interface="action-sheet" placeholder="Seleccioná una categoría">
+        <ion-select formControlName="categoryId" interface="alert" placeholder="Seleccioná una categoría">
           @for (cat of filteredCategories(); track cat.categoryId) {
             <ion-select-option [value]="cat.categoryId">{{ cat.icon }} {{ cat.name }}</ion-select-option>
           }
