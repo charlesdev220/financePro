@@ -4,7 +4,7 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding" style="--background: --color-green-50;">
+<ion-content class="ion-padding" style="--background: var(--color-green-50);">
   <div class="max-w-screen-xl mx-auto">
     <app-period-selector [period]="currentPeriod()" (periodChange)="onPeriodChange($event)">
     </app-period-selector>
@@ -13,7 +13,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
       @for (budget of budgets(); track budget.budgetId) {
       <div class="bg-white rounded-2xl border border-monefy-border overflow-hidden">
-        <ion-item-sliding>
+        <ion-item-sliding style="width: 100%;">
           <ion-item (click)="openEditModal(budget)" button detail lines="none">
             <ion-label>
               <p class="text-sm font-semibold text-monefy-text-primary mb-1">{{ getCategoryName(budget.categoryId) }}

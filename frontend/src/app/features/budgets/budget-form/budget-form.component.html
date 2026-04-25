@@ -14,19 +14,43 @@
   @if (form) {
     <form [formGroup]="form">
       <ion-list>
-        <!-- Categoría -->
-        <ion-item>
-          <ion-label position="stacked">Categoría *</ion-label>
-          <ion-select formControlName="categoryId" placeholder="Seleccioná una categoría">
-            @for (cat of expenseCategories(); track cat.categoryId) {
-              <ion-select-option [value]="cat.categoryId">
-                {{ cat.icon }} {{ cat.name }}
-              </ion-select-option>
-            }
-          </ion-select>
+
+        <!-- Categoría — accordion con grid de tiles -->
+        <ion-item lines="none" class="ion-no-padding mb-1">
+          <ion-label position="stacked" class="mb-2">Categoría *</ion-label>
         </ion-item>
+        <button type="button"
+                class="w-full flex items-center justify-between bg-white rounded-2xl border-2 px-4 py-3 mb-1 transition-all"
+                [class]="form.get('categoryId')?.invalid && form.get('categoryId')?.touched ? 'border-red-400' : 'border-gray-200'"
+                (click)="onToggleCategoryPicker()">
+          <div class="flex items-center gap-3">
+            @if (selectedCategory()) {
+              <span class="text-xl">{{ selectedCategory()!.icon }}</span>
+              <span class="text-sm font-semibold text-gray-800">{{ selectedCategory()!.name }}</span>
+            } @else {
+              <span class="text-sm text-gray-400">Seleccioná una categoría</span>
+            }
+          </div>
+          <ion-icon [name]="showCategoryPicker() ? 'chevron-up-outline' : 'chevron-down-outline'" class="text-gray-400"></ion-icon>
+        </button>
+
+        @if (showCategoryPicker()) {
+          <div class="grid grid-cols-4 gap-2 mb-3 px-1">
+            @for (cat of expenseCategories(); track cat.categoryId) {
+              <div (click)="onSelectCategory(cat.categoryId)"
+                   class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2"
+                   style="height: 72px;"
+                   [style.border-color]="cat.color"
+                   [style.background-color]="cat.color + '1a'">
+                <span class="text-2xl leading-none">{{ cat.icon }}</span>
+                <span class="text-[10px] text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ cat.name }}</span>
+              </div>
+            }
+          </div>
+        }
+
         @if (form.get('categoryId')?.invalid && form.get('categoryId')?.touched) {
-          <ion-note color="danger" class="ion-padding-horizontal">
+          <ion-note color="danger" class="ion-padding-horizontal block mb-2">
             La categoría es obligatoria
           </ion-note>
         }

@@ -25,6 +25,8 @@ export class {Nombre}Page {}
 - **Los archivos `.ts` NUNCA contienen HTML.**
 - Cada componente tiene su `.html` individual — sin excepciones.
 - Cualquier PR que use `template:` inline será rechazado.
+- los observable deben ser pasados a tosignal antes de ser usados en el template.
+- en las rutas hacer uso del :slug para un mejor SEO 
 
 ## Smart vs Dumb
 
@@ -59,6 +61,29 @@ private router = inject(Router);
 constructor(private store: Store) {}
 ```
 
+# USO de CONSTANTES
+
+```typescript
+export const TRANSACTION_TYPES = {
+  INCOME: 'INCOME' as const,
+  EXPENSE: 'EXPENSE' as const,
+};
+```
+```typescript
+// ✅
+signal<TransactionType>(TRANSACTION_TYPES.EXPENSE);
+
+// ❌
+signal<'income' | 'expense'>('expense'); 
+```
+```html
+@let expense = 'expense';
+@let income = 'income';
+// ✅
+{{ expense }}    | {{ income }}
+// ❌
+'expense'      | 'income' 
+```
 ## Estado — Signals + NgRx
 
 ```typescript

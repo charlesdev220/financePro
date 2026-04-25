@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnInit, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
@@ -13,11 +13,12 @@ import {
   IonItem,
   IonLabel,
   IonInput,
-  IonSelect,
-  IonSelectOption,
+  IonIcon,
   IonNote,
   ModalController,
 } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import { chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
 import { BudgetsActions } from '@store/budgets/budgets.actions';
 import { selectByType } from '@store/categories/categories.selectors';
 import { AuthService } from '@core/services/auth.service';
@@ -41,8 +42,7 @@ import { BUDGET_STATUS } from '@core/constants/budget.constants';
     IonItem,
     IonLabel,
     IonInput,
-    IonSelect,
-    IonSelectOption,
+    IonIcon,
     IonNote,
   ],
 })
@@ -70,13 +70,32 @@ export class BudgetFormComponent implements OnInit {
   /** True cuando se recibió un presupuesto existente, indicando modo edición. */
   get isEditMode(): boolean { return !!this.budget; }
 
-  /** Categorías de tipo gasto para el selector de categoría del presupuesto. */
+  /** Categorías de tipo gasto para el grid del accordion de categoría. */
   readonly expenseCategories = toSignal(
     this.store.select(selectByType('expense')),
     { initialValue: [] },
   );
 
+  /** Controla la visibilidad del grid de tiles de categoría. */
+  showCategoryPicker = signal(false);
+
+  /** Categoría seleccionada actualmente, para mostrar en el accordion cerrado. */
+  readonly selectedCategory = computed(() =>
+    this.expenseCategories().find(c => c.categoryId === this.form?.get('categoryId')?.value)
+  );
+
+  onToggleCategoryPicker(): void {
+    this.showCategoryPicker.update(v => !v);
+  }
+
+  onSelectCategory(categoryId: string): void {
+    this.form.get('categoryId')?.setValue(categoryId);
+    this.form.get('categoryId')?.markAsDirty();
+    this.showCategoryPicker.set(false);
+  }
+
   ngOnInit(): void {
+    addIcons({ chevronDownOutline, chevronUpOutline });
     const defaultPeriod = this.budget?.period ?? this.period ?? new Date().toISOString().slice(0, 7);
     const b = this.budget;
     this.form = this.fb.group({

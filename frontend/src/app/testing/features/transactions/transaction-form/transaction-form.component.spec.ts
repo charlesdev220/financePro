@@ -183,3 +183,115 @@ describe('TransactionFormComponent – budget logic (REQ-13)', () => {
     expect(component.getBudgetWarning()).toBeTrue();
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TransactionFormComponent — onToggleSign / onDelete / save guard (REQ-16)
+// ─────────────────────────────────────────────────────────────────────────────
+describe('TransactionFormComponent – numpad sign, delete and save guard (REQ-16)', () => {
+  let component: TransactionFormComponent;
+  let fixture: ReturnType<typeof TestBed.createComponent<TransactionFormComponent>>;
+  let store: MockStore;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [TransactionFormComponent],
+      providers: [
+        provideMockStore({ initialState: INITIAL_STATE }),
+        {
+          provide: ModalController,
+          useValue: {
+            create: jasmine.createSpy('create'),
+            dismiss: jasmine.createSpy('dismiss').and.returnValue(Promise.resolve()),
+          },
+        },
+        {
+          provide: ConceptsService,
+          useValue: {
+            loadConcepts: () => of([]),
+            getSuggestions: () => [],
+            upsertConcept: async () => {},
+          },
+        },
+      ],
+    }).compileComponents();
+
+    store = TestBed.inject<MockStore>(Store as any);
+    fixture = TestBed.createComponent(TransactionFormComponent);
+    component = fixture.componentInstance;
+    fixture.componentRef.setInput('userId', 'usr_001');
+    fixture.componentRef.setInput('userBaseCurrency', 'EUR');
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    store.resetSelectors();
+  });
+
+  // onToggleSign con valor positivo → agrega prefijo '-'
+  it('onToggleSign_shouldPrependMinus_whenAmountStringIsPositive', () => {
+    // Given
+    component.amountString.set('150');
+
+    // When
+    component.onToggleSign();
+
+    // Then
+    expect(component.amountString()).toBe('-150');
+  });
+
+  // onToggleSign con valor negativo → elimina el prefijo '-'
+  it('onToggleSign_shouldRemoveMinus_whenAmountStringIsNegative', () => {
+    // Given
+    component.amountString.set('-150');
+
+    // When
+    component.onToggleSign();
+
+    // Then
+    expect(component.amountString()).toBe('150');
+  });
+
+  // onToggleSign con '0' → no opera, permanece '0'
+  it('onToggleSign_shouldNotAlterAmountString_whenValueIsZero', () => {
+    // Given
+    component.amountString.set('0');
+
+    // When
+    component.onToggleSign();
+
+    // Then
+    expect(component.amountString()).toBe('0');
+  });
+
+  // onDelete con '-1' → resetea a '0', no deja '-' colgado
+  it('onDelete_shouldResetToZero_whenDeletingLastDigitOfNegativeOneDigitValue', () => {
+    // Given
+    component.amountString.set('-1');
+
+    // When
+    component.onDelete();
+
+    // Then: '-' solo no es válido, debe quedar '0'
+    expect(component.amountString()).toBe('0');
+  });
+
+  // save() no despacha ninguna acción cuando amount === 0
+  it('save_shouldNotDispatchAnyAction_whenAmountIsZero', async () => {
+    // Given: formulario válido pero amount = 0
+    component.form.patchValue({
+      type: 'expense',
+      amount: 0,
+      currency: 'EUR',
+      walletId: 'w1',
+      categoryId: 'cat-1',
+      date: '2026-04-10',
+    });
+    const dispatchSpy = spyOn(store, 'dispatch');
+
+    // When
+    await component.save();
+
+    // Then: el guard debe haber cortado la ejecución antes del dispatch
+    expect(dispatchSpy).not.toHaveBeenCalled();
+  });
+});

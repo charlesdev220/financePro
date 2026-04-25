@@ -14,7 +14,7 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true" class="px-8">
 
   <!-- Estado inicial: Cuenta vacía (Seeding) -->
   @if (needsSeed()) {
@@ -147,7 +147,8 @@
 </ion-content>
 
 <!-- Modal para Nueva Transacción (Blindado para Signals y Layout) -->
-<ion-modal [isOpen]="isModalOpen()" (didDismiss)="closeModal()" [backdropDismiss]="true">
+<ion-modal [isOpen]="isModalOpen()" (didDismiss)="closeModal()" [backdropDismiss]="true"
+  cssClass="transaction-modal-web">
   <ng-template>
     <app-transaction-form class="ion-page" [userId]="currentUserId()" [userBaseCurrency]="'EUR'"
       [initialType]="modalInitialType()" (dismiss)="closeModal()">

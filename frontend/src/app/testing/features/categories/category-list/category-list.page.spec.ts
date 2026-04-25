@@ -1,24 +1,26 @@
 import { TestBed } from '@angular/core/testing';
 import { Store } from '@ngrx/store';
 import { provideMockStore, MockStore } from '@ngrx/store/testing';
-import { ModalController, ToastController } from '@ionic/angular/standalone';
+import { ActionSheetController, AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { CategoryListPage } from '../../../../features/categories/category-list/category-list.page';
 import { AuthService } from '../../../../core/services/auth.service';
-import { IBudget } from '../../../../models/budget.model';
+import { ICategory } from '../../../../models/category.model';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper
 // ─────────────────────────────────────────────────────────────────────────────
-function makeBudget(categoryId: string, period: string, status: IBudget['status'] = 'ok'): IBudget {
+function makeCategory(categoryId: string, type: 'income' | 'expense' = 'expense'): ICategory {
   return {
-    budgetId: `b-${categoryId}-${period}`,
-    userId: 'usr_001',
     categoryId,
-    period,
-    budgetAmount: 500,
-    spentAmount: status === 'ok' ? 200 : status === 'warning' ? 430 : 550,
-    status,
-    lastUpdated: '2026-04-12T00:00:00Z',
+    userId: 'usr_001',
+    name: `Cat ${categoryId}`,
+    type,
+    icon: '📦',
+    color: '#5BAD8F',
+    budgetAmount: null,
+    budgetPeriod: 'monthly',
+    isActive: true,
+    createdAt: '2026-01-01T00:00:00Z',
   };
 }
 
@@ -30,18 +32,17 @@ const INITIAL_STATE = {
   currency:     { rates: {}, loading: false, error: null },
 };
 
-const mockToast = { present: jasmine.createSpy('present').and.returnValue(Promise.resolve()) };
-const mockModal = { present: jasmine.createSpy('present').and.returnValue(Promise.resolve()) };
+const mockToast       = { present: jasmine.createSpy('present').and.returnValue(Promise.resolve()) };
+const mockModal       = { present: jasmine.createSpy('present').and.returnValue(Promise.resolve()), onWillDismiss: jasmine.createSpy('onWillDismiss').and.returnValue(Promise.resolve({ role: 'cancel', data: null })) };
+const mockActionSheet = { present: jasmine.createSpy('present').and.returnValue(Promise.resolve()) };
+const mockAlert       = { present: jasmine.createSpy('present').and.returnValue(Promise.resolve()) };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// CategoryListPage — getBudgetForCategory (REQ-14)
+// CategoryListPage — selection mode (REQ-17)
 // ─────────────────────────────────────────────────────────────────────────────
-describe('CategoryListPage – getBudgetForCategory (REQ-14)', () => {
+describe('CategoryListPage – selection mode (REQ-17)', () => {
   let component: CategoryListPage;
   let store: MockStore;
-
-  // El período que usa el componente es el mes actual (igual que new Date().toISOString().slice(0,7))
-  const currentPeriod = new Date().toISOString().slice(0, 7);
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -55,6 +56,14 @@ describe('CategoryListPage – getBudgetForCategory (REQ-14)', () => {
         {
           provide: ToastController,
           useValue: { create: jasmine.createSpy('create').and.returnValue(Promise.resolve(mockToast)) },
+        },
+        {
+          provide: ActionSheetController,
+          useValue: { create: jasmine.createSpy('create').and.returnValue(Promise.resolve(mockActionSheet)) },
+        },
+        {
+          provide: AlertController,
+          useValue: { create: jasmine.createSpy('create').and.returnValue(Promise.resolve(mockAlert)) },
         },
         {
           provide: AuthService,
@@ -71,61 +80,90 @@ describe('CategoryListPage – getBudgetForCategory (REQ-14)', () => {
 
   afterEach(() => {
     store.resetSelectors();
+    mockActionSheet.present.calls.reset();
+    mockAlert.present.calls.reset();
   });
 
-  // REQ-14 sc1: categoría expense con presupuesto para el período actual → retorna budget
-  it('getBudgetForCategory_shouldReturnBudget_whenCategoryHasBudgetForCurrentPeriod', () => {
-    // Given: presupuesto para 'cat-1' en el período actual
-    const budget = makeBudget('cat-1', currentPeriod, 'ok');
-    store.setState({ ...INITIAL_STATE, budgets: { items: [budget], rowMap: {}, loading: false, error: null } });
-
+  // toggleSelection agrega el id al Set
+  it('toggleSelection_shouldAddId_whenIdIsNotInSelectedIds', () => {
     // When
-    const result = component.getBudgetForCategory('cat-1');
+    component.toggleSelection('cat-1');
 
     // Then
-    expect(result).toEqual(budget);
+    expect(component.selectedIds().has('cat-1')).toBeTrue();
   });
 
-  // REQ-14 sc3/sc4: sin presupuesto para esa categoría → retorna null
-  it('getBudgetForCategory_shouldReturnNull_whenNoBudgetExistsForCategory', () => {
-    // Given: ningún presupuesto en el store
-    store.setState({ ...INITIAL_STATE, budgets: { items: [], rowMap: {}, loading: false, error: null } });
-
-    // When
-    const result = component.getBudgetForCategory('cat-999');
-
-    // Then
-    expect(result).toBeNull();
-  });
-
-  // REQ-14: presupuesto de período diferente → retorna null (no aplica al período actual)
-  it('getBudgetForCategory_shouldReturnNull_whenBudgetIsForDifferentPeriod', () => {
-    // Given: presupuesto para cat-1 pero de marzo, no del período actual
-    const oldBudget = makeBudget('cat-1', '2026-03', 'ok');
-    store.setState({ ...INITIAL_STATE, budgets: { items: [oldBudget], rowMap: {}, loading: false, error: null } });
-
-    // When
-    const result = component.getBudgetForCategory('cat-1');
-
-    // Then: no debe mostrar el badge para un período diferente al actual
-    expect(result).toBeNull();
-  });
-
-  // REQ-14: múltiples presupuestos → retorna solo el de la categoría correcta
-  it('getBudgetForCategory_shouldReturnCorrectBudget_whenMultipleBudgetsExist', () => {
+  // toggleSelection llamado dos veces → quita el id
+  it('toggleSelection_shouldRemoveId_whenCalledTwiceWithSameId', () => {
     // Given
-    const budgetCat1 = makeBudget('cat-1', currentPeriod, 'ok');
-    const budgetCat2 = makeBudget('cat-2', currentPeriod, 'warning');
-    store.setState({
-      ...INITIAL_STATE,
-      budgets: { items: [budgetCat1, budgetCat2], rowMap: {}, loading: false, error: null },
-    });
+    component.toggleSelection('cat-1');
+    expect(component.selectedIds().has('cat-1')).toBeTrue();
 
     // When
-    const result = component.getBudgetForCategory('cat-2');
+    component.toggleSelection('cat-1');
 
-    // Then: retorna el presupuesto de cat-2, no el de cat-1
-    expect(result).toEqual(budgetCat2);
-    expect(result?.categoryId).toBe('cat-2');
+    // Then
+    expect(component.selectedIds().has('cat-1')).toBeFalse();
+  });
+
+  // selectedCount refleja el tamaño del Set
+  it('selectedCount_shouldReflectSelectedIdsSize', () => {
+    // Given: inicialmente vacío
+    expect(component.selectedCount()).toBe(0);
+
+    // When
+    component.toggleSelection('cat-1');
+    component.toggleSelection('cat-2');
+
+    // Then
+    expect(component.selectedCount()).toBe(2);
+  });
+
+  // toggleSelectionMode activa el modo selección
+  it('toggleSelectionMode_shouldActivateSelectionMode_whenCalledWhileInactive', () => {
+    // Given
+    expect(component.selectionMode()).toBeFalse();
+
+    // When
+    component.toggleSelectionMode();
+
+    // Then
+    expect(component.selectionMode()).toBeTrue();
+  });
+
+  // toggleSelectionMode desactiva el modo y limpia la selección
+  it('toggleSelectionMode_shouldDeactivateModeAndClearSelection_whenCalledWhileActive', () => {
+    // Given: modo activo con categorías seleccionadas
+    component.toggleSelectionMode(); // activar
+    component.toggleSelection('cat-1');
+    component.toggleSelection('cat-2');
+    expect(component.selectionMode()).toBeTrue();
+    expect(component.selectedIds().size).toBe(2);
+
+    // When
+    component.toggleSelectionMode(); // desactivar
+
+    // Then
+    expect(component.selectionMode()).toBeFalse();
+    expect(component.selectedIds().size).toBe(0);
+  });
+
+  // onTilePress en modo selección → llama toggleSelection, no abre action sheet
+  it('onTilePress_shouldCallToggleSelection_whenSelectionModeIsActive', async () => {
+    // Given
+    const cat = makeCategory('cat-1');
+    component.toggleSelectionMode(); // activar modo selección
+    const toggleSpy = spyOn(component, 'toggleSelection').and.callThrough();
+    const actionSheetCtrl = TestBed.inject(ActionSheetController);
+    const createSpy = actionSheetCtrl.create as jasmine.Spy;
+    createSpy.calls.reset();
+
+    // When
+    await component.onTilePress(cat);
+
+    // Then: toggleSelection fue invocado con el id correcto
+    expect(toggleSpy).toHaveBeenCalledWith('cat-1');
+    // Y el action sheet NO fue creado
+    expect(createSpy).not.toHaveBeenCalled();
   });
 });

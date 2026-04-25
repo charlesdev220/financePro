@@ -46,3 +46,12 @@
 .font-pacifico {
   font-family: 'Pacifico', cursive;
 }
+
+/* Excepción: altura mínima del modal de transacción en viewports web ≥768px */
+@media (min-width: 768px) {
+  ion-modal.transaction-modal-web {
+    --height: 80vh;
+    --min-height: 80vh;
+    align-items: center;
+  }
+}

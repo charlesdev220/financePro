@@ -308,7 +308,7 @@ Transacciones
 
 **Balance pill** — Mostrar el saldo en un contenedor pill semi-transparente sobre la cabecera verde:
 ```html
-<div class="bg-white/20 backdrop-blur-md px-6 py-3 rounded-full border border-white/30">
+<div class="bg-white/20 backdrop-blur-md px-6 py-2 rounded-full border border-white/30">
   <span class="text-white text-3xl font-extrabold">{{ balance | currencyFormat }}</span>
 </div>
 ```

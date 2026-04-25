@@ -11,7 +11,6 @@ import {
   IonIcon,
   IonItem,
   IonLabel,
-
   IonItemSliding,
   IonItemOption,
   IonItemOptions,
@@ -40,8 +39,7 @@ import { selectBaseCurrency } from '@store/currency/currency.selectors';
 
 /**
  * TransactionListPage — Vista de listado detallado de movimientos.
- * Permite filtrar por cartera, categoría y período, además de gestionar
- * la edición y borrado de transacciones mediante una interfaz reactiva.
+ * Permite filtrar por cartera, categoría y rango de fechas mediante paneles inline reactivos.
  */
 @Component({
   selector: 'app-transaction-list',
@@ -53,7 +51,6 @@ import { selectBaseCurrency } from '@store/currency/currency.selectors';
     IonContent, IonHeader, IonTitle, IonToolbar,
     IonButtons, IonButton, IonIcon,
     IonItem, IonLabel,
-
     IonItemSliding, IonItemOption, IonItemOptions,
     IonModal,
     TransactionFormComponent,
@@ -69,15 +66,13 @@ export class TransactionListPage implements OnInit {
   readonly filterWallet   = signal<string>('');
   /** Filtro activo por categoría. */
   readonly filterCategory = signal<string>('');
-  /** Filtro activo por período (YYYY-MM). */
-  readonly filterPeriod   = signal<string>('');
+  /** Fecha de inicio del rango de filtro (YYYY-MM-DD). Vacío = sin límite inferior. */
+  readonly filterDateFrom = signal<string>('');
+  /** Fecha de fin del rango de filtro (YYYY-MM-DD). Vacío = sin límite superior. */
+  readonly filterDateTo   = signal<string>('');
 
-  /** Estado de visibilidad del selector de carteras. */
-  readonly filterWalletOpen   = signal(false);
-  /** Estado de visibilidad del selector de categorías. */
-  readonly filterCategoryOpen = signal(false);
-  /** Estado de visibilidad del selector de períodos. */
-  readonly filterPeriodOpen   = signal(false);
+  /** Panel de filtro activo. Solo uno puede estar abierto a la vez. */
+  readonly openFilter = signal<'wallet' | 'category' | 'period' | null>(null);
 
   /** Etiqueta descriptiva de la cartera filtrada. */
   readonly filterWalletLabel = computed(() =>
@@ -93,10 +88,22 @@ export class TransactionListPage implements OnInit {
       : 'Todas las categorías'
   );
 
-  /** Etiqueta descriptiva del período filtrado. */
-  readonly filterPeriodLabel = computed(() =>
-    this.filterPeriod() || 'Todos los períodos'
-  );
+  /** Etiqueta descriptiva del rango de fechas filtrado. */
+  readonly filterPeriodLabel = computed(() => {
+    const from = this.filterDateFrom();
+    const to   = this.filterDateTo();
+    if (from && to)  return `${from} → ${to}`;
+    if (from)        return `Desde ${from}`;
+    if (to)          return `Hasta ${to}`;
+    return 'Período';
+  });
+
+  /** True cuando filterDateFrom > filterDateTo (rango inválido). */
+  readonly dateRangeInvalid = computed(() => {
+    const from = this.filterDateFrom();
+    const to   = this.filterDateTo();
+    return !!(from && to && from > to);
+  });
 
   /** Último mensaje de error emitido por el dominio de transacciones. */
   readonly error = toSignal(this.store.select(selectTransactionsError), { initialValue: null });
@@ -115,15 +122,18 @@ export class TransactionListPage implements OnInit {
   /** Mapa de txId a número de fila para permitir ediciones en Sheets. */
   readonly rowMap = toSignal(this.store.select(selectTransactionsRowMap), { initialValue: {} as Record<string, number> });
 
-  /** Lista de transacciones filtradas y enriquecidas con iconos y nombres de categoría. */
+  /** Lista de transacciones filtradas por cartera, categoría y rango de fechas, enriquecidas con metadatos de categoría. */
   readonly transactionsEnriched = computed(() => {
     const userId = this.authService.getUser()?.sub ?? '';
     const cats = this.categories();
+    const from = this.filterDateFrom();
+    const to   = this.filterDateTo();
     return this.allTransactions()
       .filter(t => t.userId === userId)
       .filter(t => !this.filterWallet() || t.walletId === this.filterWallet())
       .filter(t => !this.filterCategory() || t.categoryId === this.filterCategory())
-      .filter(t => !this.filterPeriod() || t.date.startsWith(this.filterPeriod()))
+      .filter(t => !from || t.date >= from)
+      .filter(t => !to   || t.date <= to)
       .map(t => {
         const cat = cats.find(c => c.categoryId === t.categoryId);
         return {
@@ -139,7 +149,7 @@ export class TransactionListPage implements OnInit {
   readonly groupedTransactions = computed(() => {
     const txs = this.transactionsEnriched();
     const groups: { date: string; transactions: (ITransaction & { categoryName: string; categoryIcon: string })[]; totalDaily: number }[] = [];
-    
+
     txs.forEach(tx => {
       let group = groups.find(g => g.date === tx.date);
       if (!group) {
@@ -149,7 +159,7 @@ export class TransactionListPage implements OnInit {
       group.transactions.push(tx);
       group.totalDaily += (tx.type === 'income' ? tx.amountBase : -tx.amountBase);
     });
-    
+
     return groups;
   });
 
@@ -158,15 +168,6 @@ export class TransactionListPage implements OnInit {
     this.store.select(selectBaseCurrency).pipe(map(c => c ?? 'EUR')),
     { initialValue: 'EUR' }
   );
-
-  /** Últimos 12 períodos YYYY-MM para el selector de filtro de período. */
-  readonly availablePeriods = computed(() => {
-    const now = new Date();
-    return Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    });
-  });
 
   /** Estado de visibilidad del modal de formulario. */
   readonly isModalOpen = signal(false);
@@ -177,15 +178,16 @@ export class TransactionListPage implements OnInit {
 
   /** Determina si hay transacciones que mostrar con los filtros actuales. */
   readonly hasTransactions = computed(() => this.transactionsEnriched().length > 0);
-  /** Indica si hay algún filtro de búsqueda activo. */
-  readonly activeFilters   = computed(() => !!(this.filterWallet() || this.filterCategory() || this.filterPeriod()));
+  /** Indica si hay algún filtro activo. */
+  readonly activeFilters = computed(() =>
+    !!(this.filterWallet() || this.filterCategory() || this.filterDateFrom() || this.filterDateTo())
+  );
 
   private _prevError = signal<string | null>(null);
 
   constructor() {
     addIcons({ addOutline, trashOutline, createOutline, arrowUpOutline, arrowDownOutline, chevronUpOutline, chevronDownOutline, walletOutline, sparklesOutline, calendarOutline, closeCircleOutline });
-    
-    // Efecto reactivo para mostrar alertas de error de forma automatizada.
+
     effect(() => {
       const err = this.error();
       if (err && err !== this._prevError()) {
@@ -195,18 +197,12 @@ export class TransactionListPage implements OnInit {
     });
   }
 
-  /**
-   * Carga inicial de datos de dominio.
-   */
   ngOnInit(): void {
     this.store.dispatch(TransactionsActions.loadTransactions());
     this.store.dispatch(WalletsActions.loadWallets());
     this.store.dispatch(CategoriesActions.loadCategories());
   }
 
-  /**
-   * Prepara y abre el modal declarativo para una nueva transacción.
-   */
   openAddModal(): void {
     const user = this.authService.getUser();
     if (!user) return;
@@ -215,10 +211,6 @@ export class TransactionListPage implements OnInit {
     this.isModalOpen.set(true);
   }
 
-  /**
-   * Prepara y abre el modal declarativo para editar una transacción existente.
-   * @param tx Transacción a editar.
-   */
   openEditModal(tx: ITransaction): void {
     const user = this.authService.getUser();
     if (!user) return;
@@ -227,18 +219,11 @@ export class TransactionListPage implements OnInit {
     this.isModalOpen.set(true);
   }
 
-  /**
-   * Cierra el modal y limpia la selección.
-   */
   closeModal(): void {
     this.isModalOpen.set(false);
     this.selectedTransaction.set(null);
   }
 
-  /**
-   * Elimina una transacción del sistema sincronizando el Store.
-   * @param tx Transacción a eliminar.
-   */
   async deleteTransaction(tx: ITransaction): Promise<void> {
     const rowNumber = this.rowMap()[tx.txId];
     if (!rowNumber) return;
@@ -253,66 +238,35 @@ export class TransactionListPage implements OnInit {
 
   // --- Handlers de Filtros ---
 
-  onFilterWalletChange(event: Event): void {
-    this.filterWallet.set((event as CustomEvent).detail.value);
-  }
-
-  onFilterCategoryChange(event: Event): void {
-    this.filterCategory.set((event as CustomEvent).detail.value);
-  }
-
-  onFilterPeriodChange(event: Event): void {
-    this.filterPeriod.set((event as CustomEvent).detail.value);
-  }
-
-  toggleWalletFilter(): void {
-    this.filterWalletOpen.update(v => !v);
-    this.filterCategoryOpen.set(false);
-    this.filterPeriodOpen.set(false);
-  }
-
-  toggleCategoryFilter(): void {
-    this.filterCategoryOpen.update(v => !v);
-    this.filterWalletOpen.set(false);
-    this.filterPeriodOpen.set(false);
-  }
-
-  togglePeriodFilter(): void {
-    this.filterPeriodOpen.update(v => !v);
-    this.filterWalletOpen.set(false);
-    this.filterCategoryOpen.set(false);
+  /** Abre el panel del filtro indicado. Si ya está abierto, lo cierra (toggle mutex). */
+  toggleFilter(key: 'wallet' | 'category' | 'period'): void {
+    this.openFilter.update(v => v === key ? null : key);
   }
 
   setWalletFilter(value: string): void {
     this.filterWallet.set(value);
-    this.filterWalletOpen.set(false);
+    this.openFilter.set(null);
   }
 
   setCategoryFilter(value: string): void {
     this.filterCategory.set(value);
-    this.filterCategoryOpen.set(false);
+    this.openFilter.set(null);
   }
 
-  setPeriodFilter(value: string): void {
-    this.filterPeriod.set(value);
-    this.filterPeriodOpen.set(false);
+  setDateFrom(event: Event): void {
+    this.filterDateFrom.set((event.target as HTMLInputElement).value);
   }
 
-  closeWalletFilter(): void {
-    this.filterWalletOpen.set(false);
-  }
-
-  closeCategoryFilter(): void {
-    this.filterCategoryOpen.set(false);
+  setDateTo(event: Event): void {
+    this.filterDateTo.set((event.target as HTMLInputElement).value);
   }
 
   clearFilters(): void {
     this.filterWallet.set('');
     this.filterCategory.set('');
-    this.filterPeriod.set('');
-    this.filterWalletOpen.set(false);
-    this.filterCategoryOpen.set(false);
-    this.filterPeriodOpen.set(false);
+    this.filterDateFrom.set('');
+    this.filterDateTo.set('');
+    this.openFilter.set(null);
   }
 
   getCategoryName(categoryId: string): string {

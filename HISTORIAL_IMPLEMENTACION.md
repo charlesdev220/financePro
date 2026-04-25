@@ -4,6 +4,27 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Sprint 2 UI/UX — Pendientes de Interfaz):
+*Fase actual:* Sprint 2: 11 correcciones acumuladas de UI/UX
+*Estado actual:* Completado ✅ | Archivado: 2026-04-25
+- ✔️ **REQ-01 — CSS variables:** Fix `--background: --color-green-50` → `var(--color-green-50)` en 11 templates (settings, more, currency-settings, register, wallet-form, wallet-list, category-form, category-list, budget-list, analytics, login).
+- ✔️ **REQ-02 — Chart.js race condition:** `queueMicrotask` + guarda `if (!this.chart)` en `chart-pie.component.ts` para evitar doble instancia al navegar rápido al dashboard.
+- ✔️ **REQ-03 — Filtros inline:** Reemplazados 2 overlays `fixed inset-0` (bottom sheets) y añadido el faltante de Período por 3 paneles inline bajo el banner verde. Signal única `openFilter<'wallet'|'category'|'period'|null>` garantiza mutex sin código extra.
+- ✔️ **REQ-04 — Rango Desde/Hasta:** `filterPeriod` eliminado; reemplazado por `filterDateFrom` + `filterDateTo` con inputs nativos `type="date"`. `dateRangeInvalid` computed bloquea el filtro si `from > to`.
+- ✔️ **REQ-05 — Numpad responsive:** Numpad envuelto en `md:hidden`; `ion-input type="number"` alternativo con `hidden md:block` para viewports web.
+- ✔️ **REQ-06 — Modal height web:** `cssClass="transaction-modal-web"` en `ion-modal` de transaction-list y dashboard; regla `@media (min-width: 768px)` en `global.scss` fuerza `--height: 80vh`.
+- ✔️ **REQ-07 — Montos negativos:** Botón `+/−` en fila inferior del numpad; validación `min(-999999)/max(999999)`; guard `amount === 0` en `save()`; `onDelete` limpiado para no dejar `-` colgado.
+- ✔️ **REQ-08 — Budget accordion:** Reemplazado `ion-select` por accordion inline con grid de tiles Monefy. `showCategoryPicker signal`, `selectedCategory computed`, `onToggleCategoryPicker`, `onSelectCategory`.
+- ✔️ **REQ-09 — Budget sliding width:** `style="width: 100%"` en `ion-item-sliding` dentro del grid de cards de presupuesto.
+- ✔️ **REQ-10 — Analytics layout:** Chart full-width en `<section>` independiente; Proyección y Ranking en `grid grid-cols-1 md:grid-cols-2` debajo.
+- ✔️ **REQ-11 — Multi-select categorías:** `selectionMode`, `selectedIds<Set<string>>`, `selectedCount` computed; overlay de checkmark en tiles; barra fija inferior con `Eliminar (N)` + `AlertController` de confirmación.
+*Próximos pasos:* Verificar con Playwright visual + ejecutar test suite Karma.
+*Qué se aprendió:* La signal unificada `openFilter` como mutex es más limpia que 3 booleanas. El `Set<string>` con `signal.update(s => new Set(s))` es el patrón correcto para inmutabilidad con sets en Angular Signals.
+*Por qué se aprendió:* El código original tenía 3 métodos toggle que replicaban lógica mutex manualmente, y el filtro de período no tenía panel implementado en el HTML.
+*Dónde se aprendió:* ADR-01 en `design.md` del cambio `pendientes-ui`.
+
+---
+
 ### Qué hemos completado hasta ahora (Fase 5 — Multimoneda):
 *Fase actual:* Fase 5: Multimoneda persistida en Sheets + CurrencySettingsPage
 *Estado actual:* Completado ✅ | Archivado: 2026-04-25

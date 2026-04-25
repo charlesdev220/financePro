@@ -4,29 +4,27 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding" style="--background: --color-green-50">
+<ion-content class="ion-padding" style="--background: var(--color-green-50);">
   <div class="max-w-screen-xl mx-auto">
 
     <app-period-selector [period]="startPeriod()" (periodChange)="onPeriodChange($event)" />
 
-    <div class="md:grid md:grid-cols-2 md:gap-6 lg:grid-cols-3">
+    <section class="mb-6">
+      <h2 class="text-base font-semibold text-[var(--ion-text-color)] mb-3">Ingresos vs Gastos</h2>
+      <app-analytics-chart [data]="monthlyTotals()" />
+    </section>
 
-      <section class="mb-8 md:mb-0">
-        <h2 class="text-base font-semibold text-[var(--ion-text-color)] mb-3">Ingresos vs Gastos</h2>
-        <app-analytics-chart [data]="monthlyTotals()" />
-      </section>
-
-      <section class="mb-8 md:mb-0">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <section>
         <h2 class="text-base font-semibold text-[var(--ion-text-color)] mb-3">Proyección de tendencia</h2>
         <app-projections [data]="monthlyTotals()" [horizon]="3" />
       </section>
-
-      <section class="mb-8 md:mb-0 md:col-span-2 lg:col-span-1">
+      <section>
         <h2 class="text-base font-semibold text-[var(--ion-text-color)] mb-3">Ranking de gastos</h2>
         <app-spending-ranking [recurrentes]="spendingData().recurrentes" [superfluos]="spendingData().superfluos"
           [userCurrency]="userBaseCurrency()" />
       </section>
-
     </div>
+
   </div>
 </ion-content>

@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, injec
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
-import { IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
-  IonContent, IonItem, IonTextarea, IonIcon, IonToggle,
+import {
+  IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
+  IonContent, IonItem, IonTextarea, IonIcon, IonToggle, IonInput,
   ModalController,
 } from '@ionic/angular/standalone';
 import { OptionPickerComponent, PickerItem } from '@shared/components/option-picker/option-picker.component';
@@ -16,7 +17,7 @@ import { selectAllBudgets } from '@store/budgets/budgets.selectors';
 import { ITransaction } from '@models/transaction.model';
 import { IBudget } from '@models/budget.model';
 import { BudgetIndicatorComponent } from '@shared/components/budget-indicator/budget-indicator.component';
-import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
+import { TRANSACTION_TYPES, TransactionType } from '@core/constants/transaction.constants';
 
 const SUPPORTED_CURRENCIES = ['EUR', 'USD', 'GBP', 'ARS', 'BRL', 'MXN', 'CLP', 'COP'];
 
@@ -34,7 +35,7 @@ const SUPPORTED_CURRENCIES = ['EUR', 'USD', 'GBP', 'ARS', 'BRL', 'MXN', 'CLP', '
   imports: [
     ReactiveFormsModule,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
-    IonContent, IonItem, IonTextarea, IonIcon, IonToggle,
+    IonContent, IonItem, IonTextarea, IonIcon, IonToggle, IonInput,
     BudgetIndicatorComponent,
   ],
 })
@@ -100,7 +101,7 @@ export class TransactionFormComponent implements OnInit {
   );
 
   /** Estado reactivo interno que rastrea el tipo seleccionado en el UI. */
-  readonly typeValue = signal<'income' | 'expense'>('expense');
+  readonly typeValue = signal<TransactionType>(TRANSACTION_TYPES.EXPENSE);
 
 
   /** Icono de la categoría seleccionada actualmente para visualización en el grid. */
@@ -170,7 +171,7 @@ export class TransactionFormComponent implements OnInit {
     // 1. Inicialización inmediata para estabilidad en el renderizado
     this.form = this.fb.group({
       type: [initialType, Validators.required],
-      amount: [tx?.amount ?? null, [Validators.required, Validators.min(0.01)]],
+      amount: [tx?.amount ?? null, [Validators.required, Validators.min(-999999), Validators.max(999999)]],
       currency: [tx?.currency ?? this.userBaseCurrency() ?? 'EUR', Validators.required],
       walletId: ['', Validators.required],
       categoryId: ['', Validators.required],
@@ -186,7 +187,7 @@ export class TransactionFormComponent implements OnInit {
     // 2. Población defensiva de valores por defecto
     const wallets = this.wallets();
     const categories = this.filteredCategories();
-    
+
     if (wallets.length > 0 || categories.length > 0) {
       this.form.patchValue({
         walletId: tx?.walletId ?? wallets[0]?.walletId ?? '',
@@ -209,6 +210,7 @@ export class TransactionFormComponent implements OnInit {
    */
   async save(): Promise<void> {
     if (this.form.invalid) return;
+    if (Number(this.form.get('amount')?.value) === 0) return;
 
     const value = this.form.getRawValue();
     const draft = {
@@ -332,53 +334,61 @@ export class TransactionFormComponent implements OnInit {
     this.form.get('isRecurring')?.setValue(checked);
   }
 
-  /**
-   * Maneja las pulsaciones de los botones del teclado numérico.
-   */
+  /** Alterna el signo del monto en el numpad. No opera si el monto es cero. */
+  onToggleSign(): void {
+    const current = this.amountString();
+    if (current === '0') return;
+    this.amountString.set(current.startsWith('-') ? current.slice(1) : '-' + current);
+    this.updateFormAmount();
+  }
+
+  /** Sincroniza el input nativo web con amountString cuando el usuario escribe directamente. */
+  onWebAmountInput(event: Event): void {
+    const val = (event as CustomEvent).detail.value ?? '';
+    this.amountString.set(val === '' ? '0' : String(val));
+    this.updateFormAmount();
+  }
+
+  /** Maneja las pulsaciones del teclado numérico, preservando el signo actual. */
   onNumberPress(key: string): void {
     const current = this.amountString();
-    
-    // Evitar múltiples ceros iniciales
-    if (current === '0' && key === '0') return;
-    
-    // Manejar punto decimal
+    const isNegative = current.startsWith('-');
+    const abs = isNegative ? current.slice(1) : current;
+    const sign = isNegative ? '-' : '';
+
+    if (abs === '0' && key === '0') return;
+
     if (key === '.') {
       if (current.includes('.')) return;
       this.amountString.set(current + '.');
       return;
     }
 
-    // Reemplazar cero inicial si no es para un decimal
-    if (current === '0' && key !== '.') {
-      this.amountString.set(key);
+    const digits = abs.replace('.', '').length;
+    if (digits >= 6) return;
+
+    if (abs === '0' && key !== '.') {
+      this.amountString.set(sign + key);
     } else {
-      // Limitar a 2 decimales
-      if (current.includes('.')) {
-        const decimals = current.split('.')[1];
+      if (abs.includes('.')) {
+        const decimals = abs.split('.')[1];
         if (decimals.length >= 2) return;
       }
-      this.amountString.set(current + key);
+      this.amountString.set(sign + abs + key);
     }
 
     this.updateFormAmount();
   }
 
-  /**
-   * Borra el último carácter introducido.
-   */
+  /** Borra el último carácter introducido; resetea a '0' si el resultado sería vacío o solo '-'. */
   onDelete(): void {
     const current = this.amountString();
-    if (current.length <= 1) {
-      this.amountString.set('0');
-    } else {
-      this.amountString.set(current.slice(0, -1));
-    }
+    const next = current.slice(0, -1);
+    this.amountString.set(!next || next === '-' ? '0' : next);
     this.updateFormAmount();
   }
 
-  /**
-   * Sincroniza el string del teclado con el valor del formulario.
-   */
+  /** Sincroniza el string del teclado con el valor del formulario. */
   private updateFormAmount(): void {
     const val = parseFloat(this.amountString());
     this.form.get('amount')?.setValue(isNaN(val) ? 0 : val);
