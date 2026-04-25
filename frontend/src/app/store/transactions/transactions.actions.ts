@@ -1,5 +1,5 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { ITransaction } from '../../models/transaction.model';
+import { ITransaction } from '@models/transaction.model';
 
 /** Campos que el usuario ingresa; txId/amountBase/createdAt/updatedAt los genera el Effect. */
 export type TransactionDraft = Omit<ITransaction, 'txId' | 'amountBase' | 'createdAt' | 'updatedAt'>;

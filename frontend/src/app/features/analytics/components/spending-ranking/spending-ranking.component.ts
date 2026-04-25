@@ -1,16 +1,20 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { CurrencyPipe } from '@angular/common';
-import { SpendingItem } from '../../services/analytics.service';
+import { SpendingItem } from '@features/analytics/services/analytics.service';
+import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 
 @Component({
   selector: 'app-spending-ranking',
   standalone: true,
-  imports: [CurrencyPipe],
+  imports: [CurrencyFormatPipe],
   templateUrl: './spending-ranking.component.html',
   styleUrls: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SpendingRankingComponent {
-  recurrentes = input<SpendingItem[]>([]);
-  superfluos  = input<SpendingItem[]>([]);
+  /** Lista de gastos recurrentes clasificados por analytics.service. Usado por analytics.page. */
+  recurrentes  = input<SpendingItem[]>([]);
+  /** Lista de gastos superfluos clasificados por analytics.service. Usado por analytics.page. */
+  superfluos   = input<SpendingItem[]>([]);
+  /** Moneda base del usuario para formatear montos. Recibida de analytics.page vía userBaseCurrency. */
+  userCurrency = input<string>('EUR');
 }

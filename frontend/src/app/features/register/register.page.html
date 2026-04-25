@@ -1,70 +1,52 @@
-<ion-content class="bg-gradient-to-br from-[#1e1e2f] to-[#121212] flex items-center justify-center">
-  <div class="max-w-[400px] w-full mx-auto px-6 py-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
+<ion-content style="--background: --color-green-50;">
+  <div class="max-w-[400px] w-full mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-5 duration-700">
     <div class="mb-6">
-      <ion-button fill="clear" routerLink="/login" class="text-slate-400 text-sm normal-case p-0">
+      <ion-button fill="clear" routerLink="/login" style="text-transform: none;" class="text-monefy-green text-sm p-0">
         <ion-icon name="arrow-back-outline" slot="start" class="mr-1"></ion-icon>
         Volver
       </ion-button>
     </div>
 
     <div class="text-center mb-8">
-      <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30">
+      <div
+        class="bg-gradient-to-br from-monefy-green to-monefy-green-dark w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
         <ion-icon name="wallet-outline" class="text-3xl text-white"></ion-icon>
       </div>
-      <h1 class="text-3xl font-extrabold text-white tracking-tight">
-        Únete a <span class="text-indigo-500">Pro</span>
+      <h1 class="font-pacifico text-3xl text-gray-800 tracking-tight">
+        MyFinance
       </h1>
-      <p class="text-slate-400 text-sm mt-2">Empieza a controlar tus finanzas hoy mismo</p>
+      <p class="text-gray-500 text-sm mt-2">Empezá a controlar tus finanzas hoy mismo</p>
     </div>
 
-    <div class="bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl p-6 shadow-2xl">
+    <div class="bg-white/80 backdrop-blur-md border border-white/30 rounded-3xl p-6 shadow-sm">
       <form (ngSubmit)="handleRegister()">
         <ion-item lines="none" class="bg-white/5 rounded-xl px-4 py-1 mb-4">
-          <ion-icon name="person-outline" slot="start" class="text-indigo-500 mr-2"></ion-icon>
-          <ion-input
-            type="text"
-            placeholder="Nombre completo"
-            [(ngModel)]="name"
-            name="name"
-            required
-            class="text-white placeholder:text-slate-500"
-          ></ion-input>
+          <ion-icon name="person-outline" slot="start" class="text-monefy-green mr-2"></ion-icon>
+          <ion-input type="text" placeholder="Nombre completo" [(ngModel)]="name" name="name" required></ion-input>
         </ion-item>
 
         <ion-item lines="none" class="bg-white/5 rounded-xl px-4 py-1 mb-4">
-          <ion-icon name="mail-outline" slot="start" class="text-indigo-500 mr-2"></ion-icon>
-          <ion-input
-            type="email"
-            placeholder="Correo electrónico"
-            [(ngModel)]="email"
-            name="email"
-            required
-            class="text-white placeholder:text-slate-500"
-          ></ion-input>
+          <ion-icon name="mail-outline" slot="start" class="text-monefy-green mr-2"></ion-icon>
+          <ion-input type="email" placeholder="Correo electrónico" [(ngModel)]="email" name="email"
+            required></ion-input>
         </ion-item>
 
         <ion-item lines="none" class="bg-white/5 rounded-xl px-4 py-1 mb-6">
-          <ion-icon name="lock-closed-outline" slot="start" class="text-indigo-500 mr-2"></ion-icon>
-          <ion-input
-            type="password"
-            placeholder="Contraseña"
-            [(ngModel)]="password"
-            name="password"
-            required
-            class="text-white placeholder:text-slate-500"
-          ></ion-input>
+          <ion-icon name="lock-closed-outline" slot="start" class="text-monefy-green mr-2"></ion-icon>
+          <ion-input type="password" placeholder="Contraseña" [(ngModel)]="password" name="password"
+            required></ion-input>
         </ion-item>
 
-        <div class="actions">
-          <ion-button expand="block" type="submit" class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl font-semibold h-12 shadow-md shadow-indigo-500/20 text-white m-0 normal-case">
-            Crear Cuenta
-          </ion-button>
-        </div>
+        <ion-button expand="block" type="submit" color="primary" style="--border-radius: 12px; text-transform: none;"
+          class="font-semibold">
+          Crear cuenta
+        </ion-button>
       </form>
     </div>
 
-    <div class="text-center mt-8 text-slate-400 text-sm">
-      <p>¿Ya tienes cuenta? <span class="text-indigo-500 font-semibold cursor-pointer" routerLink="/login">Inicia sesión</span></p>
+    <div class="text-center mt-8 text-gray-500 text-sm">
+      <p>¿Ya tenés cuenta? <span class="text-monefy-green font-semibold cursor-pointer" routerLink="/login">Iniciá
+          sesión</span></p>
     </div>
   </div>
 </ion-content>

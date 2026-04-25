@@ -1,5 +1,5 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { IWallet } from '../../models/wallet.model';
+import { IWallet } from '@models/wallet.model';
 
 export const WalletsActions = createActionGroup({
   source: 'Wallets',

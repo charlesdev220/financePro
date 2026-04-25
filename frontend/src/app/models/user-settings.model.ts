@@ -10,4 +10,5 @@ export type UserSettingKey =
   | 'global_monthly_limit'
   | 'alert_threshold_pct'
   | 'default_view_period'
-  | 'custom_period_days';
+  | 'custom_period_days'
+  | 'base_currency';

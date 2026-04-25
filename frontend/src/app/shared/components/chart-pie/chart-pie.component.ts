@@ -13,6 +13,7 @@ import {
   ArcElement,
   Chart,
   ChartData,
+  ChartOptions,
   DoughnutController,
   Legend,
   Tooltip,
@@ -25,6 +26,7 @@ Chart.register(ArcElement, DoughnutController, Tooltip, Legend);
   standalone: true,
   imports: [],
   templateUrl: './chart-pie.component.html',
+  styleUrls: ['./chart-pie.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChartPieComponent implements AfterViewInit, OnDestroy {
@@ -62,9 +64,10 @@ export class ChartPieComponent implements AfterViewInit, OnDestroy {
       data,
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         cutout: '70%'
-      } as any,
+      } as ChartOptions<'doughnut'>,
     });
   }
 }

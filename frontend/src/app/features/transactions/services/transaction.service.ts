@@ -1,11 +1,19 @@
+/**
+ * Excepción arquitectónica: este service llama directamente a SheetsApiService.
+ * Regla ngrx.md: "SheetsApiService solo en Effects".
+ * Motivo: TransactionService actúa como orchestrator de transformación de datos previa al dispatch —
+ * calcula amount_base (conversión de divisa), procesa transacciones recurrentes y escribe filas en Sheets.
+ * Esta lógica de dominio compleja no encaja en un effect funcional sin añadir complejidad excesiva.
+ * Decisión aprobada en CLAUDE.md como excepción documentada de servicio auxiliar pre-dispatch.
+ */
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { firstValueFrom } from 'rxjs';
-import { SheetsApiService } from '../../../core/services/sheets-api.service';
-import { CurrencyApiService } from '../../../core/services/currency-api.service';
-import { AuthService } from '../../../core/services/auth.service';
-import { ITransaction } from '../../../models/transaction.model';
-import { TransactionDraft } from '../../../store/transactions/transactions.actions';
+import { SheetsApiService } from '@core/services/sheets-api.service';
+import { CurrencyApiService } from '@core/services/currency-api.service';
+import { AuthService } from '@core/services/auth.service';
+import { ITransaction } from '@models/transaction.model';
+import { TransactionDraft } from '@store/transactions/transactions.actions';
 
 // TRANSACTIONS schema (A:O — 15 columnas)
 // A: tx_id | B: user_id | C: wallet_id | D: category_id | E: amount

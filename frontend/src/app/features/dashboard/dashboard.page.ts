@@ -5,9 +5,7 @@ import {
   inject,
   signal,
   computed,
-  CUSTOM_ELEMENTS_SCHEMA,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import {
   IonContent,
@@ -29,33 +27,35 @@ import { addIcons } from 'ionicons';
 import {
   logOutOutline,
   addOutline,
-  trendingUpOutline,
-  trendingDownOutline,
+  removeOutline,
   settingsOutline,
   rocketOutline,
-  sparklesOutline
+  sparklesOutline,
 } from 'ionicons/icons';
 import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
 
-import { AuthService } from '../../core/services/auth.service';
-import { TransactionsActions } from '../../store/transactions/transactions.actions';
-import { selectAllTransactions } from '../../store/transactions/transactions.selectors';
-import { TransactionFormComponent } from '../transactions/transaction-form/transaction-form.component';
-import { ITransaction } from '../../models/transaction.model';
-import { DashboardSummaryComponent } from './components/dashboard-summary/dashboard-summary.component';
+import { AuthService } from '@core/services/auth.service';
+import { TransactionsActions } from '@store/transactions/transactions.actions';
+import { selectAllTransactions } from '@store/transactions/transactions.selectors';
+import { TransactionFormComponent } from '@features/transactions/transaction-form/transaction-form.component';
+import { ITransaction } from '@models/transaction.model';
 import { DashboardChartComponent } from './components/dashboard-chart/dashboard-chart.component';
-import { PeriodSelectorComponent } from '../../shared/components/period-selector/period-selector.component';
-import { selectAllCategories } from '../../store/categories/categories.selectors';
+import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
+import { selectAllCategories } from '@store/categories/categories.selectors';
 import { DashboardService } from './services/dashboard.service';
-import { selectAllBudgets } from '../../store/budgets/budgets.selectors';
-import { BudgetsActions } from '../../store/budgets/budgets.actions';
-import { WalletsActions } from '../../store/wallets/wallets.actions';
-import { CategoriesActions } from '../../store/categories/categories.actions';
-import { CurrencyFormatPipe } from '../../shared/pipes/currency-format.pipe';
-import { RelativeDatePipe } from '../../shared/pipes/relative-date.pipe';
-import { selectAllWallets } from '../../store/wallets/wallets.selectors';
-import { DataSeedService } from '../../core/services/data-seed.service';
+import { selectAllBudgets } from '@store/budgets/budgets.selectors';
+import { BudgetsActions } from '@store/budgets/budgets.actions';
+import { WalletsActions } from '@store/wallets/wallets.actions';
+import { CategoriesActions } from '@store/categories/categories.actions';
+import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
+import { RelativeDatePipe } from '@shared/pipes/relative-date.pipe';
+import { selectAllWallets } from '@store/wallets/wallets.selectors';
+import { DataSeedService } from '@core/services/data-seed.service';
+import { TRANSACTION_TYPES, TransactionType } from '@core/constants/transaction.constants';
+import { map } from 'rxjs';
+import { selectBaseCurrency } from '@store/currency/currency.selectors';
+import { CurrencyActions } from '@store/currency/currency.actions';
 
 /**
  * DashboardPage — Vista principal consolidada de la salud financiera del usuario.
@@ -68,7 +68,6 @@ import { DataSeedService } from '../../core/services/data-seed.service';
   styleUrls: [],
   standalone: true,
   imports: [
-    CommonModule,
     IonContent,
     IonHeader,
     IonTitle,
@@ -82,14 +81,12 @@ import { DataSeedService } from '../../core/services/data-seed.service';
     IonNote,
     IonSpinner,
     IonModal,
-    IonModal,
     DashboardChartComponent,
     PeriodSelectorComponent,
     CurrencyFormatPipe,
     RelativeDatePipe,
     TransactionFormComponent,
   ],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardPage implements OnInit {
@@ -107,7 +104,7 @@ export class DashboardPage implements OnInit {
   readonly isModalOpen = signal(false);
 
   /** Tipo de transacción (ingreso/gasto) para el modal abierto. */
-  readonly modalInitialType = signal<'income' | 'expense'>('expense');
+  readonly modalInitialType = signal<TransactionType>(TRANSACTION_TYPES.EXPENSE);
 
   /** ID del usuario actual para el modal (Signal reactivo para evitar fugas de contexto). */
   readonly currentUserId = signal<string>('');
@@ -142,11 +139,11 @@ export class DashboardPage implements OnInit {
   /** Estado de carga del proceso de seed. */
   readonly isSeeding = signal(false);
 
-  /** Divisa base del usuario detectada de los datos o por defecto EUR. */
-  readonly userBaseCurrency = computed(() => {
-    const txs = this.allTransactions();
-    return txs.length > 0 ? txs[0].currency : 'EUR';
-  });
+  /** Moneda base del usuario desde USER_SETTINGS via NgRx. Fallback 'EUR' antes de cargar. */
+  readonly userBaseCurrency = toSignal(
+    this.store.select(selectBaseCurrency).pipe(map(c => c ?? 'EUR')),
+    { initialValue: 'EUR' }
+  );
 
   /** Resumen consolidado: Ingresos, Gastos y Balance del período actual. */
   readonly summary = computed(() =>
@@ -158,7 +155,7 @@ export class DashboardPage implements OnInit {
     this.dashboardService.calculateBreakdown(this.allTransactions(), this.categories(), this.period())
   );
 
-  /** Útimos movimientos del período, enriquecidos con iconos y nombres de categoría. */
+  /** Útimos movimientos del período, enriquecidos con iconos, nombres y flag de tipo. */
   readonly recentTransactions = computed(() => {
     const txs = this.dashboardService.getRecentTransactions(this.allTransactions(), this.period());
     const cats = this.categories();
@@ -167,21 +164,14 @@ export class DashboardPage implements OnInit {
       return {
         ...tx,
         categoryName: cat?.name || 'Varios',
-        categoryIcon: cat?.icon || '💰'
+        categoryIcon: cat?.icon || '💰',
+        isIncome: tx.type === TRANSACTION_TYPES.INCOME,
       };
     });
   });
 
   constructor() {
-    addIcons({
-      logOutOutline,
-      addOutline,
-      trendingUpOutline,
-      trendingDownOutline,
-      settingsOutline,
-      rocketOutline,
-      sparklesOutline
-    });
+    addIcons({ logOutOutline, addOutline, removeOutline, settingsOutline, rocketOutline, sparklesOutline });
   }
 
   /**
@@ -203,6 +193,9 @@ export class DashboardPage implements OnInit {
     this.period.set(p);
   }
 
+  openAddExpense(): void { this.openAddModal(TRANSACTION_TYPES.EXPENSE as 'expense'); }
+  openAddIncome(): void { this.openAddModal(TRANSACTION_TYPES.INCOME as 'income'); }
+
   /**
    * Prepara y abre el modal declarativo para registrar una nueva transacción.
    * @param initialType Tipo de operación sugerida (ingreso o gasto).
@@ -210,7 +203,7 @@ export class DashboardPage implements OnInit {
   openAddModal(initialType: 'income' | 'expense'): void {
     const user = this.authService.getUser();
     if (!user) return;
-    
+
     this.currentUserId.set(user.sub || '');
     this.modalInitialType.set(initialType);
     this.isModalOpen.set(true);
@@ -227,7 +220,7 @@ export class DashboardPage implements OnInit {
    * Redirecciona a la vista de ajustes del perfil.
    */
   openSettings(): void {
-    this.router.navigate(['/settings']);
+    this.router.navigate(['/tabs/settings']);
   }
 
   /**
@@ -260,9 +253,13 @@ export class DashboardPage implements OnInit {
         this.store.dispatch(CategoriesActions.loadCategories());
         this.isSeeding.set(false);
       },
-      error: (err) => {
-        console.error('[DashboardPage] Error seeding data:', err);
+      error: () => {
         this.isSeeding.set(false);
+        this.alertCtrl.create({
+          header: 'Error al inicializar',
+          message: 'No se pudieron crear los datos iniciales. Revisá tu conexión e intentá de nuevo.',
+          buttons: [{ text: 'Entendido', role: 'cancel' }],
+        }).then(a => a.present());
       }
     });
   }

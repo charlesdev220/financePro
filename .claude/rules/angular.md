@@ -37,9 +37,10 @@ export class {Nombre}Page {}
 
 ```typescript
 // ✅ signal-based — obligatorio en código nuevo
-// añade comentarios SIEMPRE quien lo utiliza y para que
+//COMENTARIO OBLIGATORIO: quien lo utiliza y para que
 nombre     = input.required<string>();
 categoria  = input<string>('all');           // con default
+//COMENTARIO OBLIGATORIO: quien lo utiliza y para que
 seleccionado = output<Transaction>();
 
 // ❌ obsoleto — no usar en código nuevo
@@ -125,9 +126,50 @@ readonly wallets = toSignal(this.store.select(selectAllWallets), { initialValue:
 provideRouter(routes, withComponentInputBinding())
 
 // En el componente de la ruta — no hace falta ActivatedRoute
+//COMENTARIO OBLIGATORIO: quien lo utiliza y para que
 transactionId = input<string>();       // :transactionId del path
 filter        = input<string>('all'); // ?filter=... query param
 ```
+
+## Llamadas a servicios externos 
+
+```typescript
+  private http = inject(HttpClient);
+
+  constructor() { }
+
+  getProducts(category_id?: string) {
+    const url = new URL(`https://api.escuelajs.co/api/v1/products`);
+    if (category_id) {
+      url.searchParams.set('categoryId', category_id);
+    }
+    return this.http.get<Product[]>(url.toString());
+  }
+
+// ❌ obsoleto — no usar en código nuevo
+  private async _executeSignIn(): Promise<string | null> {
+    try {
+      const jwt = this.generateJWT();
+      const response: any = await firstValueFrom(
+        this.bareHttp.post(
+          'https://oauth2.googleapis.com/token',
+          new HttpParams()
+            .set('grant_type', 'urn:ietf:params:oauth:grant-type:jwt-bearer')
+            .set('assertion', jwt),
+          { headers: new HttpHeaders({ 'Content-Type': 'application/x-www-form-urlencoded' }) },
+        ),
+      );
+
+      this.accessToken = response.access_token;
+      this.tokenExpiry = Date.now() + response.expires_in * 1000 - 60_000;
+      return this.accessToken;
+    } catch (error) {
+      console.error('[AuthService] Error obteniendo access_token de SA:', error);
+      throw error;
+    }
+  }
+```
+
 
 ## Lifecycle hooks — orden correcto
 

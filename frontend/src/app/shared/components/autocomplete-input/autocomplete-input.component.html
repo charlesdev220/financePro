@@ -6,7 +6,7 @@
 ></ion-input>
 
 @if (showDropdown() && currentSuggestions().length > 0) {
-  <ion-list class="absolute top-full left-0 right-0 z-50 border border-[var(--ion-color-medium-tint)] rounded-lg bg-[var(--ion-background-color)] shadow-lg max-h-[200px] overflow-y-auto">
+  <ion-list class="absolute top-full left-0 right-0 z-50 border border-[var(--ion-color-medium-tint)] rounded-lg bg-[var(--ion-background-color)] shadow-sm max-h-[200px] overflow-y-auto">
     @for (suggestion of currentSuggestions(); track suggestion) {
       <ion-item
         button

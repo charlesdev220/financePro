@@ -1,5 +1,5 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { ICategory } from '../../models/category.model';
+import { ICategory } from '@models/category.model';
 
 export const CategoriesActions = createActionGroup({
   source: 'Categories',

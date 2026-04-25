@@ -2,12 +2,12 @@ import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
 import { concatMap, switchMap, map, catchError, withLatestFrom } from 'rxjs/operators';
-import { of, EMPTY } from 'rxjs';
+import { of, EMPTY, merge } from 'rxjs';
 import { BudgetsActions } from './budgets.actions';
 import { selectAllBudgets, selectBudgetsRowMap } from './budgets.selectors';
-import { selectAllTransactions } from '../transactions/transactions.selectors';
-import { BudgetService, calculateStatus } from '../../features/budgets/services/budget.service';
-import { TRANSACTION_TYPES } from '../../core/constants/transaction.constants';
+import { selectAllTransactions } from '@store/transactions/transactions.selectors';
+import { BudgetService, calculateStatus } from '@features/budgets/services/budget.service';
+import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 
 export const loadBudgets$ = createEffect(
   (
@@ -39,19 +39,19 @@ export const saveBudget$ = createEffect(
     actions$.pipe(
       ofType(BudgetsActions.saveBudget),
       withLatestFrom(store.select(selectAllBudgets)),
-      concatMap(([{ budget }, prevItems]) => {
-        store.dispatch(BudgetsActions.saveBudgetSuccess({ budget }));
-        return budgetService.saveBudget(budget).pipe(
-          catchError(error => {
-            store.dispatch(
-              BudgetsActions.saveBudgetFailure({ error: String(error), prevItems }),
-            );
-            return EMPTY;
-          }),
-        );
-      }),
+      concatMap(([{ budget }, prevItems]) =>
+        merge(
+          of(BudgetsActions.saveBudgetSuccess({ budget })),
+          budgetService.saveBudget(budget).pipe(
+            switchMap(() => EMPTY),
+            catchError(error =>
+              of(BudgetsActions.saveBudgetFailure({ error: String(error), prevItems })),
+            ),
+          ),
+        ),
+      ),
     ),
-  { functional: true, dispatch: false },
+  { functional: true },
 );
 
 export const updateBudget$ = createEffect(
@@ -63,19 +63,19 @@ export const updateBudget$ = createEffect(
     actions$.pipe(
       ofType(BudgetsActions.updateBudget),
       withLatestFrom(store.select(selectAllBudgets)),
-      concatMap(([{ budget, rowNumber }, prevItems]) => {
-        store.dispatch(BudgetsActions.updateBudgetSuccess({ budget }));
-        return budgetService.updateBudget(budget, rowNumber).pipe(
-          catchError(error => {
-            store.dispatch(
-              BudgetsActions.updateBudgetFailure({ error: String(error), prevItems }),
-            );
-            return EMPTY;
-          }),
-        );
-      }),
+      concatMap(([{ budget, rowNumber }, prevItems]) =>
+        merge(
+          of(BudgetsActions.updateBudgetSuccess({ budget })),
+          budgetService.updateBudget(budget, rowNumber).pipe(
+            switchMap(() => EMPTY),
+            catchError(error =>
+              of(BudgetsActions.updateBudgetFailure({ error: String(error), prevItems })),
+            ),
+          ),
+        ),
+      ),
     ),
-  { functional: true, dispatch: false },
+  { functional: true },
 );
 
 export const deleteBudget$ = createEffect(
@@ -87,19 +87,19 @@ export const deleteBudget$ = createEffect(
     actions$.pipe(
       ofType(BudgetsActions.deleteBudget),
       withLatestFrom(store.select(selectAllBudgets)),
-      concatMap(([{ budgetId, rowNumber }, prevItems]) => {
-        store.dispatch(BudgetsActions.deleteBudgetSuccess({ budgetId }));
-        return budgetService.deleteBudget(rowNumber).pipe(
-          catchError(error => {
-            store.dispatch(
-              BudgetsActions.deleteBudgetFailure({ error: String(error), prevItems }),
-            );
-            return EMPTY;
-          }),
-        );
-      }),
+      concatMap(([{ budgetId, rowNumber }, prevItems]) =>
+        merge(
+          of(BudgetsActions.deleteBudgetSuccess({ budgetId })),
+          budgetService.deleteBudget(rowNumber).pipe(
+            switchMap(() => EMPTY),
+            catchError(error =>
+              of(BudgetsActions.deleteBudgetFailure({ error: String(error), prevItems })),
+            ),
+          ),
+        ),
+      ),
     ),
-  { functional: true, dispatch: false },
+  { functional: true },
 );
 
 export const recalculateBudget$ = createEffect(
@@ -141,17 +141,16 @@ export const recalculateBudget$ = createEffect(
           lastUpdated: new Date().toISOString(),
         };
 
-        store.dispatch(BudgetsActions.recalculateBudgetSuccess({ budget: updatedBudget }));
-
-        return budgetService.updateBudget(updatedBudget, rowNumber).pipe(
-          catchError(error => {
-            store.dispatch(
-              BudgetsActions.recalculateBudgetFailure({ error: String(error) }),
-            );
-            return EMPTY;
-          }),
+        return merge(
+          of(BudgetsActions.recalculateBudgetSuccess({ budget: updatedBudget })),
+          budgetService.updateBudget(updatedBudget, rowNumber).pipe(
+            switchMap(() => EMPTY),
+            catchError(error =>
+              of(BudgetsActions.recalculateBudgetFailure({ error: String(error) })),
+            ),
+          ),
         );
       }),
     ),
-  { functional: true, dispatch: false },
+  { functional: true },
 );

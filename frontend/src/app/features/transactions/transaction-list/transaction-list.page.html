@@ -1,15 +1,11 @@
 <ion-header class="ion-no-border">
   <ion-toolbar style="--background: var(--color-primary); --color: white;">
-    <ion-buttons slot="start">
-      <ion-button (click)="clearFilters()" color="light">
-        <ion-icon name="arrow-back-outline" slot="icon-only"></ion-icon>
-      </ion-button>
-    </ion-buttons>
     <ion-title class="font-extrabold tracking-tight">Movimientos</ion-title>
     @if (activeFilters()) {
       <ion-buttons slot="end">
-        <ion-button (click)="clearFilters()" fill="clear" class="text-[10px] font-bold uppercase tracking-widest text-white/80">
-          Borrar Filtros
+        <ion-button (click)="clearFilters()" fill="clear" style="text-transform: none;" class="text-xs font-bold text-white/80">
+          <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+          Limpiar filtros
         </ion-button>
       </ion-buttons>
     }
@@ -18,7 +14,8 @@
 
 <ion-content style="--background: var(--color-bg-mint);">
   <!-- Filtros Rápidos (Monefy Style) -->
-  <div class="flex gap-2 p-4 overflow-x-auto no-scrollbar bg-[var(--color-primary)] pb-8 rounded-b-[40px] shadow-lg mb-4">
+  <div class="bg-[var(--color-primary)] pb-8 rounded-b-[40px] shadow-lg mb-4">
+  <div class="flex gap-2 p-4 overflow-x-auto no-scrollbar max-w-screen-xl mx-auto">
     <div (click)="toggleWalletFilter()" class="bg-white/20 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform">
       <ion-icon name="wallet-outline" class="text-xs"></ion-icon>
       <span class="text-xs font-bold">{{ filterWalletLabel() }}</span>
@@ -32,10 +29,11 @@
       <span class="text-xs font-bold">{{ filterPeriodLabel() }}</span>
     </div>
   </div>
+  </div>
 
   <!-- Popovers de Filtros (Simulados como modales compactos si están abiertos) -->
   @if (filterWalletOpen()) {
-    <div class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end" (click)="filterWalletOpen.set(false)">
+    <div class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end" (click)="closeWalletFilter()">
       <div class="bg-white w-full rounded-t-[32px] p-6 animate-slide-up" (click)="$event.stopPropagation()">
         <h4 class="text-sm font-black uppercase tracking-widest text-gray-400 mb-4">Filtrar por Cartera</h4>
         <div class="grid grid-cols-2 gap-3">
@@ -53,7 +51,7 @@
   }
 
   @if (filterCategoryOpen()) {
-    <div class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end" (click)="filterCategoryOpen.set(false)">
+    <div class="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end" (click)="closeCategoryFilter()">
       <div class="bg-white w-full rounded-t-[32px] p-6 max-h-[70vh] overflow-y-auto animate-slide-up" (click)="$event.stopPropagation()">
         <h4 class="text-sm font-black uppercase tracking-widest text-gray-400 mb-4">Filtrar por Categoría</h4>
         <div class="grid grid-cols-3 gap-3">
@@ -73,7 +71,7 @@
   }
 
   <!-- Listado Agrupado (El alma de la vista) -->
-  <div class="px-4 pb-24">
+  <div class="px-4 pb-24 max-w-screen-xl mx-auto">
     @if (hasTransactions()) {
       <div class="space-y-6">
         @for (group of groupedTransactions(); track group.date) {
@@ -123,7 +121,7 @@
                   </ion-item>
 
                   <ion-item-options side="end">
-                    <ion-item-option color="danger" (click)="deleteTransaction(tx)" style="border-radius: 0 24px 24px 0;">
+                    <ion-item-option color="danger" (click)="deleteTransaction(tx)" style="--border-radius: 0 24px 24px 0;">
                       <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
                     </ion-item-option>
                   </ion-item-options>
@@ -138,24 +136,18 @@
       </div>
     } @else {
       <div class="flex flex-col items-center justify-center pt-20 gap-6 text-center animate-fade-in">
-        <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center text-5xl">Empty</div>
+        <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center text-5xl">📭</div>
         <div class="space-y-1">
           <p class="text-lg font-black text-gray-800">No hay nada por aquí</p>
           <p class="text-sm text-gray-400 px-10">No encontramos movimientos con los filtros actuales.</p>
         </div>
-        <ion-button (click)="openAddModal()" style="--border-radius: 20px; --padding-start: 32px; --padding-end: 32px;" class="font-bold shadow-lg">
+        <ion-button (click)="openAddModal()" style="--border-radius: 20px; --padding-start: 32px; --padding-end: 32px; text-transform: none;" class="font-bold shadow-lg">
           Empezar a sumar
         </ion-button>
       </div>
     }
   </div>
 
-  <!-- Botón flotante Estilo Monefy (Minimalista) -->
-  <ion-fab vertical="bottom" horizontal="center" slot="fixed" class="pb-6">
-    <ion-fab-button (click)="openAddModal()" style="--background: var(--color-primary); --box-shadow: 0 8px 32px rgba(91, 173, 143, 0.4);">
-      <ion-icon name="add-outline" class="text-2xl"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
 
 </ion-content>
 

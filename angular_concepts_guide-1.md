@@ -222,6 +222,250 @@ export class ParentComponent {
 
 ---
 
+## 7b. Comunicación Padre ↔ Hijo — Ejemplos Completos
+
+### ¿Quién recibe qué?
+
+| Dirección | Mecanismo | Lo que viaja |
+|-----------|-----------|-------------|
+| Padre → Hijo | `input()` / `@Input()` | Datos, objetos, primitivos |
+| Hijo → Padre | `output()` / `@Output()` | Eventos con o sin payload |
+
+---
+
+### Ejemplo 1 — API Moderna con Signals (`input()` / `output()`)
+
+**Escenario:** una lista de productos (padre) tiene una tarjeta de producto (hijo). El padre le pasa el producto, y el hijo le avisa cuando el usuario lo agrega al carrito.
+
+#### Hijo — `product-card.component.ts`
+```typescript
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+import { CurrencyPipe } from '@angular/common';
+
+export interface Product {
+  id: number;
+  name: string;
+  price: number;
+}
+
+@Component({
+  selector: 'app-product-card',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CurrencyPipe],
+  templateUrl: './product-card.component.html',
+})
+export class ProductCardComponent {
+  // ✅ EL HIJO RECIBE: un objeto Product obligatorio desde el padre
+  product = input.required<Product>();
+
+  // ✅ EL HIJO EMITE: el id del producto cuando el usuario hace clic
+  addedToCart = output<number>();
+
+  onAdd() {
+    this.addedToCart.emit(this.product().id);
+  }
+}
+```
+
+#### Hijo — `product-card.component.html`
+```html
+<div class="border rounded p-4">
+  <h3>{{ product().name }}</h3>
+  <p>{{ product().price | currency }}</p>
+  <button (click)="onAdd()">Agregar al carrito</button>
+</div>
+```
+
+#### Padre — `product-list.component.ts`
+```typescript
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
+import { ProductCardComponent, Product } from './product-card/product-card.component';
+
+@Component({
+  selector: 'app-product-list',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ProductCardComponent],
+  templateUrl: './product-list.component.html',
+})
+export class ProductListComponent {
+  products = signal<Product[]>([
+    { id: 1, name: 'Teclado', price: 45 },
+    { id: 2, name: 'Mouse',   price: 25 },
+  ]);
+
+  cartCount = signal(0);
+
+  // ✅ EL PADRE RECIBE: el id emitido por el hijo
+  onProductAdded(productId: number) {
+    console.log('Producto agregado:', productId);
+    this.cartCount.update(n => n + 1);
+  }
+}
+```
+
+#### Padre — `product-list.component.html`
+```html
+<p>Carrito: {{ cartCount() }} item(s)</p>
+
+@for (p of products(); track p.id) {
+  <!--
+    [product]  → el padre ENVÍA el objeto al hijo vía input()
+    (addedToCart) → el padre ESCUCHA el evento que el hijo emite vía output()
+  -->
+  <app-product-card
+    [product]="p"
+    (addedToCart)="onProductAdded($event)"
+  />
+}
+```
+
+---
+
+### Ejemplo 2 — `input()` con valor por defecto (opcional)
+
+**Escenario:** un botón reutilizable que acepta un label y un color, ambos opcionales.
+
+#### Hijo — `action-button.component.ts`
+```typescript
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
+
+@Component({
+  selector: 'app-action-button',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <button
+      [style.background-color]="color()"
+      (click)="clicked.emit()">
+      {{ label() }}
+    </button>
+  `,
+})
+export class ActionButtonComponent {
+  // EL HIJO RECIBE: label con default, color con default
+  label = input<string>('Confirmar');
+  color = input<string>('#3b82f6');
+
+  // EL HIJO EMITE: sin payload, solo la señal del clic
+  clicked = output<void>();
+}
+```
+
+#### Padre — template
+```html
+<!-- Sin pasar nada: usa los defaults del hijo -->
+<app-action-button (clicked)="onConfirm()" />
+
+<!-- Pasando valores custom al hijo -->
+<app-action-button
+  [label]="'Eliminar'"
+  [color]="'#ef4444'"
+  (clicked)="onDelete()"
+/>
+```
+
+---
+
+### Ejemplo 3 — Output con objeto complejo
+
+**Escenario:** un formulario de búsqueda (hijo) emite los filtros seleccionados al padre.
+
+#### Hijo — `search-filter.component.ts`
+```typescript
+import { Component, output, signal, ChangeDetectionStrategy } from '@angular/core';
+import { FormsModule } from '@angular/forms';
+
+export interface SearchFilters {
+  query: string;
+  category: string;
+}
+
+@Component({
+  selector: 'app-search-filter',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule],
+  template: `
+    <input [(ngModel)]="query" placeholder="Buscar..." />
+    <select [(ngModel)]="category">
+      <option value="all">Todos</option>
+      <option value="food">Comida</option>
+      <option value="tech">Tecnología</option>
+    </select>
+    <button (click)="onSearch()">Buscar</button>
+  `,
+})
+export class SearchFilterComponent {
+  // Estado interno del hijo — el padre NO lo ve directamente
+  query    = signal('');
+  category = signal('all');
+
+  // EL HIJO EMITE: un objeto SearchFilters completo cuando el usuario confirma
+  filtersChanged = output<SearchFilters>();
+
+  onSearch() {
+    this.filtersChanged.emit({
+      query:    this.query(),
+      category: this.category(),
+    });
+  }
+}
+```
+
+#### Padre — `catalog.component.ts`
+```typescript
+import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
+import { SearchFilterComponent, SearchFilters } from './search-filter/search-filter.component';
+
+@Component({
+  selector: 'app-catalog',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [SearchFilterComponent],
+  template: `
+    <!-- El padre escucha (filtersChanged) y recibe el objeto SearchFilters -->
+    <app-search-filter (filtersChanged)="applyFilters($event)" />
+
+    <p>Buscando: "{{ activeFilters().query }}" en "{{ activeFilters().category }}"</p>
+  `,
+})
+export class CatalogComponent {
+  activeFilters = signal<SearchFilters>({ query: '', category: 'all' });
+
+  // ✅ EL PADRE RECIBE: el objeto completo emitido por el hijo
+  applyFilters(filters: SearchFilters) {
+    this.activeFilters.set(filters);
+    // Aquí el padre dispara la búsqueda real, llama al store, etc.
+  }
+}
+```
+
+---
+
+### Resumen visual del flujo
+
+```
+PADRE
+  │
+  │  [product]="p"          ← Padre ENVÍA datos al hijo (Input)
+  │  [label]="'Eliminar'"   ← Padre ENVÍA string al hijo (Input)
+  │  [color]="'#ef4444'"    ← Padre ENVÍA string al hijo (Input)
+  │
+  ▼
+HIJO
+  │
+  │  (addedToCart)="..."    ← Hijo EMITE id al padre (Output)
+  │  (clicked)="..."        ← Hijo EMITE void al padre (Output)
+  │  (filtersChanged)="..."  ← Hijo EMITE objeto al padre (Output)
+  │
+  ▼
+PADRE recibe en el método handler → actúa (actualiza signal, dispatch, navega…)
+```
+
+---
+
 ## 8. Promise (Promesas) // ¿Se sustituyen por toSignal?
 **Respuesta Directa:** **No, no lo sustituyen.** Resuelven problemas completamente distintos a nivel semántico dentro del código.
 

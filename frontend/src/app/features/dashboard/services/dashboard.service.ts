@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { ITransaction } from '../../../models/transaction.model';
-import { ICategory } from '../../../models/category.model';
-import { TRANSACTION_TYPES } from '../../../core/constants/transaction.constants';
+import { ITransaction } from '@models/transaction.model';
+import { ICategory } from '@models/category.model';
+import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 
 export interface DashboardSummary {
   totalIncome: number;

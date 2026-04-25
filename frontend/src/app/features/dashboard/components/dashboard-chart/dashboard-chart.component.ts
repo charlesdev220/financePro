@@ -1,10 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { ChartData } from 'chart.js';
-import { ChartPieComponent } from '../../../../shared/components/chart-pie/chart-pie.component';
-import { CategoryBreakdown } from '../../services/dashboard.service';
+import { ChartPieComponent } from '@shared/components/chart-pie/chart-pie.component';
+import { CategoryBreakdown } from '@features/dashboard/services/dashboard.service';
 
-import { CurrencyFormatPipe } from '../../../../shared/pipes/currency-format.pipe';
-import { CommonModule } from '@angular/common';
+import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 
 @Component({
   selector: 'app-dashboard-chart',
@@ -12,7 +11,7 @@ import { CommonModule } from '@angular/common';
   styleUrls: [],
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ChartPieComponent, CurrencyFormatPipe],
+  imports: [ChartPieComponent, CurrencyFormatPipe],
 })
 export class DashboardChartComponent {
   breakdown = input.required<CategoryBreakdown[]>();
@@ -27,5 +26,13 @@ export class DashboardChartComponent {
       labels:   b.map(item => item.name),
       datasets: [{ data: b.map(item => item.amount), backgroundColor: b.map(item => item.color) }],
     };
+  });
+
+  /** Breakdown enriquecido con el porcentaje de cada categoría sobre el total. */
+  readonly breakdownWithPct = computed(() => {
+    const b = this.breakdown();
+    const total = b.reduce((sum, item) => sum + item.amount, 0);
+    if (total === 0) return b.map(item => ({ ...item, pct: 0 }));
+    return b.map(item => ({ ...item, pct: Math.round((item.amount / total) * 100) }));
   });
 }

@@ -76,7 +76,7 @@ describe('TransactionListPage – filter logic (REQ-15)', () => {
       ],
     }).compileComponents();
 
-    store = TestBed.inject<MockStore>(Store as any);
+    store = TestBed.inject(Store) as MockStore;
     const fixture = TestBed.createComponent(TransactionListPage);
     component = fixture.componentInstance;
     fixture.detectChanges(); // trigger ngOnInit
@@ -97,7 +97,7 @@ describe('TransactionListPage – filter logic (REQ-15)', () => {
     store.setState({ ...INITIAL_STATE, transactions: { ...INITIAL_STATE.transactions, items: txs } });
 
     // When: ningún filtro activo
-    const result = component.transactions();
+    const result = component.transactionsEnriched();
 
     // Then
     expect(result.length).toBe(3);
@@ -115,7 +115,7 @@ describe('TransactionListPage – filter logic (REQ-15)', () => {
     component.filterPeriod.set('2026-04');
 
     // When
-    const result = component.transactions();
+    const result = component.transactionsEnriched();
 
     // Then: solo las 2 de abril
     expect(result.length).toBe(2);
@@ -135,7 +135,7 @@ describe('TransactionListPage – filter logic (REQ-15)', () => {
     component.filterWallet.set('wallet-a');
 
     // When
-    const result = component.transactions();
+    const result = component.transactionsEnriched();
 
     // Then: solo t1 pasa ambos filtros
     expect(result.length).toBe(1);
@@ -154,7 +154,7 @@ describe('TransactionListPage – filter logic (REQ-15)', () => {
     component.filterPeriod.set(''); // reset
 
     // When
-    const result = component.transactions();
+    const result = component.transactionsEnriched();
 
     // Then: todas
     expect(result.length).toBe(2);
@@ -170,7 +170,7 @@ describe('TransactionListPage – filter logic (REQ-15)', () => {
     store.setState({ ...INITIAL_STATE, transactions: { ...INITIAL_STATE.transactions, items: txs } });
 
     // When
-    const result = component.transactions();
+    const result = component.transactionsEnriched();
 
     // Then: solo la del usuario autenticado
     expect(result.length).toBe(1);

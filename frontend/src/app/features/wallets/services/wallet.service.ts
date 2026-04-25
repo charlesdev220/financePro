@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { SheetsApiService } from '../../../core/services/sheets-api.service';
-import { AuthService } from '../../../core/services/auth.service';
-import { IWallet } from '../../../models/wallet.model';
+import { SheetsApiService } from '@core/services/sheets-api.service';
+import { AuthService } from '@core/services/auth.service';
+import { IWallet } from '@models/wallet.model';
 
 // WALLETS schema (A:I — 9 columnas)
 // A: wallet_id | B: user_id | C: name | D: currency | E: balance(deprecated)

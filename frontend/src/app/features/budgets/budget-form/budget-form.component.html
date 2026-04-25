@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-button (click)="cancel()">Cancelar</ion-button>
     </ion-buttons>
-    <ion-title>{{ isEditMode() ? 'Editar presupuesto' : 'Nuevo presupuesto' }}</ion-title>
+    <ion-title>{{ isEditMode ? 'Editar presupuesto' : 'Nuevo presupuesto' }}</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="save()" [disabled]="form.invalid">Guardar</ion-button>
     </ion-buttons>
@@ -65,7 +65,7 @@
 
       <div class="ion-padding">
         <ion-button expand="block" (click)="save()" [disabled]="form.invalid">
-          {{ isEditMode() ? 'Actualizar' : 'Crear presupuesto' }}
+          {{ isEditMode ? 'Actualizar' : 'Crear presupuesto' }}
         </ion-button>
       </div>
     </form>

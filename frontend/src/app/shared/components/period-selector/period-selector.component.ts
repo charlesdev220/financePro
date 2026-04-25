@@ -1,16 +1,30 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
-import { IonButton, IonIcon } from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import { chevronBackOutline, chevronForwardOutline } from 'ionicons/icons';
+
+type PeriodTab = 'day' | 'week' | 'month' | 'year';
+
+const TABS: { id: PeriodTab; label: string }[] = [
+  { id: 'day',   label: 'Día' },
+  { id: 'week',  label: 'Semana' },
+  { id: 'month', label: 'Mes' },
+  { id: 'year',  label: 'Año' },
+];
 
 function currentMonth(): string {
   return new Date().toISOString().slice(0, 7);
 }
 
+function isoWeek(date: Date): string {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
 @Component({
   selector: 'app-period-selector',
   standalone: true,
-  imports: [IonButton, IonIcon],
+  imports: [],
   templateUrl: './period-selector.component.html',
   styleUrls: [],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -19,29 +33,27 @@ export class PeriodSelectorComponent {
   period       = input<string>(currentMonth());
   periodChange = output<string>();
 
-  constructor() {
-    addIcons({ chevronBackOutline, chevronForwardOutline });
-  }
+  readonly tabs = TABS;
 
-  /** Etiqueta localizada del período actual (mes + año en español capitalizado). */
-  readonly label = computed(() => {
-    const raw = new Intl.DateTimeFormat('es', { month: 'long', year: 'numeric' }).format(
-      new Date(this.period() + '-01'),
-    );
-    return raw.charAt(0).toUpperCase() + raw.slice(1);
+  /** Tab activo inferido del formato del período recibido por input. */
+  readonly activeTab = computed((): PeriodTab => {
+    const p = this.period();
+    if (!p) return 'month';
+    if (p.includes('W')) return 'week';
+    if (p.length === 4) return 'year';
+    if (p.length === 10) return 'day';
+    return 'month';
   });
 
-  previous(): void {
-    this.periodChange.emit(this.shiftMonth(this.period(), -1));
-  }
-
-  next(): void {
-    this.periodChange.emit(this.shiftMonth(this.period(), 1));
-  }
-
-  private shiftMonth(period: string, delta: number): string {
-    const [year, month] = period.split('-').map(Number);
-    const date = new Date(year, month - 1 + delta, 1);
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+  selectPeriod(tab: PeriodTab): void {
+    const now = new Date();
+    let value: string;
+    switch (tab) {
+      case 'day':   value = now.toISOString().slice(0, 10); break;
+      case 'week':  value = isoWeek(now); break;
+      case 'year':  value = String(now.getFullYear()); break;
+      default:      value = now.toISOString().slice(0, 7);
+    }
+    this.periodChange.emit(value);
   }
 }

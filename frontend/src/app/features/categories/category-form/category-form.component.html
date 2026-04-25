@@ -1,26 +1,26 @@
 <ion-header>
-  <ion-toolbar>
+  <ion-toolbar color="primary">
     <ion-buttons slot="start">
-      <ion-button (click)="cancel()" color="medium">Cancelar</ion-button>
+      <ion-button (click)="cancel()" color="light" fill="clear">Cancelar</ion-button>
     </ion-buttons>
-    <ion-title>{{ isEditMode() ? 'Editar categoría' : 'Nueva categoría' }}</ion-title>
+    <ion-title>{{ isEditMode ? 'Editar categoría' : 'Nueva categoría' }}</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="save()" [disabled]="form.invalid" color="primary" strong="true">
+      <ion-button (click)="save()" [disabled]="form.invalid" color="light" fill="clear" strong="true">
         Guardar
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
+<ion-content style="--background: --color-green-50;">
   <form [formGroup]="form">
-    <ion-list inset="true">
+    <ion-list inset="true" class="mt-4">
 
       <ion-item>
         <ion-label position="stacked">Nombre</ion-label>
         <ion-input formControlName="name" placeholder="Ej: Alimentación"></ion-input>
         @if (form.get('name')?.invalid && form.get('name')?.touched) {
-          <ion-note color="danger" slot="error">El nombre es requerido</ion-note>
+        <ion-note color="danger" slot="error">El nombre es requerido</ion-note>
         }
       </ion-item>
 
@@ -32,47 +32,104 @@
         </ion-select>
       </ion-item>
 
-      <ion-item>
+    </ion-list>
+
+    <!-- Icono picker -->
+    <ion-list inset="true" class="mt-2">
+      <ion-item button (click)="showIconPicker.set(!showIconPicker())" detail="false" lines="none">
         <ion-label>Icono</ion-label>
-        <ion-select formControlName="icon" interface="action-sheet">
-          @for (icon of icons; track icon) {
-            <ion-select-option [value]="icon">{{ icon }}</ion-select-option>
-          }
-        </ion-select>
+        <span slot="end" class="text-3xl mr-1">{{ form.get('icon')?.value }}</span>
+        <ion-icon name="chevron-down-outline" slot="end" class="text-gray-400"
+          [class.rotate-180]="showIconPicker()"></ion-icon>
       </ion-item>
+      @if (showIconPicker()) {
+      <div class="bg-white rounded-2xl mx-3 mb-3 p-3 shadow-sm">
+        <div class="grid grid-cols-6 gap-2">
+          @for (icon of icons(); track icon) {
+          <button type="button" (click)="onIconSelect(icon)"
+            class="text-3xl p-2 rounded-2xl flex items-center justify-center transition-all active:scale-95"
+            [class.border-2]="form.get('icon')?.value === icon"
+            [class.border-monefy-green]="form.get('icon')?.value === icon"
+            [class.bg-monefy-mint]="form.get('icon')?.value === icon" style="min-height: 56px;">
+            {{ icon }}
+          </button>
+          }
+          <!-- Botón para agregar emoji personalizado -->
+          <button type="button" (click)="openAddIconAlert()"
+            class="text-2xl p-2 rounded-2xl flex items-center justify-center border-2 border-dashed border-gray-300 text-gray-400 transition-all active:scale-95"
+            style="min-height: 56px;">
+            +
+          </button>
+        </div>
+      </div>
+      }
+    </ion-list>
 
-      <ion-item>
+    <!-- Color picker -->
+    <ion-list inset="true" class="mt-2">
+      <ion-item button (click)="showColorPicker.set(!showColorPicker())" detail="false" lines="none">
         <ion-label>Color</ion-label>
-        <ion-select formControlName="color" interface="action-sheet">
-          @for (color of colors; track color) {
-            <ion-select-option [value]="color">
-              <span [style.color]="color">■ </span>{{ color }}
-            </ion-select-option>
-          }
-        </ion-select>
+        <div slot="end" class="w-6 h-6 rounded-full border-2 border-gray-200 mr-2"
+          [style.background-color]="form.get('color')?.value"></div>
+        <ion-icon name="chevron-down-outline" slot="end" class="text-gray-400"
+          [class.rotate-180]="showColorPicker()"></ion-icon>
       </ion-item>
+      @if (showColorPicker()) {
+      <div class="bg-white rounded-2xl mx-3 mb-3 p-4 shadow-sm">
+        <div class="grid grid-cols-7 gap-3">
+          @for (opt of colorOptions; track opt.value) {
+          <button type="button" (click)="onColorSelect(opt.value)"
+            class="w-11 h-11 rounded-full border-2 flex items-center justify-center transition-all active:scale-95"
+            [style.background-color]="opt.value" [class.border-gray-900]="form.get('color')?.value === opt.value"
+            [class.scale-110]="form.get('color')?.value === opt.value"
+            [class.border-transparent]="form.get('color')?.value !== opt.value">
+            @if (form.get('color')?.value === opt.value) {
+            <svg class="w-3 h-3 text-white drop-shadow" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clip-rule="evenodd" />
+            </svg>
+            }
+          </button>
+          }
+        </div>
+      </div>
+      }
+    </ion-list>
 
+    <!-- Presupuesto -->
+    <ion-list inset="true" class="mt-2">
       <ion-item>
         <ion-label position="stacked">Presupuesto (opcional)</ion-label>
-        <ion-input
-          formControlName="budgetAmount"
-          type="number"
-          placeholder="0.00"
-          inputmode="decimal"
-        ></ion-input>
+        <ion-input formControlName="budgetAmount" type="number" placeholder="0.00" inputmode="decimal"></ion-input>
       </ion-item>
 
       @if (form.get('budgetAmount')?.value) {
-        <ion-item>
-          <ion-label>Período del presupuesto</ion-label>
-          <ion-select formControlName="budgetPeriod" interface="action-sheet">
-            <ion-select-option value="monthly">Mensual</ion-select-option>
-            <ion-select-option value="weekly">Semanal</ion-select-option>
-            <ion-select-option value="custom">Personalizado</ion-select-option>
-          </ion-select>
-        </ion-item>
+      <!-- Período como accordion inline -->
+      <ion-item button (click)="showPeriodPicker.set(!showPeriodPicker())" detail="false" lines="none">
+        <ion-label>Período del presupuesto</ion-label>
+        <span slot="end" class="text-sm text-monefy-text-secondary mr-1">
+          {{ periodLabel }}
+        </span>
+        <ion-icon name="chevron-down-outline" slot="end" class="text-gray-400"
+          [class.rotate-180]="showPeriodPicker()"></ion-icon>
+      </ion-item>
+      @if (showPeriodPicker()) {
+      <div class="bg-white rounded-2xl mx-3 mb-3 shadow-sm overflow-hidden">
+        @for (opt of PERIOD_OPTIONS; track opt.value; let last = $last) {
+        <button type="button"
+          class="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-monefy-green"
+          [class.border-b]="!last" [class.border-gray-100]="!last" (click)="onPeriodSelect(opt.value)">
+          <span>{{ opt.label }}</span>
+          @if (form.get('budgetPeriod')?.value === opt.value) {
+          <ion-icon name="checkmark-outline" class="text-monefy-green"></ion-icon>
+          }
+        </button>
+        }
+      </div>
       }
-
+      }
     </ion-list>
+
   </form>
 </ion-content>

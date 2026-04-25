@@ -1,15 +1,13 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
-import { CommonModule } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import {
   IonContent,
   IonHeader,
   IonTitle,
   IonToolbar,
   IonIcon,
-  IonList,
+  IonButton,
   IonItem,
   IonItemSliding,
   IonItemOptions,
@@ -21,13 +19,18 @@ import {
   ToastController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { addOutline, trashOutline } from 'ionicons/icons';
-import { BudgetsActions } from '../../../store/budgets/budgets.actions';
-import { selectAllBudgets, selectBudgetsRowMap } from '../../../store/budgets/budgets.selectors';
-import { IBudget } from '../../../models/budget.model';
-import { PeriodSelectorComponent } from '../../../shared/components/period-selector/period-selector.component';
-import { BudgetIndicatorComponent } from '../../../shared/components/budget-indicator/budget-indicator.component';
-import { BudgetFormComponent } from '../budget-form/budget-form.component';
+import { addOutline, trashOutline, barChartOutline } from 'ionicons/icons';
+import { TransactionsActions } from '@store/transactions/transactions.actions';
+import { BudgetsActions } from '@store/budgets/budgets.actions';
+import { CategoriesActions } from '@store/categories/categories.actions';
+import { selectAllBudgets, selectBudgetsRowMap } from '@store/budgets/budgets.selectors';
+import { map } from 'rxjs';
+import { selectBaseCurrency } from '@store/currency/currency.selectors';
+import { selectAllCategories } from '@store/categories/categories.selectors';
+import { IBudget } from '@models/budget.model';
+import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
+import { BudgetIndicatorComponent } from '@shared/components/budget-indicator/budget-indicator.component';
+import { BudgetFormComponent } from '@features/budgets/budget-form/budget-form.component';
 
 @Component({
   selector: 'app-budget-list',
@@ -35,13 +38,12 @@ import { BudgetFormComponent } from '../budget-form/budget-form.component';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
     IonContent,
     IonHeader,
     IonTitle,
     IonToolbar,
     IonIcon,
-    IonList,
+    IonButton,
     IonItem,
     IonItemSliding,
     IonItemOptions,
@@ -52,7 +54,6 @@ import { BudgetFormComponent } from '../budget-form/budget-form.component';
     PeriodSelectorComponent,
     BudgetIndicatorComponent,
   ],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class BudgetListPage implements OnInit {
   private readonly store = inject(Store);
@@ -66,6 +67,14 @@ export class BudgetListPage implements OnInit {
   /** Mapa budgetId → rowNumber en Sheets, necesario para edición y borrado. */
   private readonly rowMap = toSignal(this.store.select(selectBudgetsRowMap), { initialValue: {} as Record<string, number> });
 
+  /** Categorías del usuario para resolver nombre en la lista de presupuestos. */
+  private readonly categories = toSignal(this.store.select(selectAllCategories), { initialValue: [] });
+  /** Moneda base del usuario desde USER_SETTINGS via NgRx. Fallback 'EUR' antes de cargar. */
+  readonly userBaseCurrency = toSignal(
+    this.store.select(selectBaseCurrency).pipe(map(c => c ?? 'EUR')),
+    { initialValue: 'EUR' }
+  );
+
   /** Presupuestos filtrados por el período seleccionado actualmente. */
   readonly budgets = computed(() => {
     const period = this.currentPeriod();
@@ -73,11 +82,13 @@ export class BudgetListPage implements OnInit {
   });
 
   constructor() {
-    addIcons({ addOutline, trashOutline });
+    addIcons({ addOutline, trashOutline, barChartOutline });
   }
 
   ngOnInit(): void {
     this.store.dispatch(BudgetsActions.loadBudgets());
+    this.store.dispatch(TransactionsActions.loadTransactions());
+    this.store.dispatch(CategoriesActions.loadCategories());
   }
 
   onPeriodChange(p: string): void {
@@ -100,6 +111,10 @@ export class BudgetListPage implements OnInit {
       backdropDismiss: true,
     });
     await modal.present();
+  }
+
+  getCategoryName(categoryId: string): string {
+    return this.categories().find(c => c.categoryId === categoryId)?.name ?? 'Sin categoría';
   }
 
   async deleteBudget(budget: IBudget): Promise<void> {

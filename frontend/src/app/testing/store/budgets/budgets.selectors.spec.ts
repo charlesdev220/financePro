@@ -26,7 +26,7 @@ const emptyAppState: AppState = {
   wallets: { items: [], rowMap: {}, loading: false, error: null },
   budgets: { items: [], rowMap: {}, loading: false, error: null },
   categories: { items: [], rowMap: {}, loading: false, error: null },
-  currency: { rates: {}, loading: false, error: null },
+  currency: { rates: {}, currencies: [], currencyRowMap: {}, baseCurrency: null, baseCurrencyRowNumber: null, loading: false, error: null },
 };
 
 // ─────────────────────────────────────────────────────────────────────────────

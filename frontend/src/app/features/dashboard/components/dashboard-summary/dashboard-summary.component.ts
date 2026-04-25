@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonGrid, IonRow, IonCol } from '@ionic/angular/standalone';
-import { CurrencyFormatPipe } from '../../../../shared/pipes/currency-format.pipe';
-import { DashboardSummary } from '../../services/dashboard.service';
+import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
+import { DashboardSummary } from '@features/dashboard/services/dashboard.service';
 
 @Component({
   selector: 'app-dashboard-summary',

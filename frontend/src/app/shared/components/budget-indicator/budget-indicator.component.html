@@ -1,4 +1,6 @@
 <div class="flex flex-col gap-1 w-full py-1">
   <ion-progress-bar [value]="percentage() / 100" [color]="color()"></ion-progress-bar>
-  <ion-note class="text-[0.75rem]">{{ budget().spentAmount | number:'1.2-2' }} / {{ budget().budgetAmount | number:'1.2-2' }} EUR</ion-note>
+  <ion-note class="text-[0.75rem]">
+    {{ budget().spentAmount | currencyFormat:userCurrency() }} / {{ budget().budgetAmount | currencyFormat:userCurrency() }}
+  </ion-note>
 </div>

@@ -5,7 +5,7 @@
         <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
       </ion-button>
     </ion-buttons>
-    <ion-title class="t-logo text-2xl font-normal" style="font-family: 'Pacifico', cursive;">MyFinance</ion-title>
+    <ion-title class="t-logo text-2xl font-normal font-pacifico">MyFinance</ion-title>
     <ion-buttons slot="end">
       <ion-button (click)="logout()">
         <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
@@ -15,39 +15,41 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  
+
   <!-- Estado inicial: Cuenta vacía (Seeding) -->
   @if (needsSeed()) {
-    <div class="flex flex-col items-center justify-center min-h-[80vh] px-8 text-center bg-gray-50">
-      <div class="w-24 h-24 mb-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-600">
-        <ion-icon name="rocket-outline" class="text-5xl"></ion-icon>
-      </div>
-      <h1 class="text-2xl font-bold text-gray-900 mb-2">¡Bienvenido a FinancePro!</h1>
-      <p class="text-gray-600 mb-8 max-w-xs">
-        Parece que es tu primera vez aquí. Vamos a preparar tu cuenta con carteras y categorías básicas para que empieces a ahorrar hoy mismo.
-      </p>
-      
-      <ion-button (click)="seedData()" expand="block" shape="round" class="w-full max-w-xs h-12 text-lg font-semibold shadow-lg" [disabled]="isSeeding()">
-        @if (isSeeding()) {
-          <ion-spinner name="crescent" slot="start"></ion-spinner>
-          Preparando...
-        } @else {
-          <ion-icon name="sparkles-outline" slot="start"></ion-icon>
-          Inicializar mi cuenta
-        }
-      </ion-button>
-      
-      <p class="mt-4 text-xs text-gray-400">
-        Esto creará carteras como "Efectivo" y categorías como "Alimentación".
-      </p>
+  <div class="flex flex-col items-center justify-center min-h-[80vh] px-8 text-center bg-gray-50">
+    <div class="w-24 h-24 mb-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-600">
+      <ion-icon name="rocket-outline" class="text-5xl"></ion-icon>
     </div>
+    <h1 class="text-2xl font-bold text-gray-900 mb-2">¡Bienvenido a MyFinance!</h1>
+    <p class="text-gray-600 mb-8 max-w-xs">
+      Parece que es tu primera vez aquí. Vamos a preparar tu cuenta con carteras y categorías básicas para que empieces
+      a ahorrar hoy mismo.
+    </p>
+
+    <ion-button (click)="seedData()" expand="block" shape="round" class="w-full max-w-xs h-12 text-lg font-semibold"
+      [disabled]="isSeeding()">
+      @if (isSeeding()) {
+      <ion-spinner name="crescent" slot="start"></ion-spinner>
+      Preparando...
+      } @else {
+      <ion-icon name="sparkles-outline" slot="start"></ion-icon>
+      Inicializar mi cuenta
+      }
+    </ion-button>
+
+    <p class="mt-4 text-xs text-gray-400">
+      Esto creará carteras como "Efectivo" y categorías como "Alimentación".
+    </p>
+  </div>
   } @else {
-    <!-- Contenido normal del Dashboard -->
-    <div class="bg-[var(--ion-color-primary)] pb-8 rounded-b-[40px] shadow-sm">
-      <app-period-selector
-        [currentPeriod]="period()"
-        (periodChange)="onPeriodChange($event)"
-      ></app-period-selector>
+  <!-- Contenido normal del Dashboard -->
+
+  <!-- Header verde — full width, contenido centrado en desktop -->
+  <div class="bg-[var(--ion-color-primary)] pb-8 rounded-b-[40px] shadow-sm">
+    <div class="max-w-screen-xl mx-auto">
+      <app-period-selector [period]="period()" (periodChange)="onPeriodChange($event)"></app-period-selector>
 
       <div class="flex flex-col items-center mt-4">
         <div class="bg-white/20 backdrop-blur-md px-6 py-3 rounded-full border border-white/30 shadow-lg mb-2">
@@ -56,7 +58,7 @@
             {{ summary().balance | currencyFormat:userBaseCurrency() }}
           </span>
         </div>
-        
+
         <div class="flex gap-8 mt-4 text-white/90">
           <div class="flex flex-col items-center">
             <span class="text-[10px] uppercase font-bold opacity-75">Ingresos</span>
@@ -70,73 +72,76 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <div class="px-4 mt-4">
-      <app-dashboard-chart 
-        [breakdown]="breakdown()" 
-        [balance]="summary().balance"
-        [currency]="userBaseCurrency()"
-      ></app-dashboard-chart>
+  <!-- Cuerpo principal — 1 col en móvil, 2 cols en desktop solo con datos -->
+  <div class="max-w-screen-xl mx-auto px-4 mt-4 pb-[calc(env(safe-area-inset-bottom)+136px)]"
+    [class.lg:grid]="recentTransactions().length > 0"
+    [class.lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]]="recentTransactions().length > 0"
+    [class.lg:gap-6]="recentTransactions().length > 0" [class.lg:items-start]="recentTransactions().length > 0">
+
+    <!-- Columna izquierda: gráfico -->
+    <div>
+      <app-dashboard-chart [breakdown]="breakdown()" [balance]="summary().balance"
+        [currency]="userBaseCurrency()"></app-dashboard-chart>
     </div>
 
-    <div class="flex gap-4 px-4 my-6">
-      <ion-button
-        class="flex-1 h-16 shadow-lg"
-        style="--border-radius: 20px;"
-        color="danger"
-        (click)="openAddModal('expense')"
-      >
-        <div class="flex flex-col items-center py-1">
-          <ion-icon name="trending-down-outline" class="text-xl"></ion-icon>
-          <span class="text-[10px] font-bold uppercase mt-1">Gasto</span>
-        </div>
-      </ion-button>
-      <ion-button
-        class="flex-1 h-14 shadow-xl"
-        style="--border-radius: 16px;"
-        color="success"
-        (click)="openAddModal('income')"
-      >
-        <div class="flex flex-col items-center py-1">
-          <ion-icon name="trending-up-outline" class="text-xl"></ion-icon>
-          <span class="text-[10px] font-bold uppercase mt-1">Ingreso</span>
-        </div>
-      </ion-button>
-    </div>
-
-    @if (recentTransactions().length > 0) {
-      <div class="flex items-center justify-between px-4 mt-6 mb-2">
+    <!-- Columna derecha: transacciones recientes -->
+    <div>
+      @if (recentTransactions().length > 0) {
+      <div class="flex items-center justify-between mt-6 mb-2 lg:mt-0">
         <h2 class="m-0 text-lg font-bold">Últimos movimientos</h2>
-        <ion-note color="primary" class="text-xs font-semibold">VER TODOS</ion-note>
+        <ion-note color="primary" class="text-xs font-semibold">Ver todos</ion-note>
       </div>
 
-      <ion-list lines="inset" class="mx-2 mb-8 bg-transparent">
+      <ion-list lines="inset" class="mx-0 bg-transparent pb-[calc(56px+80px)]">
         @for (tx of recentTransactions(); track tx.txId || $index) {
-        <ion-item class="mx-0 mb-1" lines="full" style="--padding-start: 16px; --inner-padding-end: 16px;">
-          <div slot="start" class="flex items-center justify-center w-12 h-12 rounded-2xl bg-gray-50 border border-gray-100 text-2xl">
+        <ion-item class="mb-1" lines="full" style="--padding-start: 16px; --inner-padding-end: 16px;">
+          <div slot="start"
+            class="flex items-center justify-center w-12 h-12 rounded-2xl bg-gray-50 border border-gray-100 text-2xl">
             {{ tx.categoryIcon || '💰' }}
           </div>
           <ion-label>
             <div class="flex items-center gap-2">
-              <div class="w-2.5 h-2.5 rounded-full {{ tx.type === 'income' ? 'bg-[var(--color-income)] shadow-[0_0_8px_var(--color-income)]' : 'bg-[var(--color-expense)] shadow-[0_0_8px_var(--color-expense)]' }}"></div>
+              <div class="w-2.5 h-2.5 rounded-full" [class.bg-green-500]="tx.isIncome"
+                [class.bg-red-400]="!tx.isIncome"></div>
               <h3 class="text-sm font-bold text-[var(--color-text-primary)]">{{ tx.concept || 'Sin descripción' }}</h3>
             </div>
-            <p class="text-[10px] uppercase tracking-wider font-bold text-[var(--color-text-secondary)] mt-0.5">{{ tx.categoryName }} • {{ tx.date | relativeDate }}</p>
+            <p class="text-[10px] uppercase tracking-wider font-bold text-[var(--color-text-secondary)] mt-0.5">{{
+              tx.categoryName }} • {{ tx.date | relativeDate }}</p>
           </ion-label>
           <div slot="end" class="text-right">
-            <span class="text-base font-extrabold {{ tx.type === 'income' ? 'text-[var(--color-income)]' : 'text-[var(--color-expense)]' }}">
-              {{ tx.type === 'income' ? '+' : '-' }}{{ tx.amount | currencyFormat:tx.currency }}
+            <span class="text-base font-extrabold" [class.text-green-600]="tx.isIncome"
+              [class.text-red-500]="!tx.isIncome">
+              {{ tx.isIncome ? '+' : '-' }}{{ tx.amount | currencyFormat:tx.currency }}
             </span>
           </div>
         </ion-item>
-      }
+        }
       </ion-list>
-    } @else {
+      } @else {
       <div class="flex flex-col items-center justify-center px-10 py-12 text-center opacity-60">
         <ion-icon name="add-outline" class="text-5xl mb-3"></ion-icon>
         <p class="text-sm">Todavía no registraste nada en este periodo.</p>
       </div>
-    }
+      }
+    </div>
+  </div>
+
+  <!-- Barra de acciones fija — todas las pantallas -->
+  <div
+    class="fixed bottom-0 left-0 right-0 flex gap-3 px-4 pb-[calc(env(safe-area-inset-bottom)+64px)] pt-3 bg-monefy-mint z-10">
+    <ion-button (click)="openAddExpense()" expand="block" class="flex-1 font-semibold"
+      style="--background: var(--color-red-400); --background-activated: --color-red-500; --border-radius: 12px; text-transform: none;">
+      <ion-icon name="remove-outline" slot="start"></ion-icon>
+      Registrar gasto
+    </ion-button>
+    <ion-button (click)="openAddIncome()" expand="block" class="flex-1 font-semibold"
+      style="--background: var(--color-green-500); --background-activated: --color-green-700; --border-radius: 12px; text-transform: none;">
+      <ion-icon name="add-outline" slot="start"></ion-icon>
+      Registrar ingreso
+    </ion-button>
+  </div>
   }
 
 </ion-content>
@@ -144,12 +149,8 @@
 <!-- Modal para Nueva Transacción (Blindado para Signals y Layout) -->
 <ion-modal [isOpen]="isModalOpen()" (didDismiss)="closeModal()" [backdropDismiss]="true">
   <ng-template>
-    <app-transaction-form
-      class="ion-page"
-      [userId]="currentUserId()"
-      [userBaseCurrency]="'EUR'"
-      [initialType]="modalInitialType()"
-      (dismiss)="closeModal()">
+    <app-transaction-form class="ion-page" [userId]="currentUserId()" [userBaseCurrency]="'EUR'"
+      [initialType]="modalInitialType()" (dismiss)="closeModal()">
     </app-transaction-form>
   </ng-template>
 </ion-modal>

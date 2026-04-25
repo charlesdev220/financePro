@@ -1,11 +1,11 @@
 import { inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
-import { Store } from '@ngrx/store';
 import { concatMap, switchMap, map, catchError, withLatestFrom } from 'rxjs/operators';
-import { of, EMPTY } from 'rxjs';
+import { of, EMPTY, merge } from 'rxjs';
 import { WalletsActions } from './wallets.actions';
 import { selectAllWallets } from './wallets.selectors';
-import { WalletService } from '../../features/wallets/services/wallet.service';
+import { WalletService } from '@features/wallets/services/wallet.service';
+import { Store } from '@ngrx/store';
 
 export const loadWallets$ = createEffect(
   (
@@ -37,19 +37,19 @@ export const addWallet$ = createEffect(
     actions$.pipe(
       ofType(WalletsActions.addWallet),
       withLatestFrom(store.select(selectAllWallets)),
-      concatMap(([{ wallet }, prevItems]) => {
-        store.dispatch(WalletsActions.addWalletSuccess({ wallet }));
-        return walletService.saveWallet(wallet).pipe(
-          catchError(error => {
-            store.dispatch(
-              WalletsActions.addWalletFailure({ error: String(error), prevItems }),
-            );
-            return EMPTY;
-          }),
-        );
-      }),
+      concatMap(([{ wallet }, prevItems]) =>
+        merge(
+          of(WalletsActions.addWalletSuccess({ wallet })),
+          walletService.saveWallet(wallet).pipe(
+            switchMap(() => EMPTY),
+            catchError(error =>
+              of(WalletsActions.addWalletFailure({ error: String(error), prevItems })),
+            ),
+          ),
+        ),
+      ),
     ),
-  { functional: true, dispatch: false },
+  { functional: true },
 );
 
 export const updateWallet$ = createEffect(
@@ -61,19 +61,19 @@ export const updateWallet$ = createEffect(
     actions$.pipe(
       ofType(WalletsActions.updateWallet),
       withLatestFrom(store.select(selectAllWallets)),
-      concatMap(([{ wallet, rowNumber }, prevItems]) => {
-        store.dispatch(WalletsActions.updateWalletSuccess({ wallet }));
-        return walletService.updateWallet(wallet, rowNumber).pipe(
-          catchError(error => {
-            store.dispatch(
-              WalletsActions.updateWalletFailure({ error: String(error), prevItems }),
-            );
-            return EMPTY;
-          }),
-        );
-      }),
+      concatMap(([{ wallet, rowNumber }, prevItems]) =>
+        merge(
+          of(WalletsActions.updateWalletSuccess({ wallet })),
+          walletService.updateWallet(wallet, rowNumber).pipe(
+            switchMap(() => EMPTY),
+            catchError(error =>
+              of(WalletsActions.updateWalletFailure({ error: String(error), prevItems })),
+            ),
+          ),
+        ),
+      ),
     ),
-  { functional: true, dispatch: false },
+  { functional: true },
 );
 
 export const deleteWallet$ = createEffect(
@@ -85,17 +85,17 @@ export const deleteWallet$ = createEffect(
     actions$.pipe(
       ofType(WalletsActions.deleteWallet),
       withLatestFrom(store.select(selectAllWallets)),
-      concatMap(([{ walletId, rowNumber }, prevItems]) => {
-        store.dispatch(WalletsActions.deleteWalletSuccess({ walletId }));
-        return walletService.deleteWallet(rowNumber).pipe(
-          catchError(error => {
-            store.dispatch(
-              WalletsActions.deleteWalletFailure({ error: String(error), prevItems }),
-            );
-            return EMPTY;
-          }),
-        );
-      }),
+      concatMap(([{ walletId, rowNumber }, prevItems]) =>
+        merge(
+          of(WalletsActions.deleteWalletSuccess({ walletId })),
+          walletService.deleteWallet(rowNumber).pipe(
+            switchMap(() => EMPTY),
+            catchError(error =>
+              of(WalletsActions.deleteWalletFailure({ error: String(error), prevItems })),
+            ),
+          ),
+        ),
+      ),
     ),
-  { functional: true, dispatch: false },
+  { functional: true },
 );

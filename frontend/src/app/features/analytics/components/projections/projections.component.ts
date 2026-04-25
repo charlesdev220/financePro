@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { ChartDataset } from 'chart.js';
-import { ChartBarComponent } from '../../../../shared/components/chart-bar/chart-bar.component';
-import { AnalyticsService, MonthlyTotal } from '../../services/analytics.service';
+import { ChartBarComponent } from '@shared/components/chart-bar/chart-bar.component';
+import { AnalyticsService, MonthlyTotal } from '@features/analytics/services/analytics.service';
 
 @Component({
   selector: 'app-projections',

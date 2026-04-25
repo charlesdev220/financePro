@@ -46,4 +46,9 @@ export const tabsRoutes: Routes = [
     loadComponent: () =>
       import('../settings/settings.page').then(m => m.SettingsPage),
   },
+  {
+    path: 'currencies',
+    loadComponent: () =>
+      import('../settings/currency-settings/currency-settings.page').then(m => m.CurrencySettingsPage),
+  },
 ];

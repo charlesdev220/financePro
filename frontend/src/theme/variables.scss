@@ -8,15 +8,22 @@
   /* ─── BASE COLOR TOKENS (Monefy) ─── */
   --color-green-900: #2D7A5C;
   --color-green-700: #3D9970;
-  --color-green-500: #5BAD8F;   /* PRIMARY */
+  --color-green-500: #5BAD8F;
+  /* PRIMARY */
   --color-green-400: #7CC4A4;
-  --color-green-50:  #E8F5EE;   /* App background */
-  
-  --color-red-400:   #E57373;   /* Expense color */
-  --color-white:     #FFFFFF;
-  --color-gray-900:  #2D2D2D;   /* Primary text */
-  --color-gray-400:  #8A9A90;   /* Secondary text */
-  --color-gray-200:  #C8D8CE;   /* Borders */
+  --color-green-50: #E8F5EE;
+  /* App background */
+
+  --color-red-400: #E57373;
+  --color-red-500: #C62828;
+  /* Expense color */
+  --color-white: #FFFFFF;
+  --color-gray-900: #2D2D2D;
+  /* Primary text */
+  --color-gray-400: #8A9A90;
+  /* Secondary text */
+  --color-gray-200: #C8D8CE;
+  /* Borders */
 
   /* ─── IONIC OVERRIDES ─── */
   --ion-color-primary: var(--color-green-500);
@@ -31,18 +38,24 @@
   --ion-font-family: 'Nunito', system-ui, sans-serif;
 
   /* ─── APP SPECIFIC TOKENS ─── */
-  --app-color-brand:       var(--color-green-500);
-  --app-color-brand-dark:  var(--color-green-700);
-  --app-color-surface:     var(--color-white);
-  --app-color-bg:          var(--color-green-50);
+  --app-color-brand: var(--color-green-500);
+  --app-color-brand-dark: var(--color-green-700);
+  --app-color-surface: var(--color-white);
+  --app-color-bg: var(--color-green-50);
 
   /* Spacing index */
-  --app-space-1: 0.25rem;  /* 4px */
-  --app-space-2: 0.5rem;   /* 8px */
-  --app-space-3: 0.75rem;  /* 12px */
-  --app-space-4: 1.0rem;   /* 16px */
-  --app-space-6: 1.5rem;   /* 24px */
-  --app-space-8: 2.0rem;   /* 32px */
+  --app-space-1: 0.25rem;
+  /* 4px */
+  --app-space-2: 0.5rem;
+  /* 8px */
+  --app-space-3: 0.75rem;
+  /* 12px */
+  --app-space-4: 1.0rem;
+  /* 16px */
+  --app-space-6: 1.5rem;
+  /* 24px */
+  --app-space-8: 2.0rem;
+  /* 32px */
 
   /* Specifics */
   --font-logo: 'Pacifico', cursive;
@@ -50,19 +63,31 @@
   /* SEMANTIC TOKENS */
   --color-primary: var(--color-green-500);
   --color-bg-mint: var(--color-green-50);
-  --color-income:  var(--color-green-500);
+  --color-income: var(--color-green-500);
   --color-expense: var(--color-red-400);
 }
 
 /* ─── PREMIUM ANIMATIONS ─── */
 @keyframes slideUp {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .animate-slide-up {
@@ -77,18 +102,26 @@
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
 }
 
 /* Base typography for entire app */
 body {
-  font-family: var(--font-body) !important;
+  font-family: var(--font-body);
   color: var(--color-gray-900);
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 800;
   letter-spacing: -0.02em;
 }

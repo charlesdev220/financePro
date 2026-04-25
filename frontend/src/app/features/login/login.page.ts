@@ -12,7 +12,7 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { mailOutline, lockClosedOutline, walletOutline } from 'ionicons/icons';
-import { AuthService } from '../../core/services/auth.service';
+import { AuthService } from '@core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -56,12 +56,11 @@ export class LoginPage implements OnInit {
     try {
       const success = await this.authService.login(this.email, this.password);
       if (success) {
-        this.router.navigate(['/dashboard']);
+        this.router.navigate(['/tabs/dashboard']);
       } else {
         this.showToast('Credenciales incorrectas');
       }
-    } catch (error) {
-      console.error('[LoginPage] Error login:', error);
+    } catch {
       this.showToast('Error al conectar con el servidor');
     } finally {
       loading.dismiss();

@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   IonContent,
@@ -14,15 +14,17 @@ import {
   IonNote,
   AlertController,
 } from '@ionic/angular/standalone';
+import { RouterLink } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { logOutOutline, personCircleOutline } from 'ionicons/icons';
-import { AuthService } from '../../core/services/auth.service';
+import { logOutOutline, personCircleOutline, cashOutline } from 'ionicons/icons';
+import { AuthService } from '@core/services/auth.service';
 
 @Component({
   selector: 'app-settings',
   templateUrl: 'settings.page.html',
   standalone: true,
-  imports: [IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonList, IonItem, IonLabel, IonIcon, IonNote],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonList, IonItem, IonLabel, IonIcon, IonNote],
 })
 export class SettingsPage {
   private readonly authService = inject(AuthService);
@@ -32,7 +34,7 @@ export class SettingsPage {
   readonly user = this.authService.getUser();
 
   constructor() {
-    addIcons({ logOutOutline, personCircleOutline });
+    addIcons({ logOutOutline, personCircleOutline, cashOutline });
   }
 
   async handleSignOut(): Promise<void> {

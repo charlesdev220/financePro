@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal, computed } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ToastController } from '@ionic/angular/standalone';
 import {
   IonContent,
   IonHeader,
@@ -10,34 +9,34 @@ import {
   IonButtons,
   IonButton,
   IonIcon,
-  IonList,
   IonItem,
   IonLabel,
-  IonFab,
-  IonFabButton,
-  IonNote,
+
   IonItemSliding,
   IonItemOption,
   IonItemOptions,
   IonModal,
+  ToastController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { addOutline, trashOutline, createOutline, arrowUpOutline, arrowDownOutline, chevronUpOutline, chevronDownOutline } from 'ionicons/icons';
-import { TransactionsActions } from '../../../store/transactions/transactions.actions';
+import { addOutline, trashOutline, createOutline, arrowUpOutline, arrowDownOutline, chevronUpOutline, chevronDownOutline, walletOutline, sparklesOutline, calendarOutline, closeCircleOutline } from 'ionicons/icons';
+import { TransactionsActions } from '@store/transactions/transactions.actions';
 import {
   selectAllTransactions,
   selectTransactionsRowMap,
   selectTransactionsError,
-} from '../../../store/transactions/transactions.selectors';
-import { WalletsActions } from '../../../store/wallets/wallets.actions';
-import { selectAllWallets } from '../../../store/wallets/wallets.selectors';
-import { CategoriesActions } from '../../../store/categories/categories.actions';
-import { selectActiveCategories } from '../../../store/categories/categories.selectors';
-import { AuthService } from '../../../core/services/auth.service';
-import { ITransaction } from '../../../models/transaction.model';
-import { RelativeDatePipe } from '../../../shared/pipes/relative-date.pipe';
-import { CurrencyFormatPipe } from '../../../shared/pipes/currency-format.pipe';
-import { TransactionFormComponent } from '../transaction-form/transaction-form.component';
+} from '@store/transactions/transactions.selectors';
+import { WalletsActions } from '@store/wallets/wallets.actions';
+import { selectAllWallets } from '@store/wallets/wallets.selectors';
+import { CategoriesActions } from '@store/categories/categories.actions';
+import { selectActiveCategories } from '@store/categories/categories.selectors';
+import { AuthService } from '@core/services/auth.service';
+import { ITransaction } from '@models/transaction.model';
+import { RelativeDatePipe } from '@shared/pipes/relative-date.pipe';
+import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
+import { TransactionFormComponent } from '@features/transactions/transaction-form/transaction-form.component';
+import { map } from 'rxjs';
+import { selectBaseCurrency } from '@store/currency/currency.selectors';
 
 /**
  * TransactionListPage — Vista de listado detallado de movimientos.
@@ -53,8 +52,8 @@ import { TransactionFormComponent } from '../transaction-form/transaction-form.c
   imports: [
     IonContent, IonHeader, IonTitle, IonToolbar,
     IonButtons, IonButton, IonIcon,
-    IonList, IonItem, IonLabel, IonNote,
-    IonFab, IonFabButton,
+    IonItem, IonLabel,
+
     IonItemSliding, IonItemOption, IonItemOptions,
     IonModal,
     TransactionFormComponent,
@@ -139,7 +138,7 @@ export class TransactionListPage implements OnInit {
   /** Transacciones agrupadas por fecha para la vista de lista cronológica. */
   readonly groupedTransactions = computed(() => {
     const txs = this.transactionsEnriched();
-    const groups: { date: string; transactions: any[]; totalDaily: number }[] = [];
+    const groups: { date: string; transactions: (ITransaction & { categoryName: string; categoryIcon: string })[]; totalDaily: number }[] = [];
     
     txs.forEach(tx => {
       let group = groups.find(g => g.date === tx.date);
@@ -154,11 +153,11 @@ export class TransactionListPage implements OnInit {
     return groups;
   });
 
-  /** Divisa base detectada para los totales diarios. */
-  readonly userBaseCurrency = computed(() => {
-    const txs = this.allTransactions();
-    return txs.length > 0 ? txs[0].currency : 'EUR';
-  });
+  /** Moneda base del usuario desde USER_SETTINGS via NgRx. Fallback 'EUR' antes de cargar. */
+  readonly userBaseCurrency = toSignal(
+    this.store.select(selectBaseCurrency).pipe(map(c => c ?? 'EUR')),
+    { initialValue: 'EUR' }
+  );
 
   /** Últimos 12 períodos YYYY-MM para el selector de filtro de período. */
   readonly availablePeriods = computed(() => {
@@ -184,7 +183,7 @@ export class TransactionListPage implements OnInit {
   private _prevError = signal<string | null>(null);
 
   constructor() {
-    addIcons({ addOutline, trashOutline, createOutline, arrowUpOutline, arrowDownOutline, chevronUpOutline, chevronDownOutline });
+    addIcons({ addOutline, trashOutline, createOutline, arrowUpOutline, arrowDownOutline, chevronUpOutline, chevronDownOutline, walletOutline, sparklesOutline, calendarOutline, closeCircleOutline });
     
     // Efecto reactivo para mostrar alertas de error de forma automatizada.
     effect(() => {
@@ -297,6 +296,14 @@ export class TransactionListPage implements OnInit {
   setPeriodFilter(value: string): void {
     this.filterPeriod.set(value);
     this.filterPeriodOpen.set(false);
+  }
+
+  closeWalletFilter(): void {
+    this.filterWalletOpen.set(false);
+  }
+
+  closeCategoryFilter(): void {
+    this.filterCategoryOpen.set(false);
   }
 
   clearFilters(): void {

@@ -1,0 +1,6 @@
+/* Excepción tailwind.md: Chart.js requiere height explícito en el canvas cuando
+   maintainAspectRatio: false — Tailwind no puede establecer esto sin !important */
+canvas {
+  width: 100% !important;
+  height: 100% !important;
+}

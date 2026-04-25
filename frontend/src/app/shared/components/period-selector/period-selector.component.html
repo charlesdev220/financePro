@@ -1,9 +1,13 @@
-<div class="period-selector">
-  <ion-button fill="clear" (click)="previous()">
-    <ion-icon slot="icon-only" name="chevron-back-outline"></ion-icon>
-  </ion-button>
-  <span class="period-label">{{ label() }}</span>
-  <ion-button fill="clear" (click)="next()">
-    <ion-icon slot="icon-only" name="chevron-forward-outline"></ion-icon>
-  </ion-button>
+<div class="flex w-full bg-white/90 backdrop-blur-sm">
+  @for (tab of tabs; track tab.id) {
+    <button
+      class="flex-1 py-2 text-sm transition-colors"
+      [class.font-bold]="activeTab() === tab.id"
+      [class.text-monefy-green]="activeTab() === tab.id"
+      [class.border-b-2]="activeTab() === tab.id"
+      [class.border-monefy-green]="activeTab() === tab.id"
+      [class.text-gray-400]="activeTab() !== tab.id"
+      (click)="selectPeriod(tab.id)"
+    >{{ tab.label }}</button>
+  }
 </div>

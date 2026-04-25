@@ -1,9 +1,9 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { BudgetsState } from './budgets.reducer';
-import { BUDGET_STATUS } from '../../core/constants/budget.constants';
-import { selectAllTransactions } from '../transactions/transactions.selectors';
-import { IBudget } from '../../models/budget.model';
-import { TRANSACTION_TYPES } from '../../core/constants/transaction.constants';
+import { BUDGET_STATUS, BudgetStatus } from '@core/constants/budget.constants';
+import { selectAllTransactions } from '@store/transactions/transactions.selectors';
+import { IBudget } from '@models/budget.model';
+import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 
 export const selectBudgetsState =
   createFeatureSelector<BudgetsState>('budgets');
@@ -33,7 +33,7 @@ export const selectAllBudgets = createSelector(
         .reduce((sum, t) => sum + t.amountBase, 0);
 
       // Determinar el nuevo estado
-      let status: any = BUDGET_STATUS.OK;
+      let status: BudgetStatus = BUDGET_STATUS.OK;
       if (spent > budget.budgetAmount) {
         status = BUDGET_STATUS.EXCEEDED;
       } else if (spent > budget.budgetAmount * 0.8) {

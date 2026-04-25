@@ -4,20 +4,20 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 import {
   IonContent, IonHeader, IonTitle, IonToolbar,
-  IonList, IonItem, IonLabel, IonNote,
-  IonFab, IonFabButton, IonIcon, IonButton, IonButtons,
+  IonBadge, IonSpinner,
+  IonFab, IonFabButton, IonIcon, IonButton,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { addOutline, trashOutline, createOutline } from 'ionicons/icons';
-import { WalletsActions } from '../../../store/wallets/wallets.actions';
-import { selectAllWallets, selectWalletsRowMap } from '../../../store/wallets/wallets.selectors';
-import { selectAllTransactions } from '../../../store/transactions/transactions.selectors';
-import { IWallet } from '../../../models/wallet.model';
-import { AuthService } from '../../../core/services/auth.service';
-import { WalletFormComponent } from '../wallet-form/wallet-form.component';
-import { CurrencyFormatPipe } from '../../../shared/pipes/currency-format.pipe';
-import { AppState } from '../../../store/app.state';
-import { TRANSACTION_TYPES } from '../../../core/constants/transaction.constants';
+import { WalletsActions } from '@store/wallets/wallets.actions';
+import { selectAllWallets, selectWalletsRowMap, selectWalletsLoading } from '@store/wallets/wallets.selectors';
+import { selectAllTransactions } from '@store/transactions/transactions.selectors';
+import { IWallet } from '@models/wallet.model';
+import { AuthService } from '@core/services/auth.service';
+import { WalletFormComponent } from '@features/wallets/wallet-form/wallet-form.component';
+import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
+import { AppState } from '@store/app.state';
+import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 
 @Component({
   selector: 'app-wallet-list',
@@ -27,8 +27,8 @@ import { TRANSACTION_TYPES } from '../../../core/constants/transaction.constants
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     IonContent, IonHeader, IonTitle, IonToolbar,
-    IonList, IonItem, IonLabel, IonNote,
-    IonFab, IonFabButton, IonIcon, IonButton, IonButtons,
+    IonBadge, IonSpinner,
+    IonFab, IonFabButton, IonIcon, IonButton,
     CurrencyFormatPipe,
   ],
 })
@@ -38,6 +38,8 @@ export class WalletListPage implements OnInit {
   private readonly toastCtrl   = inject(ToastController);
   private readonly authService = inject(AuthService);
 
+  /** Estado de carga de carteras para mostrar spinner mientras llegan del store. */
+  readonly loading = toSignal(this.store.select(selectWalletsLoading), { initialValue: false });
   /** Carteras del usuario para renderizar la lista. */
   readonly wallets  = toSignal(this.store.select(selectAllWallets),  { initialValue: [] });
   /** Mapa walletId → rowNumber en Sheets, necesario para edición y borrado. */

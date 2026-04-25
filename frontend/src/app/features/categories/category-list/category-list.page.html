@@ -1,48 +1,56 @@
 <ion-header>
-  <ion-toolbar>
+  <ion-toolbar color="primary">
     <ion-title>Categorías</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  @if (categories().length > 0) {
-    <ion-list>
-      @for (cat of categories(); track cat.categoryId) {
-        <ion-item>
-          <ion-label>
-            <h3>{{ cat.icon }} {{ cat.name }}</h3>
-            <p>{{ cat.type === 'income' ? 'Ingreso' : 'Gasto' }}</p>
-            @if (cat.budgetAmount) {
-              <ion-note>Presupuesto: {{ cat.budgetAmount }} · {{ cat.budgetPeriod }}</ion-note>
-            }
-          </ion-label>
-          @if (cat.type === 'expense') {
-            @if (getBudgetForCategory(cat.categoryId); as budget) {
-              <app-budget-indicator [budget]="budget"></app-budget-indicator>
-            }
-          }
-          <ion-badge [style.background]="cat.color" slot="end">
-            {{ cat.type === 'income' ? '↑' : '↓' }}
-          </ion-badge>
-          <ion-buttons slot="end">
-            <ion-button fill="clear" (click)="openEditModal(cat)">
-              <ion-icon name="create-outline" color="medium"></ion-icon>
-            </ion-button>
-            <ion-button fill="clear" (click)="deleteCategory(cat)">
-              <ion-icon name="trash-outline" color="danger"></ion-icon>
-            </ion-button>
-          </ion-buttons>
-        </ion-item>
-      }
-    </ion-list>
+<ion-content style="--background: --color-green-50;">
+  @if (loading()) {
+  <div class="flex justify-center items-center py-16">
+    <ion-spinner name="crescent" color="primary"></ion-spinner>
+  </div>
+  } @else if (categories().length === 0) {
+  <div class="flex flex-col items-center justify-center py-16 gap-4 text-center">
+    <ion-icon name="grid-outline" class="text-6xl text-gray-300"></ion-icon>
+    <p class="text-gray-400 text-sm">Todavía no tenés categorías.<br>Creá una para empezar a registrar gastos.</p>
+    <ion-button (click)="openAddModal()">Crear categoría</ion-button>
+  </div>
   } @else {
-    <div class="empty-state flex flex-col items-center justify-center h-[60vh] gap-4 text-[var(--ion-color-medium)]">
-      <p>No hay categorías activas</p>
-      <ion-button fill="outline" (click)="openAddModal()">
-        <ion-icon slot="start" name="add-outline"></ion-icon>
-        Nueva categoría
-      </ion-button>
+  <div class="max-w-screen-xl mx-auto">
+    @if (expenseCategories().length > 0) {
+    <div class="px-4 pt-4 pb-2">
+      <h2 class="text-sm font-semibold text-monefy-text-secondary tracking-wider mb-3">Gastos</h2>
+      <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+        @for (cat of expenseCategories(); track cat.categoryId) {
+        <div
+          class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2 aspect-square min-h-[72px]"
+          [style.border-color]="cat.color" [style.background-color]="cat.color + '1a'" (click)="onTilePress(cat)">
+          <span class="text-3xl leading-none">{{ cat.icon }}</span>
+          <span class="text-xs text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ cat.name
+            }}</span>
+        </div>
+        }
+      </div>
     </div>
+    }
+
+    @if (incomeCategories().length > 0) {
+    <div class="px-4 pt-2 pb-4">
+      <h2 class="text-sm font-semibold text-monefy-text-secondary tracking-wider mb-3">Ingresos</h2>
+      <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+        @for (cat of incomeCategories(); track cat.categoryId) {
+        <div
+          class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2 aspect-square min-h-[72px]"
+          [style.border-color]="cat.color" [style.background-color]="cat.color + '1a'" (click)="onTilePress(cat)">
+          <span class="text-3xl leading-none">{{ cat.icon }}</span>
+          <span class="text-xs text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ cat.name
+            }}</span>
+        </div>
+        }
+      </div>
+    </div>
+    }
+  </div>
   }
 
   <ion-fab vertical="bottom" horizontal="end" slot="fixed">

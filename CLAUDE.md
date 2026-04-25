@@ -91,18 +91,28 @@ src/app/
 ```
 Prompt
   └── CLAUDE.md                    ← QUÉ construir y por qué (este archivo, actúa como orchestrator)
-        ├── ionic-angular-architect   ← implementa frontend
-        │     ├── lee: typescript · angular · html · ionic · ngrx · tailwind
+        ├── ionic-angular-architect   ← implementa frontend (UI, componentes, páginas, store)
+        │     ├── lee: typescript · angular · html · ionic · ngrx · tailwind · ux-ui
         │     └── delega implementación atómica → feature-scaffold
         ├── google-sheets-architect   ← mantiene el esquema de datos y los modelos
-        │     └── lee: sheets-api
+        │     └── lee: sheets-api · typescript
         ├── qa-automation             ← escribe y ejecuta tests contra spec.md
-        │     └── lee: angular · ngrx + spec.md del cambio activo
+        │     └── lee: angular · ngrx · typescript + spec.md del cambio activo
         ├── playwright-inspector      ← inspección visual/funcional en navegador real → bug-report.md
         │     └── lee: ux-ui · ionic · tailwind · HISTORIAL_IMPLEMENTACION
         └── devops-cloud              ← builds, CI/CD, secrets
               └── lee: CLAUDE.md (sección Stack)
 ```
+
+**Qué lee cada agente — referencia rápida:**
+
+| Agente | Archivos de reglas obligatorios |
+|--------|--------------------------------|
+| `ionic-angular-architect` | `typescript` · `angular` · `html` · `ionic` · `ngrx` · `tailwind` · `ux-ui` |
+| `google-sheets-architect` | `sheets-api` · `typescript` |
+| `qa-automation` | `angular` · `ngrx` · `typescript` · `spec.md` del cambio activo |
+| `playwright-inspector` | `ux-ui` · `ionic` · `tailwind` · `HISTORIAL_IMPLEMENTACION.md` |
+| `devops-cloud` | `CLAUDE.md` (sección Stack) |
 
 **Regla de cadena:** Ningún agente escribe código sin haber leído el archivo de reglas de su capa. Si un requerimiento contradice una regla → señalar el conflicto antes de proceder.
 

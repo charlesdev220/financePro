@@ -7,15 +7,33 @@
     </ion-buttons>
     <ion-title>{{ formTitle() }}</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="save()" [disabled]="form.invalid" strong="true">
-        GUARDAR
+      <ion-button (click)="save()" [disabled]="form.invalid" strong="true" style="text-transform: none;">
+        Guardar
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 
-  <!-- Cabeza de Monto Gigante (Monefy style) -->
-  <div class="flex flex-col items-center justify-center py-6 transition-colors duration-300 shadow-inner"
+  <!-- Monto + toggle tipo -->
+  <div class="flex flex-col items-center justify-center py-4 transition-colors duration-300 shadow-inner"
        [class]="typeValue() === 'income' ? 'bg-[var(--ion-color-success)]' : 'bg-[var(--ion-color-danger)]'">
+    <div class="flex gap-2 mb-3">
+      <button type="button" (click)="onTypeToggle('expense')"
+              class="px-4 py-1 rounded-full text-sm font-bold transition-all"
+              [class.bg-white]="typeValue() === 'expense'"
+              [class.text-red-500]="typeValue() === 'expense'"
+              [class.bg-white/20]="typeValue() !== 'expense'"
+              [class.text-white]="typeValue() !== 'expense'">
+        Gasto
+      </button>
+      <button type="button" (click)="onTypeToggle('income')"
+              class="px-4 py-1 rounded-full text-sm font-bold transition-all"
+              [class.bg-white]="typeValue() === 'income'"
+              [class.text-green-600]="typeValue() === 'income'"
+              [class.bg-white/20]="typeValue() !== 'income'"
+              [class.text-white]="typeValue() !== 'income'">
+        Ingreso
+      </button>
+    </div>
     <div class="flex items-baseline text-white">
       <span class="text-2xl font-bold opacity-80 mr-2">{{ form.get('currency')?.value }}</span>
       <span class="text-6xl font-black tracking-tighter">{{ amountString() }}</span>
@@ -23,72 +41,65 @@
   </div>
 </ion-header>
 
+<!-- ion-content gestiona el scroll; numpad es hermano externo -->
 <ion-content>
-  <form [formGroup]="form" class="h-full flex flex-col">
-    
-    <div class="flex-1 overflow-y-auto bg-gray-50 p-4">
-      
-      <!-- Selectores Rápidos (Iconos) -->
-      <div class="grid grid-cols-2 gap-3 mb-4">
+  <form [formGroup]="form">
+    <div class="bg-gray-50 p-4">
+
+      <!-- Grid 2×2 de selectores — cada tile abre un bottom-sheet picker -->
+      <div class="grid grid-cols-2 gap-3 mb-3">
+
         <!-- Cartera -->
-        <div class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex items-center gap-3 active:scale-95 transition-transform overflow-hidden">
-          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
-            <ion-icon name="wallet-outline"></ion-icon>
+        <button type="button" (click)="openWalletPicker()"
+                class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex items-center gap-3 active:scale-95 transition-transform overflow-hidden text-left w-full">
+          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl flex-shrink-0">
+            {{ selectedWallet()?.icon || '💳' }}
           </div>
-          <div class="flex-1">
+          <div class="flex-1 min-w-0">
             <span class="text-[10px] uppercase font-bold text-gray-400 block">Cartera</span>
-            <ion-select formControlName="walletId" interface="action-sheet" class="text-sm font-bold p-0 min-h-0">
-              @for (wallet of wallets(); track wallet.walletId) {
-                <ion-select-option [value]="wallet.walletId">{{ wallet.icon }} {{ wallet.name }}</ion-select-option>
-              }
-            </ion-select>
+            <span class="text-sm font-bold text-gray-800 truncate block">{{ selectedWallet()?.name || 'Seleccioná' }}</span>
           </div>
-        </div>
+        </button>
 
         <!-- Categoría -->
-        <div class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex items-center gap-3 active:scale-95 transition-transform overflow-hidden">
-          <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+        <button type="button" (click)="openCategoryPicker()"
+                class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex items-center gap-3 active:scale-95 transition-transform overflow-hidden text-left w-full">
+          <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl flex-shrink-0">
             {{ selectedCategoryIcon() }}
           </div>
-          <div class="flex-1">
+          <div class="flex-1 min-w-0">
             <span class="text-[10px] uppercase font-bold text-gray-400 block">Categoría</span>
-            <ion-select formControlName="categoryId" interface="action-sheet" class="text-sm font-bold p-0 min-h-0">
-              @for (cat of filteredCategories(); track cat.categoryId) {
-                <ion-select-option [value]="cat.categoryId">{{ cat.name }}</ion-select-option>
-              }
-            </ion-select>
+            <span class="text-sm font-bold text-gray-800 truncate block">{{ selectedCategoryName() }}</span>
           </div>
-        </div>
+        </button>
 
         <!-- Fecha -->
-        <div class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex items-center gap-3 active:scale-95 transition-transform overflow-hidden relative">
-          <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-xl">
+        <div class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex items-center gap-3 overflow-hidden relative">
+          <div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-xl flex-shrink-0">
             <ion-icon name="calendar-outline"></ion-icon>
           </div>
-          <div class="flex-1">
+          <div class="flex-1 min-w-0">
             <span class="text-[10px] uppercase font-bold text-gray-400 block">Fecha</span>
+            <!-- Excepción ionic.md: ion-datetime requiere refactor del FormGroup date handling; native input mantiene la integración con ReactiveFormsModule sin overhead adicional -->
             <input type="date" formControlName="date" class="text-sm font-bold bg-transparent border-none p-0 w-full outline-none" />
           </div>
         </div>
 
         <!-- Divisa -->
-        <div class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex items-center gap-3 active:scale-95 transition-transform overflow-hidden">
-          <div class="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center text-xl">
+        <button type="button" (click)="openCurrencyPicker()"
+                class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex items-center gap-3 active:scale-95 transition-transform overflow-hidden text-left w-full">
+          <div class="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center text-xl flex-shrink-0">
             <ion-icon name="cash-outline"></ion-icon>
           </div>
-          <div class="flex-1">
+          <div class="flex-1 min-w-0">
             <span class="text-[10px] uppercase font-bold text-gray-400 block">Divisa</span>
-            <ion-select formControlName="currency" interface="action-sheet" class="text-sm font-bold p-0 min-h-0">
-              @for (c of currencies; track c) {
-                <ion-select-option [value]="c">{{ c }}</ion-select-option>
-              }
-            </ion-select>
+            <span class="text-sm font-bold text-gray-800 block">{{ form.get('currency')?.value || 'EUR' }}</span>
           </div>
-        </div>
+        </button>
       </div>
 
-      <!-- Otros campos (Descripción y Notas) -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">
+      <!-- Descripción y Notas -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-3">
         <ion-item lines="full" class="ion-no-padding px-4">
           <ion-textarea
             formControlName="concept"
@@ -113,28 +124,41 @@
         </ion-item>
       </div>
 
+      <!-- Recurrente -->
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 mb-3 flex items-center justify-between">
+        <div>
+          <span class="text-sm font-semibold text-monefy-text-primary block">Recurrente</span>
+          <span class="text-[10px] text-monefy-text-secondary">Se repite automáticamente cada mes</span>
+        </div>
+        <ion-toggle
+          [checked]="form.get('isRecurring')?.value"
+          (ionChange)="onRecurringToggle($event.detail.checked)"
+          color="primary">
+        </ion-toggle>
+      </div>
+
       @if (getActiveBudget(); as budget) {
-        <div class="mb-4">
-          <app-budget-indicator [budget]="budget"></app-budget-indicator>
+        <div class="mb-3">
+          <app-budget-indicator [budget]="budget" [userCurrency]="userBaseCurrency()"></app-budget-indicator>
         </div>
       }
     </div>
-
-    <!-- Numpad (Monefy style) -->
-    <div class="bg-white border-t border-gray-200 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.05)]">
-      <div class="grid grid-cols-4 select-none">
-        @for (num of ['7','8','9','4','5','6','1','2','3','0','00','.']; track num) {
-          <div (click)="onNumberPress(num)" 
-               class="flex items-center justify-center h-14 text-xl font-medium active:bg-gray-100 border-r border-b border-gray-50 transition-colors">
-            {{ num }}
-          </div>
-        }
-        <div (click)="onDelete()" 
-             class="flex items-center justify-center h-14 bg-gray-50/50 active:bg-red-50 text-red-500 border-b border-gray-50 transition-colors col-span-4">
-          <ion-icon name="backspace-outline" class="text-2xl"></ion-icon>
-        </div>
-      </div>
-    </div>
-
   </form>
 </ion-content>
+
+<!-- Numpad — hermano de ion-content, siempre fijo al fondo del ion-page -->
+<div class="bg-white border-t border-gray-200 shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
+     style="padding-bottom: env(safe-area-inset-bottom);">
+  <div class="grid grid-cols-3 select-none">
+    @for (num of ['7','8','9','4','5','6','1','2','3','0','00','.']; track num) {
+      <div (click)="onNumberPress(num)"
+           class="flex items-center justify-center h-14 text-xl font-medium active:bg-gray-100 border-r border-b border-gray-50 transition-colors">
+        {{ num }}
+      </div>
+    }
+    <div (click)="onDelete()"
+         class="flex items-center justify-center h-14 bg-gray-50/50 active:bg-red-50 text-red-500 border-b border-gray-50 transition-colors col-span-3">
+      <ion-icon name="backspace-outline" class="text-2xl"></ion-icon>
+    </div>
+  </div>
+</div>

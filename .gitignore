@@ -49,3 +49,6 @@ tools/
 # Claude
 .claude/settings.local.json
 .claude/logs/
+
+# Playwright
+.playwright-reports/

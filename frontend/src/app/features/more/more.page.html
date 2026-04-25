@@ -1,24 +1,26 @@
 <ion-header>
-  <ion-toolbar>
+  <ion-toolbar color="primary">
     <ion-title>Más</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content>
-  <ion-list>
-    <ion-item [routerLink]="['/tabs/categories']" detail>
-      <ion-icon name="layers-outline" slot="start"></ion-icon>
-      <ion-label>Categorías</ion-label>
-    </ion-item>
+<ion-content style="--background: --color-green-50;">
+  <div class="max-w-screen-xl mx-auto">
+    <ion-list>
+      <ion-item [routerLink]="['/tabs/categories']" detail>
+        <ion-icon name="layers-outline" slot="start"></ion-icon>
+        <ion-label>Categorías</ion-label>
+      </ion-item>
 
-    <ion-item [routerLink]="['/tabs/wallets']" detail>
-      <ion-icon name="wallet-outline" slot="start"></ion-icon>
-      <ion-label>Carteras</ion-label>
-    </ion-item>
+      <ion-item [routerLink]="['/tabs/wallets']" detail>
+        <ion-icon name="wallet-outline" slot="start"></ion-icon>
+        <ion-label>Carteras</ion-label>
+      </ion-item>
 
-    <ion-item [routerLink]="['/tabs/settings']" detail>
-      <ion-icon name="settings-outline" slot="start"></ion-icon>
-      <ion-label>Configuración</ion-label>
-    </ion-item>
-  </ion-list>
+      <ion-item [routerLink]="['/tabs/settings']" detail>
+        <ion-icon name="settings-outline" slot="start"></ion-icon>
+        <ion-label>Configuración</ion-label>
+      </ion-item>
+    </ion-list>
+  </div>
 </ion-content>

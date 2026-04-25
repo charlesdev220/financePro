@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
 import { SheetsApiService } from './sheets-api.service';
-import { TRANSACTION_TYPES } from '../constants/transaction.constants';
+import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 
 /**
  * DataSeedService — Provee datos iniciales (Semillas) para nuevos usuarios.

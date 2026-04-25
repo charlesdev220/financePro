@@ -1,6 +1,13 @@
-<app-chart-bar
-  [datasets]="datasets()"
-  [labels]="labels()"
-  type="bar"
-  ariaLabel="Gráfico histórico de ingresos y gastos por mes"
-/>
+@if (hasData()) {
+  <app-chart-bar
+    [datasets]="datasets()"
+    [labels]="labels()"
+    type="bar"
+    ariaLabel="Gráfico histórico de ingresos y gastos por mes"
+  />
+} @else {
+  <div class="flex flex-col items-center justify-center py-10 gap-2 text-center">
+    <span class="text-4xl">📊</span>
+    <p class="text-sm text-gray-400">Sin datos para este período</p>
+  </div>
+}

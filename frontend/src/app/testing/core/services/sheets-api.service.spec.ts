@@ -27,10 +27,12 @@ describe('SheetsApiService', () => {
 
   // REQ-12: no expone métodos obsoletos
   it('does not expose initDatabase()', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((service as any).initDatabase).toBeUndefined();
   });
 
   it('does not expose healthCheck()', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((service as any).healthCheck).toBeUndefined();
   });
 

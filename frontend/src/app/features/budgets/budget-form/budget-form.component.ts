@@ -1,9 +1,7 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit, computed, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
-import { CommonModule } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import {
   IonHeader,
   IonToolbar,
@@ -20,11 +18,11 @@ import {
   IonNote,
   ModalController,
 } from '@ionic/angular/standalone';
-import { BudgetsActions } from '../../../store/budgets/budgets.actions';
-import { selectByType } from '../../../store/categories/categories.selectors';
-import { AuthService } from '../../../core/services/auth.service';
-import { IBudget } from '../../../models/budget.model';
-import { BUDGET_STATUS } from '../../../core/constants/budget.constants';
+import { BudgetsActions } from '@store/budgets/budgets.actions';
+import { selectByType } from '@store/categories/categories.selectors';
+import { AuthService } from '@core/services/auth.service';
+import { IBudget } from '@models/budget.model';
+import { BUDGET_STATUS } from '@core/constants/budget.constants';
 
 @Component({
   selector: 'app-budget-form',
@@ -32,7 +30,6 @@ import { BUDGET_STATUS } from '../../../core/constants/budget.constants';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     IonHeader,
     IonToolbar,
@@ -48,12 +45,20 @@ import { BUDGET_STATUS } from '../../../core/constants/budget.constants';
     IonSelectOption,
     IonNote,
   ],
-  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class BudgetFormComponent implements OnInit {
-  budget    = input<IBudget>();
-  period    = input<string>();
-  rowNumber = input<number>();
+  /**
+   * Excepción arquitectónica: se usa @Input() decorador legacy en lugar de input() signal-based.
+   * Motivo: Ionic ModalController.create({ componentProps }) asigna las props directamente
+   * sobre la instancia del componente como propiedades planas (component.budget = value),
+   * sin pasar por el mecanismo de Angular signals. Usar input<T>() provoca
+   * "TypeError: this.budget is not a function" en runtime al invocar this.budget().
+   */
+  @Input() budget?: IBudget;
+  /** @see budget — misma excepción, valor de período pre-seleccionado para nuevos presupuestos. */
+  @Input() period?: string;
+  /** @see budget — número de fila en Sheets para actualizar en modo edición. */
+  @Input() rowNumber?: number;
 
   private readonly fb          = inject(FormBuilder);
   private readonly store       = inject(Store);
@@ -63,7 +68,7 @@ export class BudgetFormComponent implements OnInit {
   form!: FormGroup;
 
   /** True cuando se recibió un presupuesto existente, indicando modo edición. */
-  readonly isEditMode = computed(() => !!this.budget());
+  get isEditMode(): boolean { return !!this.budget; }
 
   /** Categorías de tipo gasto para el selector de categoría del presupuesto. */
   readonly expenseCategories = toSignal(
@@ -72,8 +77,8 @@ export class BudgetFormComponent implements OnInit {
   );
 
   ngOnInit(): void {
-    const defaultPeriod = this.budget()?.period ?? this.period() ?? new Date().toISOString().slice(0, 7);
-    const b = this.budget();
+    const defaultPeriod = this.budget?.period ?? this.period ?? new Date().toISOString().slice(0, 7);
+    const b = this.budget;
     this.form = this.fb.group({
       categoryId:   [b?.categoryId ?? '', Validators.required],
       period:       [defaultPeriod, Validators.required],
@@ -86,8 +91,8 @@ export class BudgetFormComponent implements OnInit {
 
     const value = this.form.getRawValue();
     const now   = new Date().toISOString();
-    const b     = this.budget();
-    const rn    = this.rowNumber();
+    const b     = this.budget;
+    const rn    = this.rowNumber;
 
     if (b && rn) {
       const updatedBudget: IBudget = {

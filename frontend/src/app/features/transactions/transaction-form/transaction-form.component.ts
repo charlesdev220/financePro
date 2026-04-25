@@ -1,22 +1,22 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, input, signal, output } from '@angular/core';
 import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
-  IonContent, IonItem, IonSelect,
-  IonSelectOption, IonTextarea, IonIcon,
+  IonContent, IonItem, IonTextarea, IonIcon, IonToggle,
+  ModalController,
 } from '@ionic/angular/standalone';
+import { OptionPickerComponent, PickerItem } from '@shared/components/option-picker/option-picker.component';
 import { backspaceOutline, calendarOutline, cashOutline, walletOutline, arrowBackOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
-import { TransactionsActions } from '../../../store/transactions/transactions.actions';
-import { selectByType } from '../../../store/categories/categories.selectors';
-import { selectAllWallets } from '../../../store/wallets/wallets.selectors';
-import { selectAllBudgets } from '../../../store/budgets/budgets.selectors';
-import { ITransaction } from '../../../models/transaction.model';
-import { IBudget } from '../../../models/budget.model';
-import { BudgetIndicatorComponent } from '../../../shared/components/budget-indicator/budget-indicator.component';
-import { TRANSACTION_TYPES } from '../../../core/constants/transaction.constants';
+import { TransactionsActions } from '@store/transactions/transactions.actions';
+import { selectByType } from '@store/categories/categories.selectors';
+import { selectAllWallets } from '@store/wallets/wallets.selectors';
+import { selectAllBudgets } from '@store/budgets/budgets.selectors';
+import { ITransaction } from '@models/transaction.model';
+import { IBudget } from '@models/budget.model';
+import { BudgetIndicatorComponent } from '@shared/components/budget-indicator/budget-indicator.component';
+import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 
 const SUPPORTED_CURRENCIES = ['EUR', 'USD', 'GBP', 'ARS', 'BRL', 'MXN', 'CLP', 'COP'];
 
@@ -32,11 +32,9 @@ const SUPPORTED_CURRENCIES = ['EUR', 'USD', 'GBP', 'ARS', 'BRL', 'MXN', 'CLP', '
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    CommonModule,
     ReactiveFormsModule,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
-    IonContent, IonItem, IonSelect,
-    IonSelectOption, IonTextarea, IonIcon,
+    IonContent, IonItem, IonTextarea, IonIcon, IonToggle,
     BudgetIndicatorComponent,
   ],
 })
@@ -62,6 +60,7 @@ export class TransactionFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly store = inject(Store);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly modalCtrl = inject(ModalController);
 
   /** El FormGroup raíz para el formulario reactivo. */
   form!: FormGroup;
@@ -103,11 +102,22 @@ export class TransactionFormComponent implements OnInit {
   /** Estado reactivo interno que rastrea el tipo seleccionado en el UI. */
   readonly typeValue = signal<'income' | 'expense'>('expense');
 
+
   /** Icono de la categoría seleccionada actualmente para visualización en el grid. */
   readonly selectedCategoryIcon = computed(() => {
     const catId = this.form?.get('categoryId')?.value;
     return this.filteredCategories().find(c => c.categoryId === catId)?.icon || '📂';
   });
+
+  /** Nombre de la categoría seleccionada para mostrar en el tile del selector. */
+  readonly selectedCategoryName = computed(() =>
+    this.filteredCategories().find(c => c.categoryId === this.form?.get('categoryId')?.value)?.name ?? 'Seleccioná'
+  );
+
+  /** Cartera seleccionada actualmente para mostrar en el tile. */
+  readonly selectedWallet = computed(() =>
+    this.wallets().find(w => w.walletId === this.form?.get('walletId')?.value)
+  );
 
   /** Representación en string del monto para el teclado personalizado. */
   readonly amountString = signal<string>('0');
@@ -245,6 +255,81 @@ export class TransactionFormComponent implements OnInit {
    */
   async cancel(): Promise<void> {
     this.dismiss.emit();
+  }
+
+  /**
+   * Cambia el tipo de transacción entre ingreso y gasto, actualizando el form y los filtros.
+   */
+  onTypeToggle(type: 'income' | 'expense'): void {
+    this.form.get('type')?.setValue(type);
+  }
+
+  async openWalletPicker(): Promise<void> {
+    const items: PickerItem[] = this.wallets().map(w => ({
+      value: w.walletId,
+      label: w.name,
+      icon: w.icon,
+      sublabel: w.currency,
+    }));
+    const modal = await this.modalCtrl.create({
+      component: OptionPickerComponent,
+      componentProps: {
+        title: 'Seleccioná una cartera',
+        items,
+        selectedValue: this.form.get('walletId')?.value ?? '',
+        mode: 'cards',
+      },
+      breakpoints: [0, 0.6, 0.85],
+      initialBreakpoint: 0.6,
+    });
+    await modal.present();
+    const { data, role } = await modal.onWillDismiss();
+    if (role === 'confirm') this.form.get('walletId')?.setValue(data.value);
+  }
+
+  async openCategoryPicker(): Promise<void> {
+    const items: PickerItem[] = this.filteredCategories().map(c => ({
+      value: c.categoryId,
+      label: c.name,
+      icon: c.icon,
+      color: c.color,
+    }));
+    const modal = await this.modalCtrl.create({
+      component: OptionPickerComponent,
+      componentProps: {
+        title: this.typeValue() === 'income' ? 'Categoría de ingreso' : 'Categoría de gasto',
+        items,
+        selectedValue: this.form.get('categoryId')?.value ?? '',
+        mode: 'tiles',
+      },
+      breakpoints: [0, 0.75, 1],
+      initialBreakpoint: 0.75,
+    });
+    await modal.present();
+    const { data, role } = await modal.onWillDismiss();
+    if (role === 'confirm') this.form.get('categoryId')?.setValue(data.value);
+  }
+
+  async openCurrencyPicker(): Promise<void> {
+    const items: PickerItem[] = this.currencies.map(c => ({ value: c, label: c }));
+    const modal = await this.modalCtrl.create({
+      component: OptionPickerComponent,
+      componentProps: {
+        title: 'Seleccioná una divisa',
+        items,
+        selectedValue: this.form.get('currency')?.value ?? 'EUR',
+        mode: 'pills',
+      },
+      breakpoints: [0, 0.5],
+      initialBreakpoint: 0.5,
+    });
+    await modal.present();
+    const { data, role } = await modal.onWillDismiss();
+    if (role === 'confirm') this.form.get('currency')?.setValue(data.value);
+  }
+
+  onRecurringToggle(checked: boolean): void {
+    this.form.get('isRecurring')?.setValue(checked);
   }
 
   /**

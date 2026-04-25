@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { SheetsApiService } from '../../../core/services/sheets-api.service';
-import { IBudget } from '../../../models/budget.model';
+import { SheetsApiService } from '@core/services/sheets-api.service';
+import { IBudget } from '@models/budget.model';
 
 // BUDGETS schema (A:H — 8 columnas)
 // A: budget_id | B: user_id | C: category_id | D: period (YYYY-MM)

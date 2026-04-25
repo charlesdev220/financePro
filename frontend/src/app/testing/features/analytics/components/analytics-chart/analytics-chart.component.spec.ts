@@ -59,8 +59,8 @@ describe('AnalyticsChartComponent', () => {
     // Then
     expect(component.labels()).toEqual(['2026-01', '2026-02', '2026-03']);
     expect(component.datasets().length).toBe(2);
-    expect((component.datasets()[0] as any).data).toEqual([1000, 1200, 1500]);
-    expect((component.datasets()[1] as any).data).toEqual([500, 600, 700]);
+    expect((component.datasets()[0] as ChartDataset).data).toEqual([1000, 1200, 1500]);
+    expect((component.datasets()[1] as ChartDataset).data).toEqual([500, 600, 700]);
   });
 
   // REQ-06 sc2: array vacío → datasets vacíos, sin errores

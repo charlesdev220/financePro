@@ -1,5 +1,5 @@
 import { createReducer, on } from '@ngrx/store';
-import { IBudget } from '../../models/budget.model';
+import { IBudget } from '@models/budget.model';
 import { BudgetsActions } from './budgets.actions';
 
 export interface BudgetsState {

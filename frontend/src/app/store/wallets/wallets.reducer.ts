@@ -1,5 +1,5 @@
 import { createReducer, on } from '@ngrx/store';
-import { IWallet } from '../../models/wallet.model';
+import { IWallet } from '@models/wallet.model';
 import { WalletsActions } from './wallets.actions';
 
 export interface WalletsState {

@@ -1,12 +1,12 @@
 <div class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm mb-4">
   <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
-    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Gastos Recurrentes</h3>
+    <h3 class="text-xs font-semibold text-gray-500 tracking-wider">Gastos recurrentes</h3>
   </div>
   <ul class="list-none p-0 m-0 divide-y divide-gray-100">
     @for (item of recurrentes(); track item.concept) {
       <li class="flex justify-between items-center px-4 py-3">
         <span class="text-sm text-gray-800">{{ item.concept }}</span>
-        <span class="font-semibold text-sm text-red-500">{{ item.amountBase | currency:'USD':'symbol':'1.2-2' }}</span>
+        <span class="font-semibold text-sm text-red-500">{{ item.amountBase | currencyFormat:userCurrency() }}</span>
       </li>
     } @empty {
       <li class="text-sm text-gray-400 text-center py-5">Sin datos suficientes</li>
@@ -16,13 +16,13 @@
 
 <div class="bg-white rounded-xl border border-gray-100 overflow-hidden shadow-sm mb-4">
   <div class="px-4 py-3 bg-gray-50 border-b border-gray-100">
-    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Gastos Superfluos</h3>
+    <h3 class="text-xs font-semibold text-gray-500 tracking-wider">Gastos superfluos</h3>
   </div>
   <ul class="list-none p-0 m-0 divide-y divide-gray-100">
     @for (item of superfluos(); track item.concept) {
       <li class="flex justify-between items-center px-4 py-3">
         <span class="text-sm text-gray-800">{{ item.concept }}</span>
-        <span class="font-semibold text-sm text-red-500">{{ item.amountBase | currency:'USD':'symbol':'1.2-2' }}</span>
+        <span class="font-semibold text-sm text-red-500">{{ item.amountBase | currencyFormat:userCurrency() }}</span>
       </li>
     } @empty {
       <li class="text-sm text-gray-400 text-center py-5">Sin datos suficientes</li>

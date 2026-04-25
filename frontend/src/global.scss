@@ -39,3 +39,10 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import "@ionic/angular/css/palettes/dark.system.css";
+
+/* ─── RESPONSIVE — las páginas usan clases Tailwind md:/lg: directamente ─── */
+
+/* ─── Clases de branding compartidas (login + register) ─── */
+.font-pacifico {
+  font-family: 'Pacifico', cursive;
+}

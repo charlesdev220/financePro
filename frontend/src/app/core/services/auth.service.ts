@@ -1,10 +1,15 @@
 import { Injectable, inject, Injector } from '@angular/core';
 import { HttpBackend, HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
+import { environment } from '@env/environment';
 import { SheetsApiService } from './sheets-api.service';
 import { CryptoService } from './crypto.service';
 import { KJUR } from 'jsrsasign';
+
+interface OAuth2TokenResponse {
+  access_token: string;
+  expires_in: number;
+}
 
 export interface GoogleUser {
   sub: string;
@@ -193,8 +198,8 @@ export class AuthService {
   private async _executeSignIn(): Promise<string | null> {
     try {
       const jwt = this.generateJWT();
-      const response: any = await firstValueFrom(
-        this.bareHttp.post(
+      const response = await firstValueFrom(
+        this.bareHttp.post<OAuth2TokenResponse>(
           'https://oauth2.googleapis.com/token',
           new HttpParams()
             .set('grant_type', 'urn:ietf:params:oauth:grant-type:jwt-bearer')

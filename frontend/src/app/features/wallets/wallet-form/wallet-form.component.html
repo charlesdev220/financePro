@@ -1,18 +1,18 @@
 <ion-header>
-  <ion-toolbar>
+  <ion-toolbar color="primary">
     <ion-buttons slot="start">
-      <ion-button (click)="cancel()" color="medium">Cancelar</ion-button>
+      <ion-button (click)="cancel()" color="light" fill="clear">Cancelar</ion-button>
     </ion-buttons>
-    <ion-title>{{ isEditMode() ? 'Editar cartera' : 'Nueva cartera' }}</ion-title>
+    <ion-title>{{ isEditMode ? 'Editar cartera' : 'Nueva cartera' }}</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="save()" [disabled]="form.invalid" color="primary" strong="true">
+      <ion-button (click)="save()" [disabled]="form.invalid" color="light" fill="clear" strong="true">
         Guardar
       </ion-button>
     </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content style="--background: var(--ion-color-light)">
+<ion-content style="--background: --color-green-50;">
   <form [formGroup]="form">
     <ion-list inset="true" class="mt-4">
 
@@ -20,7 +20,7 @@
         <ion-label position="stacked">Nombre</ion-label>
         <ion-input formControlName="name" placeholder="Ej: Cuenta corriente"></ion-input>
         @if (form.get('name')?.invalid && form.get('name')?.touched) {
-          <ion-note color="danger" slot="error">El nombre es requerido</ion-note>
+        <ion-note color="danger" slot="error">El nombre es requerido</ion-note>
         }
       </ion-item>
 
@@ -28,42 +28,54 @@
         <ion-label position="stacked">Divisa</ion-label>
         <ion-select formControlName="currency" interface="action-sheet">
           @for (c of currencies; track c) {
-            <ion-select-option [value]="c">{{ c }}</ion-select-option>
-          }
-        </ion-select>
-      </ion-item>
-
-      <ion-item>
-        <ion-label position="stacked">Icono</ion-label>
-        <ion-select formControlName="icon" interface="action-sheet">
-          @for (icon of icons; track icon) {
-            <ion-select-option [value]="icon">{{ icon }}</ion-select-option>
+          <ion-select-option [value]="c">{{ c }}</ion-select-option>
           }
         </ion-select>
       </ion-item>
 
     </ion-list>
 
-    <!-- Color picker visual — nunca mostrar el código hex al usuario -->
+    <!-- Icono picker — cuadrícula inline -->
+    <ion-list inset="true" class="mt-2">
+      <ion-item button (click)="showIconPicker.set(!showIconPicker())" detail="false" lines="none">
+        <ion-label>Icono</ion-label>
+        <span slot="end" class="text-2xl mr-1">{{ form.get('icon')?.value }}</span>
+        <ion-icon name="chevron-down-outline" slot="end" class="text-gray-400"
+          [class.rotate-180]="showIconPicker()"></ion-icon>
+      </ion-item>
+      @if (showIconPicker()) {
+      <div class="grid grid-cols-6 gap-2 px-4 py-3 bg-gray-50">
+        @for (icon of icons; track icon) {
+        <button type="button" (click)="onIconSelect(icon)"
+          class="text-2xl p-2 rounded-xl flex items-center justify-center transition-all active:scale-95"
+          [class.ring-2]="form.get('icon')?.value === icon" [class.ring-monefy-green]="form.get('icon')?.value === icon"
+          [class.bg-monefy-mint]="form.get('icon')?.value === icon">
+          {{ icon }}
+        </button>
+        }
+      </div>
+      }
+    </ion-list>
+
+    <!-- Color picker visual -->
     <ion-list inset="true" class="mt-2">
       <ion-item lines="none">
         <ion-label position="stacked" class="mb-3">Color de la cartera</ion-label>
         <div class="flex flex-wrap gap-3 py-2 w-full">
           @for (color of colors; track color) {
-            <button
-              type="button"
-              class="w-10 h-10 rounded-full border-2 flex items-center justify-center transition-transform duration-150"
-              [style.background-color]="color"
-              [style.border-color]="form.get('color')?.value === color ? '#111827' : 'transparent'"
-              [style.transform]="form.get('color')?.value === color ? 'scale(1.2)' : 'scale(1)'"
-              (click)="onColorSelect(color)"
-            >
-              @if (form.get('color')?.value === color) {
-                <svg class="w-4 h-4 text-white drop-shadow" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
-                </svg>
-              }
-            </button>
+          <button type="button"
+            class="w-10 h-10 rounded-full border-2 flex items-center justify-center transition-transform duration-150"
+            [style.background-color]="color" [class.border-gray-900]="form.get('color')?.value === color"
+            [class.border-transparent]="form.get('color')?.value !== color"
+            [class.scale-110]="form.get('color')?.value === color" (click)="onColorSelect(color)">
+            @if (form.get('color')?.value === color) {
+            <svg class="w-4 h-4 text-white drop-shadow" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clip-rule="evenodd" />
+            </svg>
+            }
+          </button>
           }
         </div>
       </ion-item>

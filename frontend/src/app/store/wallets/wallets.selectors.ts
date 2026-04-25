@@ -1,7 +1,7 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
 import { WalletsState } from './wallets.reducer';
-import { selectAllTransactions } from '../transactions/transactions.selectors';
-import { TRANSACTION_TYPES } from '../../core/constants/transaction.constants';
+import { selectAllTransactions } from '@store/transactions/transactions.selectors';
+import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 
 export const selectWalletsState = createFeatureSelector<WalletsState>('wallets');
 

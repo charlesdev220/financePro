@@ -8,15 +8,18 @@ import {
   IonToolbar,
 } from '@ionic/angular/standalone';
 
-import { selectAllTransactions } from '../../store/transactions/transactions.selectors';
-import { selectActiveCategories } from '../../store/categories/categories.selectors';
-import { TransactionsActions } from '../../store/transactions/transactions.actions';
-import { CategoriesActions } from '../../store/categories/categories.actions';
+import { selectAllTransactions } from '@store/transactions/transactions.selectors';
+import { selectActiveCategories } from '@store/categories/categories.selectors';
+import { map } from 'rxjs';
+import { selectBaseCurrency } from '@store/currency/currency.selectors';
+import { ITransaction } from '@models/transaction.model';
+import { TransactionsActions } from '@store/transactions/transactions.actions';
+import { CategoriesActions } from '@store/categories/categories.actions';
 import { AnalyticsService } from './services/analytics.service';
 import { AnalyticsChartComponent } from './components/analytics-chart/analytics-chart.component';
 import { ProjectionsComponent } from './components/projections/projections.component';
 import { SpendingRankingComponent } from './components/spending-ranking/spending-ranking.component';
-import { PeriodSelectorComponent } from '../../shared/components/period-selector/period-selector.component';
+import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
 
 function sixMonthsAgo(): string {
   const date = new Date();
@@ -46,7 +49,13 @@ export class AnalyticsPage implements OnInit {
   private readonly analyticsService = inject(AnalyticsService);
 
   /** Todas las transacciones del usuario para calcular totales y clasificaciones. */
-  readonly allTxs     = toSignal(this.store.select(selectAllTransactions),  { initialValue: [] });
+  readonly allTxs = toSignal(this.store.select(selectAllTransactions), { initialValue: [] as ITransaction[] });
+
+  /** Moneda base del usuario desde USER_SETTINGS via NgRx. Fallback 'EUR' antes de cargar. */
+  readonly userBaseCurrency = toSignal(
+    this.store.select(selectBaseCurrency).pipe(map(c => c ?? 'EUR')),
+    { initialValue: 'EUR' }
+  );
   /** Categorías activas del usuario para el análisis de gastos. */
   readonly categories = toSignal(this.store.select(selectActiveCategories), { initialValue: [] });
 

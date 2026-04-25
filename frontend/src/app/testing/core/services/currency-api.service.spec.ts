@@ -17,7 +17,8 @@ describe('CurrencyApiService', () => {
 
   afterEach(() => {
     httpMock.verify();
-    // Reset cache between tests
+    // Reset cache between tests — `as any` necesario para acceder a propiedad privada en test
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (service as any).cache.clear();
   });
 
@@ -52,7 +53,8 @@ describe('CurrencyApiService', () => {
 
   // REQ-02 sc1: caché vigente (< 1 hora) — no llama API
   it('should return cached rate without HTTP call when cache is fresh', done => {
-    // Pre-populate cache
+    // Pre-populate cache — `as any` para acceder a propiedad privada en test
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (service as any).cache.set('USD_EUR', { rate: 0.88, timestamp: Date.now() });
     service.getRate('USD', 'EUR').subscribe(rate => {
       expect(rate).toBe(0.88);
@@ -64,6 +66,7 @@ describe('CurrencyApiService', () => {
   // REQ-02 sc2: caché expirada (> 1 hora) — llama API y actualiza caché
   it('should call API when cache is stale (> 1 hour)', done => {
     const oneHourAgo = Date.now() - 61 * 60 * 1000;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (service as any).cache.set('USD_EUR', { rate: 0.85, timestamp: oneHourAgo });
     service.getRate('USD', 'EUR').subscribe(rate => {
       expect(rate).toBe(0.92);

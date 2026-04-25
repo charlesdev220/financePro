@@ -14,6 +14,7 @@ debes tener valores por defecto en los campos como fecha de hoy, moneda base del
 - Prohibido mostrar IDs técnicos (`tx_abc123`, `wal_xyz`, `#9E9E9E`), claves JSON, stack traces,
   mensajes de error de red crudos o cualquier string que no sea lenguaje natural.
 - Los errores se transforman en mensajes de usuario antes de llegar al template:
+- LOS COLORES DEBEN SER DEFINIDOS en un archivo de constantes, nunca ir en los HTML como HEXADECIMAL
 
 ```typescript
 // ✅ en el effect o en el componente
@@ -266,6 +267,115 @@ Transacciones
 <!-- ❌ empty state sin guía -->
 <p>No hay datos.</p>
 ```
+
+---
+
+## 8. Monefy Design Language
+
+### Paleta semántica
+```
+  /* ─── BASE COLOR TOKENS (Monefy) ─── */
+  --color-green-900: #2D7A5C;
+  --color-green-700: #3D9970;
+  --color-green-500: #5BAD8F;
+  /* PRIMARY */
+  --color-green-400: #7CC4A4;
+  --color-green-50: #E8F5EE;
+  /* App background */
+
+  --color-red-400: #E57373;
+  --color-red-500: #C62828;
+  /* Expense color */
+  --color-white: #FFFFFF;
+  --color-gray-900: #2D2D2D;
+  /* Primary text */
+  --color-gray-400: #8A9A90;
+  /* Secondary text */
+  --color-gray-200: #C8D8CE;
+```
+| Token | variable.scss | Clase Tailwind | Uso |
+|-------|-----|----------------|-----|
+| Verde primario | `--color-green-500` | `text-monefy-green` / `bg-monefy-green` | Ingresos, acciones primarias, FAB ingreso |
+| Rojo gasto | `--color-red-400` | `text-monefy-red` / `bg-monefy-red` | Gastos, alertas, FAB gasto |
+| Mint (fondo) | `--color-green-50` | `bg-monefy-mint` | Fondo de `ion-content` en todas las páginas |
+| Verde oscuro | `--color-green-700` | `text-monefy-green-dark` | Hover / pressed state del verde primario |
+| Verde claro | `--color-green-400` | `text-monefy-green-light` | Íconos secundarios, chips de filtro |
+| Borde | `--color-gray-200` | `border-monefy-border` | Cards, separadores, tiles de categoría |
+| Texto principal | `--color-gray-900` | `text-monefy-text-primary` | Nombres, valores importantes |
+| Texto secundario | `--color-gray-400` | `text-monefy-text-secondary` | Labels, metadatos, encabezados de sección |
+
+### Componentes clave
+
+**Balance pill** — Mostrar el saldo en un contenedor pill semi-transparente sobre la cabecera verde:
+```html
+<div class="bg-white/20 backdrop-blur-md px-6 py-3 rounded-full border border-white/30">
+  <span class="text-white text-3xl font-extrabold">{{ balance | currencyFormat }}</span>
+</div>
+```
+
+**FAB dual** — Dos `ion-fab` circulares flotantes en la parte inferior del dashboard, sobre el tab bar:
+```html
+<!-- Expense FAB — izquierda, rojo -->
+<ion-fab vertical="bottom" horizontal="start" slot="fixed" style="margin-bottom: calc(56px + 16px)">
+  <ion-fab-button (click)="openAddModal('expense')" style="--background: var(--color-red-400);">
+    <ion-icon name="remove-outline"></ion-icon>
+  </ion-fab-button>
+</ion-fab>
+<!-- Income FAB — derecha, verde -->
+<ion-fab vertical="bottom" horizontal="end" slot="fixed" style="margin-bottom: calc(56px + 16px)">
+  <ion-fab-button (click)="openAddModal('income')" style="--background: var(--color-green-500);">   
+    <ion-icon name="add-outline"></ion-icon>
+  </ion-fab-button>
+</ion-fab>
+```
+
+**Category tile** — Grid 4-col de tiles cuadrados (~80×80px) con borde y tinte de fondo derivado del `cat.color`:
+```html
+<div class="grid grid-cols-4 gap-3">
+  @for (cat of categories(); track cat.categoryId) {
+    <div
+      class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2"
+      style="height: 80px;"
+      [style.border-color]="cat.color"
+      [style.background-color]="cat.color + '1a'"
+      (click)="onTilePress(cat)"
+    >
+      <span style="font-size: 28px; line-height: 1;">{{ cat.icon }}</span>
+      <span class="text-xs text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ cat.name }}</span>
+    </div>
+  }
+</div>
+```
+Regla del tinte: `cat.color + '1a'` agrega el canal alpha al hex, produciendo 10% de opacidad sin conversión a RGB.
+
+**Period tabs** — Selector de período como fila de 4 tabs (Día / Semana / Mes / Año), sin chevrons:
+- Tab activo: `font-bold text-monefy-green border-b-2 border-monefy-green`
+- Tab inactivo: `text-gray-400`
+- El componente `app-period-selector` usa `bg-white/90` de fondo para contrastar en pantallas verdes y mint.
+
+### Tipografía numérica
+
+Los valores monetarios importantes usan fuente extrabold y tamaño grande. No hay superscript para decimales — el pipe `currencyFormat` ya normaliza el formato:
+```html
+<span class="text-3xl font-extrabold text-white">{{ balance | currencyFormat:currency }}</span>
+```
+
+### Flat design — regla de sombras
+
+- Prohibido `shadow-lg`, `shadow-xl` en cards de contenido.
+- Solo `shadow-sm` permitido (o ninguna sombra) en cards y tiles.
+- Excepción: balance pill en el header puede usar `shadow-lg` por efecto de profundidad visual.
+
+### Fondo de páginas
+
+Todas las páginas secundarias (no dashboard) usan `style="--background: --color-green-50;"` en `<ion-content>` para mantener el tono mint del DS. El toolbar usa siempre `color="primary"`.
+
+### Regla de color por categoría
+
+El color de cada categoría se aplica como:
+1. **Borde** del tile: `[style.border-color]="cat.color"` — 2px, `border-2`
+2. **Tinte de fondo**: `[style.background-color]="cat.color + '1a'"` — 10% opacidad (hex alpha)
+3. Nunca usar `cat.color` directamente en texto — no garantiza contraste.
 
 ---
 

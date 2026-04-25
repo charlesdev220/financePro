@@ -1,14 +1,16 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { ModalController } from '@ionic/angular/standalone';
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
   IonContent, IonList, IonItem, IonLabel, IonInput,
-  IonSelect, IonSelectOption, IonToggle, IonNote,
+  IonSelect, IonSelectOption, IonToggle, IonNote, IonIcon,
 } from '@ionic/angular/standalone';
-import { WalletsActions } from '../../../store/wallets/wallets.actions';
-import { IWallet } from '../../../models/wallet.model';
+import { addIcons } from 'ionicons';
+import { chevronDownOutline } from 'ionicons/icons';
+import { WalletsActions } from '@store/wallets/wallets.actions';
+import { IWallet } from '@models/wallet.model';
 
 const SUPPORTED_CURRENCIES = ['EUR', 'USD', 'GBP', 'ARS', 'BRL', 'MXN', 'CLP', 'COP'];
 const ICON_OPTIONS = ['💳','🏦','💰','💵','🏧','👝','💼','🏠','🚗','✈️','💎','🪙'];
@@ -23,13 +25,21 @@ const COLOR_OPTIONS = ['#4CAF50','#2196F3','#9C27B0','#FF9800','#F44336','#00968
     ReactiveFormsModule,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
     IonContent, IonList, IonItem, IonLabel, IonInput,
-    IonSelect, IonSelectOption, IonToggle, IonNote,
+    IonSelect, IonSelectOption, IonToggle, IonNote, IonIcon,
   ],
 })
 export class WalletFormComponent implements OnInit {
-  wallet    = input<IWallet>();
-  userId    = input<string>();
-  rowNumber = input<number>();
+  /**
+   * Excepción arquitectónica: se usa @Input() legacy en lugar de input() signal-based.
+   * Motivo: Ionic ModalController.create({ componentProps }) asigna props directamente
+   * sobre la instancia (component.wallet = value), sin pasar por Angular signals.
+   * Usar input<T>() provoca "TypeError: this.wallet is not a function" en runtime.
+   */
+  @Input() wallet?: IWallet;
+  /** @see wallet — misma excepción. */
+  @Input() userId?: string;
+  /** @see wallet — misma excepción. */
+  @Input() rowNumber?: number;
 
   private readonly fb        = inject(FormBuilder);
   private readonly store     = inject(Store);
@@ -40,11 +50,18 @@ export class WalletFormComponent implements OnInit {
   readonly icons      = ICON_OPTIONS;
   readonly colors     = COLOR_OPTIONS;
 
+  /** Controla la visibilidad del grid de iconos de cartera. */
+  readonly showIconPicker = signal(false);
+
   /** True cuando se recibió una cartera existente, indicando modo edición. */
-  readonly isEditMode = computed(() => !!this.wallet());
+  get isEditMode(): boolean { return !!this.wallet; }
+
+  constructor() {
+    addIcons({ chevronDownOutline });
+  }
 
   ngOnInit(): void {
-    const w = this.wallet();
+    const w = this.wallet;
     this.form = this.fb.group({
       name:      [w?.name ?? '', [Validators.required, Validators.minLength(1)]],
       currency:  [w?.currency ?? 'EUR', Validators.required],
@@ -54,19 +71,29 @@ export class WalletFormComponent implements OnInit {
     });
   }
 
+  onIconSelect(icon: string): void {
+    this.form.patchValue({ icon });
+    this.showIconPicker.set(false);
+  }
+
+  onColorSelect(color: string): void {
+    this.form.patchValue({ color });
+  }
+
   async save(): Promise<void> {
     if (this.form.invalid) return;
     const value = this.form.getRawValue();
     const now   = new Date().toISOString();
-    const w     = this.wallet();
-    const rn    = this.rowNumber();
 
-    if (w && rn) {
-      this.store.dispatch(WalletsActions.updateWallet({ wallet: { ...w, ...value }, rowNumber: rn }));
+    if (this.wallet && this.rowNumber) {
+      this.store.dispatch(WalletsActions.updateWallet({
+        wallet: { ...this.wallet, ...value },
+        rowNumber: this.rowNumber,
+      }));
     } else {
       const newWallet: IWallet = {
         walletId:  crypto.randomUUID(),
-        userId:    this.userId()!,
+        userId:    this.userId!,
         name:      value.name.trim(),
         currency:  value.currency,
         balance:   0,
@@ -78,10 +105,6 @@ export class WalletFormComponent implements OnInit {
       this.store.dispatch(WalletsActions.addWallet({ wallet: newWallet }));
     }
     await this.modalCtrl.dismiss();
-  }
-
-  onColorSelect(color: string): void {
-    this.form.patchValue({ color });
   }
 
   async cancel(): Promise<void> {

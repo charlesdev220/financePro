@@ -5,6 +5,10 @@
 Tailwind es para **layout, espaciado y tipografía**. Los componentes Ionic tienen su propio
 sistema de tematización (variables CSS) — mezclarlos genera inconsistencias en iOS/Android.
 
+## Reglas
+- Nunca utilizar !important
+- LOS COLORES DEBEN SER DEFINIDOS en un archivo de constantes, nunca ir en los HTML como HEXADECIMAL
+
 ## Cuándo usar Tailwind vs variables Ionic CSS
 
 | Necesidad | Solución correcta |
@@ -47,7 +51,7 @@ es inconsistente entre plataformas.
 <ion-item class="text-green-600">...</ion-item>
 
 <!-- ✅ -->
-<ion-card style="--background: #fee2e2;">...</ion-card>
+<ion-card style="--background: --color-green-900;">...</ion-card>
 <!-- o mejor: clase CSS custom que use variables Ionic -->
 ```
 
@@ -104,9 +108,35 @@ canvas {
 
 SCSS vacíos están prohibidos — si no tiene contenido, eliminarlo.
 
+## Tokens de color del DS — nunca valores arbitrarios hex
+
+Los colores del Monefy Design Language viven en `tailwind.config.js` como tokens nombrados.
+Usarlos siempre por nombre — nunca por valor hex directo en el template.
+
+| ❌ Prohibido | ✅ Correcto |
+|---|---|
+| `text-[#5BAD8F]` | `text-monefy-green` |
+| `bg-[#E57373]` | `bg-monefy-red` |
+| `border-[#C8D8CE]` | `border-monefy-border` |
+| `style="background: linear-gradient(135deg, #5BAD8F, #3D9970)"` | `bg-gradient-to-br from-monefy-green to-monefy-green-dark` |
+
+```html
+<!-- ❌ hex arbitrario — rompe el sistema de tokens -->
+<span class="text-[#5BAD8F]">Ingreso</span>
+<div style="background: linear-gradient(135deg, #5BAD8F, #3D9970)">...</div>
+
+<!-- ✅ token nombrado — un solo cambio en tailwind.config.js actualiza todo -->
+<span class="text-monefy-green">Ingreso</span>
+<div class="bg-gradient-to-br from-monefy-green to-monefy-green-dark">...</div>
+```
+
+La única excepción es cuando el valor se calcula dinámicamente en TypeScript
+(ej: `[style.border-color]="cat.color"` para colores de categoría definidos por el usuario).
+
 ## Restricciones
 
 - No `@apply` en SCSS de componente — usar clases directamente en el HTML.
 - No instalar plugins de Tailwind sin aprobación arquitectónica.
 - No `style=""` inline en templates cuando Tailwind tiene la clase equivalente.
+- No valores arbitrarios Tailwind `[#hex]` para colores del DS — usar el token definido en `tailwind.config.js`.
 - No purge manual — la configuración de `content` en `tailwind.config.js` ya incluye los templates.

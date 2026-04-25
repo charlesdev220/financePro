@@ -32,7 +32,9 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     // Vars de entorno vacías → signIn() retorna null sin hacer HTTP (no hay JWT que firmar)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (environment as any).googleServiceAccountEmail = '';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (environment as any).googlePrivateKey = '';
 
     cryptoSpy = jasmine.createSpyObj('CryptoService', [
@@ -65,7 +67,9 @@ describe('AuthService', () => {
   afterEach(() => {
     httpMock.verify();
     localStorage.removeItem('myfinance_user');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (environment as any).googleServiceAccountEmail = '';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (environment as any).googlePrivateKey = '';
   });
 

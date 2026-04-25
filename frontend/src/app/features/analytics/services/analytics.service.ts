@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { ITransaction } from '../../../models/transaction.model';
-import { TRANSACTION_TYPES } from '../../../core/constants/transaction.constants';
+import { ITransaction } from '@models/transaction.model';
+import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 
 export interface MonthlyTotal {
   period: string; // YYYY-MM

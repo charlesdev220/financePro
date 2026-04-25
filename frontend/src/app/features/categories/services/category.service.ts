@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map, switchMap } from 'rxjs';
-import { SheetsApiService } from '../../../core/services/sheets-api.service';
-import { AuthService } from '../../../core/services/auth.service';
-import { ICategory } from '../../../models/category.model';
+import { SheetsApiService } from '@core/services/sheets-api.service';
+import { AuthService } from '@core/services/auth.service';
+import { ICategory } from '@models/category.model';
 
 // CATEGORIES schema (A:I — 9 columnas)
 // A: category_id | B: user_id | C: name | D: icon | E: color | F: type

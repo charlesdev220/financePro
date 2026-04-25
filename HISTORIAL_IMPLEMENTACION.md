@@ -4,6 +4,131 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Fase 5 — Multimoneda):
+*Fase actual:* Fase 5: Multimoneda persistida en Sheets + CurrencySettingsPage
+*Estado actual:* Completado ✅ | Archivado: 2026-04-25
+- ✔️ **currency.actions.ts:** Ampliado con 4 grupos nuevos: `Load Currencies`, `Fetch And Persist Rate`, `Save Currency`, `Set Base Currency` (9 acciones totales + las 3 existentes de `Load Rate`).
+- ✔️ **currency.reducer.ts:** Extendido con `currencies[]`, `currencyRowMap`, `baseCurrency`, `baseCurrencyRowNumber`. Migrado a `createFeature`. 8 nuevos `on()` handlers para upsert optimista.
+- ✔️ **currency.effects.ts:** 4 nuevos effects funcionales: `loadCurrencies$` (forkJoin CURRENCIES+USER_SETTINGS), `fetchAndPersistRate$` (ExchangeRate-API → Sheets), `saveCurrency$` (manual → Sheets), `setBaseCurrency$` (USER_SETTINGS upsert).
+- ✔️ **currency.selectors.ts:** Nuevos selectores `selectAllCurrencies`, `selectBaseCurrency`, `selectCurrencyRowMap`, `selectCurrenciesLoading`, `selectCurrencyByCode`.
+- ✔️ **CurrencySettingsPage:** Nueva página `features/settings/currency-settings/` con buscador ISO 4217, lista de divisas con edición inline, refresco de API, selector de moneda base y Monefy DS.
+- ✔️ **Routing:** Ruta `/tabs/currencies` agregada en `tabs.routes.ts`.
+- ✔️ **settings.page:** Ítem "Divisas" con `routerLink` y ícono `cash-outline`.
+- ✔️ **userBaseCurrency:** Reemplazado `computed(() => txs[0].currency)` por `toSignal(selectBaseCurrency)` en Dashboard, TransactionList, BudgetList y Analytics.
+- ✔️ **user-settings.model.ts:** `'base_currency'` agregado a `UserSettingKey`.
+- ✔️ **CategoryForm UI:** Icon picker restyling (3xl, tarjeta flotante), botón `+` para emoji personalizado con `AlertController`, color picker en grid 7-col con swatches 11x11, período como accordion inline.
+- ✔️ **Bug fix — editar categoría duplica:** `addCategory$` effect ahora despacha `loadCategories` tras `saveCategory` para mantener `rowMap` en sync; evita que el form caiga en la rama `addCategory` al no encontrar `rowNumber`.
+- ✔️ **Tests:** `currency.reducer.spec.ts` (REQ-01, REQ-03) y `currency.selectors.spec.ts` (REQ-04).
+*Próximos pasos:* Verify (playwright inspector) → Archive
+*Qué se aprendió:* El patrón optimistic-insert sin conocer el rowNumber de Sheets es inherentemente propenso a bugs de edición. La solución más robusta es recargar después de cada append.
+*Por qué se aprendió:* Bug real de producción donde editar una categoría recién creada la duplicaba.
+*Dónde se aprendió:* `store/categories/categories.effects.ts` + `category-form.component.ts`
+
+---
+
+### Qué hemos completado hasta ahora (UI Improvements Sprint 1 — ui-improvements-sprint1):
+*Fase actual:* Fase: UX/UI — Pickers reutilizables, layout mejorado y bugs corregidos
+*Estado actual:* Completado ✅ | Archivado: 2026-04-24
+- ✔️ **OptionPickerComponent:** Nuevo componente reutilizable `shared/components/option-picker` — bottom-sheet con 3 modos: `tiles` (categorías), `cards` (carteras), `pills` (divisas). Usado desde `transaction-form` para los 3 selectores.
+- ✔️ **Transaction form — numpad fijo:** Numpad movido fuera de `ion-content` como sibling del `ion-page`. `ion-content` gestiona scroll nativo. Descripción y notas siempre visibles. `env(safe-area-inset-bottom)` para iOS.
+- ✔️ **Transaction form — toggle tipo:** Botones "Gasto / Ingreso" en el header del monto para cambiar el tipo sin cerrar el formulario.
+- ✔️ **Transaction form — toggle recurrente:** `ion-toggle` visible en el formulario para marcar transacciones recurrentes.
+- ✔️ **Category form — icon picker grid:** `ion-select` de iconos reemplazado por grid 6-col inline con toggle (chevron animado). Selección resaltada con `ring-monefy-green`.
+- ✔️ **Category form — color picker swatches:** `ion-select` de colores reemplazado por swatches circulares visuales con checkmark SVG. Patrón idéntico al wallet-form.
+- ✔️ **Wallet form — icon picker grid:** Mismo patrón de grid inline replicado en wallet-form.
+- ✔️ **Bug crítico — @Input() en category-form y wallet-form:** `input()` signals incompatibles con Ionic Modal `componentProps` → migrados a `@Input()` con JSDoc de excepción (igual que budget-form).
+- ✔️ **Bug crítico — category edit sin rowNumber:** `openEditModal` en `category-list.page.ts` no pasaba `rowNumber` → siempre creaba nueva categoría en lugar de actualizar.
+- ✔️ **7 bugs inline:** Settings route, budget "Sin categoría" dispatch, numpad grid-cols, chart maintainAspectRatio+SCSS, FAB overlap padding, "FinancePro"→"MyFinance", settings toolbar fix.
+*Próximos pasos:* Continuar con mejoras de UX — navegación entre pantallas, filtros avanzados en transacciones, onboarding.
+*Qué se aprendió:* `input()` signals de Angular 17+ son incompatibles con `ModalController.create({ componentProps })` de Ionic — el modal asigna las props via `component.prop = value` que sobrescribe el getter del signal. La solución es `@Input()` con JSDoc documentando la excepción. También: `ion-content` gestiona su propio scroll — un segundo `overflow-y-auto` interno genera doble-scroll y componentes no visibles.
+*Por qué se aprendió:* El crash `TypeError: this.category is not a function` en `category-form` reveló el patrón. El issue de descripción/notas no visibles reveló el conflicto de scroll.
+*Dónde se aprendió:* `frontend/src/app/features/categories/category-form/category-form.component.ts` + `frontend/src/app/features/transactions/transaction-form/transaction-form.component.html`.
+
+---
+
+### Qué hemos completado hasta ahora (Auditoría de Desviaciones Arquitectónicas — arch-deviation-audit):
+*Fase actual:* Fase: Compliance — Corrección de 53 desviaciones vs CLAUDE.md y todas las rules
+*Estado actual:* Completado ✅ | Archivado: 2026-04-23
+- ✔️ **Moneda hardcodeada eliminada:** `budget-indicator` y `spending-ranking` migrados de USD/EUR fijo a `userCurrency = input<string>()` con binding desde el componente padre; `CurrencyFormatPipe` reemplaza `CurrencyPipe`/`DecimalPipe`.
+- ✔️ **Register page — Monefy DS:** Rediseño completo con fondo mint, logo `from-monefy-green to-monefy-green-dark`, tipografía Pacifico, card `bg-white/80 shadow-sm`, botón `color="primary"` y texto rioplatense.
+- ✔️ **Inline styles → Tailwind / Variables CSS Ionic:** 10 archivos corregidos — `font-size` px → `text-6xl`/`text-3xl`, `border-radius` en `ion-item-option` → variable CSS Ionic, `[style.transform/border-color]` → `[class.scale-110/border-gray-900]`.
+- ✔️ **Tokens Monefy en dashboard-chart y login:** `text-[var(--color-gray-*)]` → `text-monefy-text-primary/secondary`; gradiente CSS inline → clase `font-pacifico` global; `from-app-surface to-app-bg` (tokens inexistentes) → `style="--background: #E8F5EE;"`.
+- ✔️ **Clase global `.font-pacifico`** agregada a `global.scss` para uso compartido en login y register.
+- ✔️ **transaction-form:** Botón "GUARDAR" → "Guardar" + `text-transform: none`; comentario de excepción documentado en `<input type="date">`.
+- ✔️ **JSDoc de excepciones:** `budget-form` documenta incompatibilidad `@Input()` vs Ionic Modal `componentProps`; `transaction.service` y `concepts.service` documentan su rol de orchestrator previo al dispatch NgRx.
+- ✔️ **Tests `as any` tipados:** 5 archivos de spec — `eslint-disable-next-line @typescript-eslint/no-explicit-any` con justificación, `Store as any` → `MockStore`, `as any` en datasets → `as ChartDataset`.
+- ✔️ **settings.page.html:** Fondo mint `#E8F5EE`, `@if (user)` guarda el bloque de perfil para evitar `undefined`.
+- ✔️ **dashboard.page.html:** `style="font-family: 'Pacifico'"` en `ion-title` → `class="font-pacifico"`; `padding-bottom` inline → clase Tailwind JIT.
+*Próximos pasos:* El codebase está en compliance con todas las reglas de `.claude/rules/`. Próximo cambio libre de deuda técnica arquitectónica.
+*Qué se aprendió:* El patrón `[style.background-color]="cat.color + '1a'"` para tinte de categorías es válido, pero los tokens de color del DS (`app-surface`, `app-bg`) deben estar definidos en `tailwind.config.js` para que Tailwind los genere — clases con tokens inexistentes se emiten pero no producen CSS.
+*Por qué se aprendió:* `login.page.html` usaba `from-app-surface to-app-bg` que nunca generó CSS real (fondo transparente en runtime). El verify-report detectó la discrepancia al no encontrar los tokens en `tailwind.config.js`.
+*Dónde se aprendió:* `frontend/src/app/features/login/login.page.html` + `frontend/tailwind.config.js`.
+
+---
+
+### Qué hemos completado hasta ahora (Monefy Visual System — monefy-visual-system):
+*Fase actual:* Fase: Alineación UI/UX al Monefy Design System
+*Estado actual:* Completado ✅ | Archivado: 2026-04-23
+- ✔️ **Tokens Tailwind Monefy:** `tailwind.config.js` extendido con 8 colores semánticos (`monefy-green`, `monefy-mint`, `monefy-red`, `monefy-green-dark`, `monefy-green-light`, `monefy-border`, `monefy-text-primary`, `monefy-text-secondary`).
+- ✔️ **Sección DS en ux-ui.md:** Documentación completa del Monefy Design Language — paleta semántica, balance pill, FAB dual, category tile, period tabs, tipografía numérica, regla flat design, regla de color por categoría.
+- ✔️ **Period Selector rediseñado:** Reemplazados chevrons de navegación por fila de 4 tabs (Día/Semana/Mes/Año) con underline activo verde y lógica `selectPeriod()` que emite directamente el valor.
+- ✔️ **FABs duales en Dashboard:** Botones rectangulares reemplazados por dos `ion-fab` circulares flotantes — rojo izquierda (gasto) y verde derecha (ingreso) — con `margin-bottom: calc(56px + 16px)` para no solapar el tab bar.
+- ✔️ **Grid de tiles de categorías:** `category-list.page.html` migrado de `ion-list` a grid 4-col de tiles con borde y tinte de color del `cat.color`, emoji 28px centrado, nombre truncado en 2 líneas y action sheet al tocar.
+- ✔️ **Cards de carteras con balance semántico:** `wallet-list.page.html` con cards `bg-white rounded-2xl`, balance en `text-monefy-green`/`text-monefy-red` según signo, badge "Principal" con `color="primary"`.
+- ✔️ **Empty states unificados:** `category-list` y `wallet-list` con ícono outline 64px + texto gris + botón CTA.
+- ✔️ **Headers y fondos DS:** `budget-list` y `analytics` con toolbar `color="primary"` y fondo mint `#E8F5EE`.
+*Próximos pasos:* Resolver 6 warnings de deuda técnica: spinner de carga en category-list/wallet-list (W-01), `console.error` en dashboard.page.ts (W-04), `DashboardSummaryComponent` sin uso (W-05), empty state de budget-list (W-06).
+*Qué se aprendió:* El patrón de tiles con `[style.background-color]="cat.color + '1a'"` genera opacidad al 10% sin necesidad de convertir el hex a RGBA — el canal alfa en hex (`1a` = 10%) es soportado por todos los navegadores modernos y es significativamente más simple que `rgba()`.
+*Por qué se aprendió:* La alternativa `rgba()` requería parsear el hex en el TS y reconstruir el string, añadiendo lógica de presentación al componente. El hex con alfa resuelve esto en el template con una sola concatenación.
+*Dónde se aprendió:* `frontend/src/app/features/categories/category-list/category-list.page.html` y la documentación de CSS Color Module Level 4.
+
+---
+
+### Qué hemos completado hasta ahora (Auditoría Monefy DS — monefy-ds-audit):
+*Fase actual:* Fase: Auditoría visual + corrección de fidelidad al Monefy Design System
+*Estado actual:* Completado ✅ | Archivado: 2026-04-23
+- ✔️ **BudgetForm crash corregido:** `input<IBudget>()` migrado a `@Input()` para compatibilidad con `componentProps` de Ionic Modal — el formulario de presupuestos ya no crashea con `TypeError: this.budget is not a function`.
+- ✔️ **Texto técnico "Empty" eliminado:** Empty state de Transacciones reemplazado por emoji 📭 + texto natural + CTA "Empezar a sumar".
+- ✔️ **Hex técnicos en selector de color:** `COLOR_OPTIONS` con `{ label, value }[]` — el usuario ve "Rojo", "Verde", etc., no `#F44336`.
+- ✔️ **5 íconos Ionicons registrados:** `walletOutline`, `sparklesOutline`, `calendarOutline`, `closeCircleOutline` agregados a `addIcons()` en los componentes correspondientes.
+- ✔️ **Ruta post-login corregida:** `/dashboard` → `/tabs/dashboard` en `login.page.ts`.
+- ✔️ **Tailwind dinámico en dashboard:** Interpolación `class="{{ expr }}"` reemplazada por bindings `[class.x]="condition"` (compatible con tree-shaking de Tailwind en build).
+- ✔️ **Settings toolbar verde:** `color="primary"` aplicado al `ion-toolbar` de Settings.
+- ✔️ **ALL CAPS eliminado:** "GASTOS RECURRENTES", "GASTOS SUPERFLUOS", "GASTOS", "INGRESOS", "VER TODOS", "EMPEZAR A SUMAR" → sentence case en 4 pantallas.
+- ✔️ **Login branding unificado:** "FinancePro" / paleta indigo-purple reemplazados por "MyFinance" con fuente Pacifico y paleta `#5BAD8F → #3D9970` del DS.
+- ✔️ **Back button de Transacciones:** Removido del toolbar; reemplazado por chip "Limpiar filtros" condicional con `close-circle-outline`.
+- ✔️ **Nombre de categoría en presupuestos:** `getCategoryName()` resuelve el nombre desde el store y lo muestra sobre cada `budget-indicator`.
+- ✔️ **Fondo mint en wallet-form:** `ion-content` con `--background: #E8F5EE`.
+- ✔️ **Imports no usados limpiados:** `IonList`, `IonNote` eliminados de `budget-list` y `transaction-list`. `ToastController` deduplicado.
+- ✔️ **More page responsive:** `max-w-screen-xl mx-auto`, toolbar `color="primary"`, fondo mint.
+- ✔️ **FABs del Dashboard responsive:** `md:hidden` en FABs flotantes; botones "Registrar gasto / ingreso" en flujo para tablet/desktop.
+- ✔️ **Tiles de categorías:** `aspect-square min-h-[72px]` reemplaza altura fija de 80px — tiles cuadrados en cualquier breakpoint.
+- ✔️ **Grid dashboard condicional:** Layout 2 columnas activado solo cuando hay transacciones reales.
+- ✔️ **Analytics chart empty state:** `hasData()` computed — canvas solo visible con datos > 0; `@else` con "Sin datos para este período".
+*Próximos pasos:* Fase 5 continúa (notificaciones y alertas). Suggestion pendiente: implementar UI del popover de filtro de período en `transaction-list.page.html`.
+*Qué se aprendió:* Los `input()` signals de Angular son incompatibles con `componentProps` de Ionic Modal — el Modal asigna las props directamente al componente como propiedades planas, sin pasar por el mecanismo de signals. La solución es `@Input()` decorador legacy en componentes que se abren exclusivamente como Ionic Modal.
+*Por qué se aprendió:* El crash `TypeError: this.budget is not a function` en `BudgetFormComponent` reveló que `componentProps: { budget }` de `ModalController.create()` hace `component.budget = value` pero no `component.budget.set(value)`. El signal existe pero su valor interno no es el signal wrapper — es el objeto crudo asignado por Ionic.
+*Dónde se aprendió:* `frontend/src/app/features/budgets/budget-form/budget-form.component.ts` + auditoría Playwright de la pantalla `/tabs/budgets`.
+
+---
+
+### Qué hemos completado hasta ahora (Corrección de Desviaciones Arquitectónicas v2 — arch-compliance-v2):
+*Fase actual:* Fase: Compliance y Calidad de Código — TypeScript, Angular, NgRx, Path Aliases
+*Estado actual:* Completado ✅ | Archivado: 2026-04-21
+- ✔️ **Path aliases configurados:** `tsconfig.json` ahora define 6 aliases (`@core`, `@shared`, `@features`, `@models`, `@store`, `@env`) y 46 archivos de producción fueron migrados de imports relativos `../../` a aliases semánticos.
+- ✔️ **Cero `any` en producción:** `budgets.selectors.ts` usa `BudgetStatus`; `auth.service.ts` usa `OAuth2TokenResponse` con `http.post<T>()`; `chart-pie.component.ts` usa `ChartOptions<'doughnut'>`; `transaction-list.page.ts` usa tipo enriquecido explícito.
+- ✔️ **Interceptores HTTP eliminados:** `auth.interceptor.ts` y `error.interceptor.ts` (código muerto) borrados del repositorio. `SheetsApiService` gestiona headers de auth directamente. Specs huérfanos también eliminados.
+- ✔️ **CommonModule y CUSTOM_ELEMENTS_SCHEMA eliminados:** 5 componentes (`dashboard`, `dashboard-chart`, `transaction-form`, `budget-list`, `budget-form`) migrados a imports explícitos individuales. `DashboardSummaryComponent` agregado a `dashboard.page.ts` que lo usaba sin declararlo.
+- ✔️ **OnPush universal en features/shared:** `settings.page.ts` recibió `ChangeDetectionStrategy.OnPush`; todos los componentes en scope verificados.
+- ✔️ **Templates sin lógica inline:** `filterWalletOpen.set(false)` y `filterCategoryOpen.set(false)` extraídos a métodos `closeWalletFilter()` y `closeCategoryFilter()` en `transaction-list.page.ts`.
+- ✔️ **NgRx Effects declarativos:** Los 4 effects files (`wallets`, `categories`, `budgets`, `transactions`) refactorizados del patrón `store.dispatch()` imperativo + `dispatch: false` al patrón `merge(of(SuccessAction), persist$.pipe(switchMap(() => EMPTY), catchError(...)))`. `loadTransactions$` usa `from/concatMap/toArray` para recurrentes en lugar de `.subscribe()` fire-and-forget.
+*Próximos pasos:* Continuar con `monefy-visual-system` u otro cambio pendiente. WARNING pendiente: `ng test` falla por `jsrsasign` usando `node:*` en Webpack/Karma — requiere polyfill o migración de librería JWT.
+*Qué se aprendió:* El patrón `merge(of(Success), persist$.pipe(switchMap(() => EMPTY), catchError(...)))` es la forma correcta de efectos optimistas en NgRx sin romper el flujo declarativo. `http.post()` sin genérico retorna `Observable<Object>`, no `Observable<T>` — siempre usar `http.post<T>()` para tipado correcto.
+*Por qué se aprendió:* `tsc --noEmit` reveló que `const response: OAuth2TokenResponse = await http.post(...)` falla porque el tipo inferido es `Object`, no `OAuth2TokenResponse`. La solución es mover el genérico al método HTTP, no a la variable de destino.
+*Dónde se aprendió:* `frontend/src/app/core/services/auth.service.ts:201` y `frontend/src/app/store/transactions/transactions.effects.ts`.
+
+---
+
 ### Qué hemos completado hasta ahora (Auditoría de Cumplimiento Arquitectónico — compliance-audit-fix):
 *Fase actual:* Fase: Alineación de código con reglas de arquitectura
 *Estado actual:* Completado ✅ | Archivado: 2026-04-19
