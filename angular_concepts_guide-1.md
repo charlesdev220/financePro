@@ -4,6 +4,36 @@ Aquí tienes la guía adaptada con los nuevos conceptos solicitados, haciendo fo
 
 ---
 
+## Índice
+
+1. [Inyección de Dependencias (Dependency Injection)](#1-inyección-de-dependencias-dependency-injection)
+2. [Signals](#2-signals)
+3. [Computed (Signals Computados)](#3-computed-signals-computados)
+4. [toSignal](#4-tosignal)
+5. [Store (`@ngrx/store`)](#5-store-ngrxstore)
+6. [Vistas Anidadas (Router con Children y `<router-outlet>`)](#6-vistas-anidadas-router-con-children-y-router-outlet)
+7. [`@Input()` y `@Output()` (Decoradores Tradicionales)](#7-input-y-output-decoradores-tradicionales)
+8. [Comunicación Padre ↔ Hijo — Ejemplos Completos](#7b-comunicación-padre--hijo--ejemplos-completos)
+9. [Promise (Promesas) // ¿Se sustituyen por toSignal?](#8-promise-promesas--se-sustituyen-por-tosignal)
+10. [routerLink y routerLinkActive](#9-routerlink-y-routerlinkactive)
+11. [withComponentInputBinding](#10-withcomponentinputbinding)
+12. [short-imports (Alias de Importación)](#11-short-imports-alias-de-importación)
+13. [Carga Dinámica (`loadComponent`) con `withPreloading`](#12-carga-dinámica-loadcomponent-con-withpreloading)
+14. [effect()](#13-effect)
+15. [linkedSignal()](#14-linkedsignal)
+16. [@let (Variables de Plantilla)](#15-let-variables-de-plantilla)
+17. [SSR — Server-Side Rendering](#16-ssr--server-side-rendering)
+18. [Signal Input — `input()` e `input.required()`](#17-signal-input--input-e-inputrequired)
+19. [Slug — Parámetros de Ruta Semánticos](#18-slug--parámetros-de-ruta-semánticos)
+20. [EventEmitter — El Emisor de Eventos Clásico](#19-eventemitter--el-emisor-de-eventos-clásico)
+21. [State — Estado del Componente con Signals](#20-state--estado-del-componente-con-signals)
+22. [model() / model.required() — Two-Way Binding con Signals](#21-model--modelrequired--two-way-binding-con-signals)
+23. [resource() y rxResource() — Carga Asíncrona Declarativa](#22-resource-y-rxresource--carga-asíncrona-declarativa)
+24. [@ViewChild vs viewChild() — Referencia a Elementos Hijos](#23-viewchild-vs-viewchild--referencia-a-elementos-hijos)
+25. [BehaviorSubject — Observable con Estado Actual](#24-behaviorsubject--observable-con-estado-actual)
+
+---
+
 ## 1. Inyección de Dependencias (Dependency Injection)
 **¿Qué es?** Es un patrón de diseño fundamental en Angular donde una clase recibe sus dependencias (como servicios o configuraciones) de fuentes externas en lugar de crearlas ella misma internamente. En Angular moderno puedes usar la función `inject()`.
 
@@ -174,6 +204,75 @@ import { RouterOutlet, RouterLink } from '@angular/router';
 })
 export class DashboardLayoutComponent {}
 ```
+
+**🔥 Aprendido en MyFinance — Layout Shell con Ionic Tabs:**
+
+En Ionic Angular, el patrón de vistas anidadas se usa para que un componente layout (shell) provea el `ion-header` compartido, y los hijos solo rendericen el `ion-content`.
+
+```typescript
+// tabs.routes.ts
+{
+  path: 'dashboard',
+  loadComponent: () =>
+    import('@shared/components/share-header/share-header.component')
+      .then(m => m.ShareHeaderComponent),   // ← layout shell (padre)
+  children: [
+    {
+      path: '',
+      pathMatch: 'full',
+      loadComponent: () =>
+        import('../dashboard/dashboard.page').then(m => m.DashboardPage), // ← solo ion-content
+    },
+  ],
+},
+```
+
+```typescript
+// share-header.component.ts — el padre es "smart": maneja su propia lógica
+@Component({
+  selector: 'app-share-header',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonIcon, RouterOutlet],
+  templateUrl: './share-header.component.html',
+})
+export class ShareHeaderComponent {
+  private readonly router     = inject(Router);
+  private readonly alertCtrl  = inject(AlertController);
+  private readonly authService = inject(AuthService);
+
+  openSettings(): void { this.router.navigate(['/tabs/settings']); }
+
+  async logout(): Promise<void> {
+    const alert = await this.alertCtrl.create({ /* ... */ });
+    await alert.present();
+  }
+}
+```
+
+```html
+<!-- share-header.component.html -->
+<ion-header class="ion-no-border">
+  <ion-toolbar color="primary">
+    <!-- botones settings / logout -->
+  </ion-toolbar>
+</ion-header>
+
+<router-outlet />   <!-- los hijos se renderizan aquí -->
+```
+
+```html
+<!-- dashboard.page.html — ya NO tiene ion-header propio -->
+<ion-content [fullscreen]="true">
+  <!-- todo el contenido del dashboard -->
+</ion-content>
+```
+
+**Regla clave para Ionic:** El componente hijo (page) **no repite** el `ion-header`. Lo tiene el padre. `ion-content` en el hijo igual encuentra al `ion-header` padre a través del DOM, y el scroll funciona correctamente.
+
+**Cuándo NO usar este patrón:**
+- Si los hijos tienen headers distintos entre sí (cada uno necesita su propio `ion-header` personalizado).
+- Si necesitás que el hijo reciba Ionic lifecycle hooks (`ionViewDidEnter` etc.) — esos solo disparan en el componente que está directamente dentro del `ion-router-outlet`, no en los hijos del `router-outlet` estándar. La solución es usar `ResizeObserver` o un servicio compartido en lugar de depender del lifecycle del hijo.
 
 ---
 

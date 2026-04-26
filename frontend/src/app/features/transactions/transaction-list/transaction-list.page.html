@@ -150,8 +150,8 @@
                     <ion-label class="py-4">
                       <div class="flex justify-between items-start mb-1">
                         <h3 class="text-sm font-bold text-gray-900 m-0">{{ tx.concept || tx.categoryName }}</h3>
-                        <span class="text-sm font-black" [class]="tx.type === 'income' ? 'text-[var(--color-income)]' : 'text-[var(--color-expense)]'">
-                          {{ tx.type === 'income' ? '+' : '-' }}{{ tx.amount | currencyFormat:tx.currency }}
+                        <span class="text-sm font-black" [class]="tx.isEffectiveIncome ? 'text-[var(--color-income)]' : 'text-[var(--color-expense)]'">
+                          {{ tx.isEffectiveIncome ? '+' : '-' }}{{ tx.displayAmount | currencyFormat:tx.currency }}
                         </span>
                       </div>
                       <div class="flex items-center gap-2">

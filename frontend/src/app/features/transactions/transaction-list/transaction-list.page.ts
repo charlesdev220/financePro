@@ -131,10 +131,14 @@ export class TransactionListPage implements OnInit {
       .filter(t => !to   || t.date <= to)
       .map(t => {
         const cat = cats.find(c => c.categoryId === t.categoryId);
+        const isIncome = t.type === TRANSACTION_TYPES.INCOME;
+        const isEffectiveIncome = isIncome || (t.type === TRANSACTION_TYPES.EXPENSE && t.amount < 0);
         return {
           ...t,
           categoryName: cat?.name || 'Varios',
-          categoryIcon: cat?.icon || '💰'
+          categoryIcon: cat?.icon || '💰',
+          isEffectiveIncome,
+          displayAmount: Math.abs(t.amount),
         };
       })
       .sort((a, b) => b.date.localeCompare(a.date));
@@ -143,7 +147,7 @@ export class TransactionListPage implements OnInit {
   /** Transacciones agrupadas por fecha para la vista de lista cronológica. */
   readonly groupedTransactions = computed(() => {
     const txs = this.transactionsEnriched();
-    const groups: { date: string; transactions: (ITransaction & { categoryName: string; categoryIcon: string })[]; totalDaily: number }[] = [];
+    const groups: { date: string; transactions: (ITransaction & { categoryName: string; categoryIcon: string; isEffectiveIncome: boolean; displayAmount: number })[]; totalDaily: number }[] = [];
 
     txs.forEach(tx => {
       let group = groups.find(g => g.date === tx.date);

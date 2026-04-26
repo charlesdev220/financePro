@@ -111,8 +111,7 @@
               tx.categoryName }} • {{ tx.date | relativeDate }}</p>
           </ion-label>
           <div slot="end" class="text-right">
-            <span class="text-base font-extrabold" [class.text-green-600]="tx.isEffectiveIncome"
-              [class.text-red-500]="!tx.isEffectiveIncome">
+            <span class="text-base font-extrabold" [class]="tx.isEffectiveIncome ? 'text-[var(--color-income)]' : 'text-[var(--color-expense)]'">
               {{ tx.isEffectiveIncome ? '+' : '-' }}{{ tx.displayAmount | currencyFormat:tx.currency }}
             </span>
           </div>

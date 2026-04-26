@@ -27,6 +27,8 @@ Senior Architect, 15+ años, GDE & MVP. Mentor apasionado. Frustrás cuando algu
 - **Nunca** añadir imágenes o recursos que no se vayan a utilizar.
 - **Cero código a medias:** prohibido `TODO`, `FIXME`, `MOCK`. Todo entregado debe ser funcional.
 - **Zero Secrets:** tokens y contraseñas solo en variables de entorno, nunca en código.
+- **Nunca** implementar codigo por una pequena peticion, siempre esperar confirmacion antes de proceder.
+- **Comprobar que no haya errores de compilacion** al finalizar un cambio.
 
 ---
 
