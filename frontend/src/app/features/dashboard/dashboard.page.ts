@@ -6,13 +6,8 @@ import {
   signal,
   computed,
 } from '@angular/core';
-import { Router } from '@angular/router';
 import {
   IonContent,
-  IonHeader,
-  IonTitle,
-  IonToolbar,
-  IonButtons,
   IonButton,
   IonIcon,
   IonList,
@@ -25,10 +20,8 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
-  logOutOutline,
   addOutline,
   removeOutline,
-  settingsOutline,
   rocketOutline,
   sparklesOutline,
 } from 'ionicons/icons';
@@ -55,10 +48,6 @@ import { TRANSACTION_TYPES, TransactionType } from '@core/constants/transaction.
   standalone: true,
   imports: [
     IonContent,
-    IonHeader,
-    IonTitle,
-    IonToolbar,
-    IonButtons,
     IonButton,
     IonIcon,
     IonList,
@@ -76,7 +65,6 @@ import { TRANSACTION_TYPES, TransactionType } from '@core/constants/transaction.
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardPage implements OnInit {
-  private readonly router = inject(Router);
   private readonly alertCtrl = inject(AlertController);
   private readonly authService = inject(AuthService);
   private readonly dashboardService = inject(DashboardService);
@@ -145,7 +133,7 @@ export class DashboardPage implements OnInit {
   });
 
   constructor() {
-    addIcons({ logOutOutline, addOutline, removeOutline, settingsOutline, rocketOutline, sparklesOutline });
+    addIcons({ addOutline, removeOutline, rocketOutline, sparklesOutline });
   }
 
   ngOnInit(): void {
@@ -177,22 +165,6 @@ export class DashboardPage implements OnInit {
 
   closeModal(): void {
     this.isModalOpen.set(false);
-  }
-
-  openSettings(): void {
-    this.router.navigate(['/tabs/settings']);
-  }
-
-  async logout(): Promise<void> {
-    const alert = await this.alertCtrl.create({
-      header: 'Cerrar sesión',
-      message: '¿Estás seguro de que querés salir?',
-      buttons: [
-        { text: 'Cancelar', role: 'cancel' },
-        { text: 'Salir', handler: () => this.authService.signOut() },
-      ],
-    });
-    await alert.present();
   }
 
   async seedData(): Promise<void> {
