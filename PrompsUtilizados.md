@@ -6,7 +6,10 @@ tenemos ahora una nueva logica de implementacion que empieza en @CLAUDE.md, quie
   inicialices un nuevo flujo sdd para corregir las desviaciones de implementacion
 
 ------
-
+comprueba porque falla el chart cuando cambio entre tabs 
+dashboard.page.ts 
+dashboard-chart.component.ts
+ 
 Quiero crear un fichero md parecido a @HISTORIAL_IMPLEMENTACION.md pero solo con el historial de lo aprendido para tenerlo como referencia
 Log de conocimiento aprendido — append-only, insertar al principio |
 **Entrada estándar en `HISTORIAL_IMPLEMENTACION.md`:**

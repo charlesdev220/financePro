@@ -42,22 +42,28 @@ export class ChartPieComponent implements AfterViewInit, OnDestroy {
   constructor() {
     effect(() => {
       const data = this.data();
+      const trigger = this.refreshTrigger(); // Observamos el trigger de refresco
+      
       if (!this.initialized()) return;
+
+      // Destrucción inmediata para evitar colisiones de contexto
       this.chart?.destroy();
       this.chart = null;
-      if (data) {
-        queueMicrotask(() => { if (!this.chart) this.createChart(data); });
-      }
-    });
 
-    effect(() => {
-      this.refreshTrigger();
-      if (!this.initialized() || !this.chart) return;
-      this.chart.resize();
+      if (data) {
+        // En Ionic, es crítico esperar a que la transición termine para que el contenedor
+        // recupere sus dimensiones reales (no 0x0).
+        setTimeout(() => {
+          if (this.data() && this.initialized() && !this.chart) {
+            this.createChart(this.data()!);
+          }
+        }, 100);
+      }
     });
   }
 
   ngAfterViewInit(): void {
+    // Marcar como inicializado y forzar una primera actualización si ya hay datos
     this.initialized.set(true);
   }
 
