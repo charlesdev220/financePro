@@ -27,7 +27,7 @@
   <!-- Fila 2: Balance full-width prominente -->
   <ion-row>
     <ion-col size="12">
-      <ion-card [color]="balanceIsNegative() ? 'warning' : 'primary'" class="m-1">
+      <ion-card [color]="balanceIsNegative() ? 'danger' : 'primary'" class="m-1">
         <ion-card-content class="flex items-center justify-between py-3">
           <span class="text-white font-medium text-sm opacity-90">Balance del período</span>
           <span class="text-white font-bold text-xl">{{ summary().balance | currencyFormat }}</span>

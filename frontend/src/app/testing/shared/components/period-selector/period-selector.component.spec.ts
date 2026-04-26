@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PeriodSelectorComponent } from '../../../../shared/components/period-selector/period-selector.component';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PeriodSelectorComponent — navegación de períodos mensuales
+// PeriodSelectorComponent — selección de períodos por tab
 // ─────────────────────────────────────────────────────────────────────────────
 describe('PeriodSelectorComponent', () => {
   let component: PeriodSelectorComponent;
@@ -23,89 +23,61 @@ describe('PeriodSelectorComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  // REQ-18 sc2: anterior desde 2026-04 → emite 2026-03
-  it('previous_shouldEmitPreviousMonth_whenCalledFromApril2026', () => {
-    // Given
+  // REQ-08 sc1 — selectPeriod('month') emite YYYY-MM
+  it('selectPeriod_month_shouldEmitYYYYMM', () => {
     fixture.componentRef.setInput('period', '2026-04');
     fixture.detectChanges();
-    const emitSpy = spyOn(component.periodChange, 'emit');
+    const emitted: string[] = [];
+    component.periodChange.subscribe((v: string) => emitted.push(v));
 
-    // When
-    component.previous();
+    component.selectPeriod('month');
 
-    // Then
-    expect(emitSpy).toHaveBeenCalledOnceWith('2026-03');
+    expect(emitted.length).toBe(1);
+    expect(emitted[0]).toMatch(/^\d{4}-\d{2}$/);
   });
 
-  // REQ-18 sc3: siguiente desde 2026-03 → emite 2026-04
-  it('next_shouldEmitNextMonth_whenCalledFromMarch2026', () => {
-    // Given
-    fixture.componentRef.setInput('period', '2026-03');
+  // REQ-08 sc1 — selectPeriod('day') emite YYYY-MM-DD
+  it('selectPeriod_day_shouldEmitYYYYMMDD', () => {
+    fixture.componentRef.setInput('period', '2026-04-26');
     fixture.detectChanges();
-    const emitSpy = spyOn(component.periodChange, 'emit');
+    const emitted: string[] = [];
+    component.periodChange.subscribe((v: string) => emitted.push(v));
 
-    // When
-    component.next();
+    component.selectPeriod('day');
 
-    // Then
-    expect(emitSpy).toHaveBeenCalledOnceWith('2026-04');
+    expect(emitted.length).toBe(1);
+    expect(emitted[0]).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 
-  // Edge: enero → atrás → diciembre del año anterior
-  it('previous_shouldEmitDecemberOfPreviousYear_whenCalledFromJanuary', () => {
-    // Given: 2026-01 → retroceder → 2025-12
-    fixture.componentRef.setInput('period', '2026-01');
-    fixture.detectChanges();
-    const emitSpy = spyOn(component.periodChange, 'emit');
-
-    // When
-    component.previous();
-
-    // Then
-    expect(emitSpy).toHaveBeenCalledOnceWith('2025-12');
-  });
-
-  // Edge: diciembre → siguiente → enero del año siguiente
-  it('next_shouldEmitJanuaryOfNextYear_whenCalledFromDecember', () => {
-    // Given: 2025-12 → avanzar → 2026-01
-    fixture.componentRef.setInput('period', '2025-12');
-    fixture.detectChanges();
-    const emitSpy = spyOn(component.periodChange, 'emit');
-
-    // When
-    component.next();
-
-    // Then
-    expect(emitSpy).toHaveBeenCalledOnceWith('2026-01');
-  });
-
-  // REQ-18 sc3: computed label devuelve mes en español capitalizado
-  it('label_shouldReturnCapitalizedSpanishMonthName_forApril2026', () => {
-    // Given
+  // REQ-08 sc1 — activeTab es 'month' cuando period es 'YYYY-MM'
+  it('activeTab_shouldBeMonth_whenPeriodIsYYYYMM', () => {
     fixture.componentRef.setInput('period', '2026-04');
     fixture.detectChanges();
 
-    // When
-    const label = component.label();
-
-    // Then: contiene 'abril' en español, incluye el año, y empieza con mayúscula
-    expect(label.toLowerCase()).toContain('abril');
-    expect(label).toContain('2026');
-    expect(label.charAt(0)).toBe(label.charAt(0).toUpperCase());
+    expect(component.activeTab()).toBe('month');
   });
 
-  // REQ-18 sc3 (edge): enero → label 'Enero YYYY'
-  it('label_shouldReturnCapitalizedSpanishMonthName_forJanuary', () => {
-    // Given
-    fixture.componentRef.setInput('period', '2026-01');
+  // REQ-08 sc1 — activeTab es 'week' cuando period contiene 'W'
+  it('activeTab_shouldBeWeek_whenPeriodContainsW', () => {
+    fixture.componentRef.setInput('period', '2026-W17');
     fixture.detectChanges();
 
-    // When
-    const label = component.label();
+    expect(component.activeTab()).toBe('week');
+  });
 
-    // Then
-    expect(label.toLowerCase()).toContain('enero');
-    expect(label).toContain('2026');
-    expect(label.charAt(0)).toBe(label.charAt(0).toUpperCase());
+  // activeTab es 'day' cuando period tiene longitud 10 (YYYY-MM-DD)
+  it('activeTab_shouldBeDay_whenPeriodIsFullDate', () => {
+    fixture.componentRef.setInput('period', '2026-04-26');
+    fixture.detectChanges();
+
+    expect(component.activeTab()).toBe('day');
+  });
+
+  // activeTab es 'year' cuando period tiene longitud 4 (YYYY)
+  it('activeTab_shouldBeYear_whenPeriodIsYYYY', () => {
+    fixture.componentRef.setInput('period', '2026');
+    fixture.detectChanges();
+
+    expect(component.activeTab()).toBe('year');
   });
 });

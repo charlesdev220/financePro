@@ -272,6 +272,50 @@ describe('AuthService', () => {
   });
 
   // -----------------------------------------------------------------------
+  // checkEmailExists() — REQ-07
+  // -----------------------------------------------------------------------
+  describe('checkEmailExists()', () => {
+    it('returns true when email hash matches a row in USERS sheet', async () => {
+      // Given: cryptoSpy.hashEmail devuelve MOCK_EMAIL_HASH que existe en mockUsersResponse
+      const checkPromise = service.checkEmailExists(TEST_EMAIL);
+
+      httpMock.expectOne(r => r.url.includes('USERS')).flush(mockUsersResponse);
+
+      expect(await checkPromise).toBeTrue();
+    });
+
+    it('returns false when email hash does not match any row', async () => {
+      cryptoSpy.hashEmail.and.returnValue(Promise.resolve('unknown-hash-xyz'));
+
+      const checkPromise = service.checkEmailExists('notfound@test.com');
+
+      httpMock.expectOne(r => r.url.includes('USERS')).flush(mockUsersResponse);
+
+      expect(await checkPromise).toBeFalse();
+    });
+
+    it('returns false when USERS sheet is empty (only headers)', async () => {
+      const checkPromise = service.checkEmailExists(TEST_EMAIL);
+
+      httpMock.expectOne(r => r.url.includes('USERS')).flush({
+        range: 'USERS!A1:H1',
+        majorDimension: 'ROWS',
+        values: [['user_id', 'email_hash', 'email_enc', 'display_name_enc', 'password_hash', 'currency', 'period_start', 'created_at']],
+      });
+
+      expect(await checkPromise).toBeFalse();
+    });
+
+    it('propagates network error when Sheets API throws', async () => {
+      const checkPromise = service.checkEmailExists(TEST_EMAIL);
+
+      httpMock.expectOne(r => r.url.includes('USERS')).error(new ErrorEvent('network'));
+
+      await expectAsync(checkPromise).toBeRejected();
+    });
+  });
+
+  // -----------------------------------------------------------------------
   // Service Account token — access_token nunca en localStorage
   // -----------------------------------------------------------------------
   it('never writes access_token to localStorage', async () => {

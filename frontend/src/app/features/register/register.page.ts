@@ -68,7 +68,6 @@ export class RegisterPage implements OnInit {
         this.showToast('Error al crear la cuenta. Inténtalo de nuevo.');
       }
     } catch (error) {
-      console.error('[RegisterPage] Error register:', error);
       this.showToast('Error de conexión con el servidor');
     } finally {
       loading.dismiss();
