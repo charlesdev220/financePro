@@ -1,6 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal, computed } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import {
   IonContent,
   IonHeader,
@@ -19,23 +17,16 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { addOutline, trashOutline, createOutline, arrowUpOutline, arrowDownOutline, chevronUpOutline, chevronDownOutline, walletOutline, sparklesOutline, calendarOutline, closeCircleOutline } from 'ionicons/icons';
-import { TransactionsActions } from '@store/transactions/transactions.actions';
-import {
-  selectAllTransactions,
-  selectTransactionsRowMap,
-  selectTransactionsError,
-} from '@store/transactions/transactions.selectors';
-import { WalletsActions } from '@store/wallets/wallets.actions';
-import { selectAllWallets } from '@store/wallets/wallets.selectors';
-import { CategoriesActions } from '@store/categories/categories.actions';
-import { selectActiveCategories } from '@store/categories/categories.selectors';
+import { TransactionsStateService } from '@core/state/transactions.state';
+import { WalletsStateService } from '@core/state/wallets.state';
+import { CategoriesStateService } from '@core/state/categories.state';
+import { CurrencyStateService } from '@core/state/currency.state';
 import { AuthService } from '@core/services/auth.service';
 import { ITransaction } from '@models/transaction.model';
 import { RelativeDatePipe } from '@shared/pipes/relative-date.pipe';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 import { TransactionFormComponent } from '@features/transactions/transaction-form/transaction-form.component';
-import { map } from 'rxjs';
-import { selectBaseCurrency } from '@store/currency/currency.selectors';
+import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 
 /**
  * TransactionListPage — Vista de listado detallado de movimientos.
@@ -58,9 +49,12 @@ import { selectBaseCurrency } from '@store/currency/currency.selectors';
   ],
 })
 export class TransactionListPage implements OnInit {
-  private readonly store      = inject(Store);
-  private readonly toastCtrl  = inject(ToastController);
-  private readonly authService = inject(AuthService);
+  private readonly txState          = inject(TransactionsStateService);
+  private readonly walletsState     = inject(WalletsStateService);
+  private readonly categoriesState  = inject(CategoriesStateService);
+  private readonly currencyState    = inject(CurrencyStateService);
+  private readonly toastCtrl        = inject(ToastController);
+  private readonly authService      = inject(AuthService);
 
   /** Filtro activo por cartera. */
   readonly filterWallet   = signal<string>('');
@@ -73,6 +67,24 @@ export class TransactionListPage implements OnInit {
 
   /** Panel de filtro activo. Solo uno puede estar abierto a la vez. */
   readonly openFilter = signal<'wallet' | 'category' | 'period' | null>(null);
+
+  /** Último mensaje de error emitido por el dominio de transacciones. */
+  readonly error = this.txState.error;
+
+  /** Colección completa de transacciones del usuario desde el state service. */
+  private readonly allTransactions = this.txState.items;
+
+  /** Carteras disponibles para alimentar los filtros. */
+  readonly wallets = this.walletsState.items;
+
+  /** Categorías activas disponibles para alimentar los filtros. */
+  readonly categories = this.categoriesState.items;
+
+  /** Mapa de txId a número de fila para permitir ediciones en Sheets. */
+  readonly rowMap = this.txState.rowMap;
+
+  /** Moneda base del usuario. Fallback 'EUR' antes de cargar. */
+  readonly userBaseCurrency = computed(() => this.currencyState.baseCurrency() ?? 'EUR');
 
   /** Etiqueta descriptiva de la cartera filtrada. */
   readonly filterWalletLabel = computed(() =>
@@ -104,23 +116,6 @@ export class TransactionListPage implements OnInit {
     const to   = this.filterDateTo();
     return !!(from && to && from > to);
   });
-
-  /** Último mensaje de error emitido por el dominio de transacciones. */
-  readonly error = toSignal(this.store.select(selectTransactionsError), { initialValue: null });
-
-  /** Colección completa de transacciones del usuario sincronizadas con el Store. */
-  private readonly allTransactions = toSignal(
-    this.store.select(selectAllTransactions), { initialValue: [] as ITransaction[] },
-  );
-
-  /** Carteras disponibles para alimentar los filtros. */
-  readonly wallets = toSignal(this.store.select(selectAllWallets), { initialValue: [] });
-
-  /** Categorías activas disponibles para alimentar los filtros. */
-  readonly categories = toSignal(this.store.select(selectActiveCategories), { initialValue: [] });
-
-  /** Mapa de txId a número de fila para permitir ediciones en Sheets. */
-  readonly rowMap = toSignal(this.store.select(selectTransactionsRowMap), { initialValue: {} as Record<string, number> });
 
   /** Lista de transacciones filtradas por cartera, categoría y rango de fechas, enriquecidas con metadatos de categoría. */
   readonly transactionsEnriched = computed(() => {
@@ -157,17 +152,11 @@ export class TransactionListPage implements OnInit {
         groups.push(group);
       }
       group.transactions.push(tx);
-      group.totalDaily += (tx.type === 'income' ? tx.amountBase : -tx.amountBase);
+      group.totalDaily += (tx.type === TRANSACTION_TYPES.INCOME ? tx.amountBase : -tx.amountBase);
     });
 
     return groups;
   });
-
-  /** Moneda base del usuario desde USER_SETTINGS via NgRx. Fallback 'EUR' antes de cargar. */
-  readonly userBaseCurrency = toSignal(
-    this.store.select(selectBaseCurrency).pipe(map(c => c ?? 'EUR')),
-    { initialValue: 'EUR' }
-  );
 
   /** Estado de visibilidad del modal de formulario. */
   readonly isModalOpen = signal(false);
@@ -198,9 +187,9 @@ export class TransactionListPage implements OnInit {
   }
 
   ngOnInit(): void {
-    this.store.dispatch(TransactionsActions.loadTransactions());
-    this.store.dispatch(WalletsActions.loadWallets());
-    this.store.dispatch(CategoriesActions.loadCategories());
+    this.txState.load();
+    this.walletsState.load();
+    this.categoriesState.load();
   }
 
   openAddModal(): void {
@@ -227,7 +216,7 @@ export class TransactionListPage implements OnInit {
   async deleteTransaction(tx: ITransaction): Promise<void> {
     const rowNumber = this.rowMap()[tx.txId];
     if (!rowNumber) return;
-    this.store.dispatch(TransactionsActions.deleteTransaction({ txId: tx.txId, rowNumber }));
+    this.txState.delete(tx.txId, rowNumber);
     const toast = await this.toastCtrl.create({
       message: 'Transacción eliminada',
       duration: 2000,
@@ -261,11 +250,29 @@ export class TransactionListPage implements OnInit {
     this.filterDateTo.set((event.target as HTMLInputElement).value);
   }
 
+  clearWalletFilter(): void {
+    this.filterWallet.set('');
+  }
+
+  clearCategoryFilter(): void {
+    this.filterCategory.set('');
+  }
+
+  clearPeriodFilter(): void {
+    this.filterDateFrom.set('');
+    this.filterDateTo.set('');
+  }
+
   clearFilters(): void {
     this.filterWallet.set('');
     this.filterCategory.set('');
     this.filterDateFrom.set('');
     this.filterDateTo.set('');
+    this.openFilter.set(null);
+  }
+
+  onCategoryFilterSelect(id: string): void {
+    this.filterCategory.set(id);
     this.openFilter.set(null);
   }
 

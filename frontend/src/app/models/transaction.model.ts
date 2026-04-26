@@ -1,3 +1,6 @@
+/** Campos que ingresa el usuario; txId/amountBase/createdAt/updatedAt los genera el State Service. */
+export type TransactionDraft = Omit<ITransaction, 'txId' | 'amountBase' | 'createdAt' | 'updatedAt'>;
+
 export interface ITransaction {
   txId: string;
   userId: string;

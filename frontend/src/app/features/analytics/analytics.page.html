@@ -4,8 +4,27 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content class="ion-padding" style="--background: var(--color-green-50);">
-  <div class="max-w-screen-xl mx-auto">
+<ion-content style="--background: var(--color-green-50);">
+
+  <!-- Header verde resumen — full-width -->
+  <div class="bg-[var(--ion-color-primary)] pb-8 rounded-b-[40px] shadow-sm px-4 pt-4 flex flex-col items-center gap-3">
+    <p class="text-white/70 text-xs font-semibold tracking-widest uppercase">Saldo actual</p>
+    <div class="bg-white/20 backdrop-blur-md px-6 py-2 rounded-full border border-white/30 shadow-lg">
+      <span class="text-white text-3xl font-extrabold tracking-tight">
+        {{ currentPeriodSummary().balance | currencyFormat:userBaseCurrency() }}
+      </span>
+    </div>
+    <div class="flex gap-6 mt-1">
+      <span class="text-white/80 text-sm font-semibold">
+        INGRESOS {{ currentPeriodSummary().income | currencyFormat:userBaseCurrency() }}
+      </span>
+      <span class="text-white/80 text-sm font-semibold">
+        GASTOS {{ currentPeriodSummary().expense | currencyFormat:userBaseCurrency() }}
+      </span>
+    </div>
+  </div>
+
+  <div class="max-w-screen-xl mx-auto px-4 pt-4">
 
     <app-period-selector [period]="startPeriod()" (periodChange)="onPeriodChange($event)" />
 
@@ -27,4 +46,5 @@
     </div>
 
   </div>
+
 </ion-content>

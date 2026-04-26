@@ -14,7 +14,7 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true" class="px-8">
+<ion-content [fullscreen]="true">
 
   <!-- Estado inicial: Cuenta vacía (Seeding) -->
   @if (needsSeed()) {
@@ -75,7 +75,7 @@
   </div>
 
   <!-- Cuerpo principal — 1 col en móvil, 2 cols en desktop solo con datos -->
-  <div class="max-w-screen-xl mx-auto px-4 mt-4 pb-[calc(env(safe-area-inset-bottom)+136px)]"
+  <div class="max-w-screen-xl mx-auto px-4 md:px-8 mt-4 pb-[calc(env(safe-area-inset-bottom)+136px)]"
     [class.lg:grid]="recentTransactions().length > 0"
     [class.lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]]="recentTransactions().length > 0"
     [class.lg:gap-6]="recentTransactions().length > 0" [class.lg:items-start]="recentTransactions().length > 0">
@@ -83,7 +83,7 @@
     <!-- Columna izquierda: gráfico -->
     <div>
       <app-dashboard-chart [breakdown]="breakdown()" [balance]="summary().balance"
-        [currency]="userBaseCurrency()"></app-dashboard-chart>
+        [currency]="userBaseCurrency()" [refreshTick]="chartRefreshTick()"></app-dashboard-chart>
     </div>
 
     <!-- Columna derecha: transacciones recientes -->
@@ -103,17 +103,17 @@
           </div>
           <ion-label>
             <div class="flex items-center gap-2">
-              <div class="w-2.5 h-2.5 rounded-full" [class.bg-green-500]="tx.isIncome"
-                [class.bg-red-400]="!tx.isIncome"></div>
+              <div class="w-2.5 h-2.5 rounded-full" [class.bg-green-500]="tx.isEffectiveIncome"
+                [class.bg-red-400]="!tx.isEffectiveIncome"></div>
               <h3 class="text-sm font-bold text-[var(--color-text-primary)]">{{ tx.concept || 'Sin descripción' }}</h3>
             </div>
             <p class="text-[10px] uppercase tracking-wider font-bold text-[var(--color-text-secondary)] mt-0.5">{{
               tx.categoryName }} • {{ tx.date | relativeDate }}</p>
           </ion-label>
           <div slot="end" class="text-right">
-            <span class="text-base font-extrabold" [class.text-green-600]="tx.isIncome"
-              [class.text-red-500]="!tx.isIncome">
-              {{ tx.isIncome ? '+' : '-' }}{{ tx.amount | currencyFormat:tx.currency }}
+            <span class="text-base font-extrabold" [class.text-green-600]="tx.isEffectiveIncome"
+              [class.text-red-500]="!tx.isEffectiveIncome">
+              {{ tx.isEffectiveIncome ? '+' : '-' }}{{ tx.displayAmount | currencyFormat:tx.currency }}
             </span>
           </div>
         </ion-item>
@@ -129,20 +129,19 @@
   </div>
 
   <!-- Barra de acciones fija — todas las pantallas -->
-  <div
-    class="fixed bottom-0 left-0 right-0 flex gap-3 px-4 pb-[calc(env(safe-area-inset-bottom)+64px)] pt-3 bg-monefy-mint z-10">
+  <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md flex gap-3 px-4 pb-3 pt-3 bg-monefy-mint z-1">
     <ion-button (click)="openAddExpense()" expand="block" class="flex-1 font-semibold"
       style="--background: var(--color-red-400); --background-activated: --color-red-500; --border-radius: 12px; text-transform: none;">
       <ion-icon name="remove-outline" slot="start"></ion-icon>
       Registrar gasto
     </ion-button>
+
     <ion-button (click)="openAddIncome()" expand="block" class="flex-1 font-semibold"
       style="--background: var(--color-green-500); --background-activated: --color-green-700; --border-radius: 12px; text-transform: none;">
       <ion-icon name="add-outline" slot="start"></ion-icon>
       Registrar ingreso
     </ion-button>
-  </div>
-  }
+  </div> }
 
 </ion-content>
 

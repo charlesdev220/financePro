@@ -17,6 +17,8 @@ export class DashboardChartComponent {
   breakdown = input.required<CategoryBreakdown[]>();
   balance = input.required<number>();
   currency = input.required<string>();
+  /** Proveniente de DashboardPage.ionViewDidEnter para forzar resize del chart al volver al tab. */
+  refreshTick = input<number>(0);
 
   /** Datos formateados para Chart.js doughnut, derivados del breakdown del período activo. */
   readonly chartData = computed<ChartData<'doughnut'> | null>(() => {

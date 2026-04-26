@@ -24,12 +24,30 @@
         }
       </ion-item>
 
-      <ion-item>
-        <ion-label>Tipo</ion-label>
-        <ion-select formControlName="type" interface="action-sheet">
-          <ion-select-option value="expense">Gasto</ion-select-option>
-          <ion-select-option value="income">Ingreso</ion-select-option>
-        </ion-select>
+      <ion-item lines="none">
+        <ion-label position="stacked" class="mb-2">Tipo</ion-label>
+        <div class="flex gap-2 w-full py-2">
+          <button type="button"
+            class="flex-1 py-2 rounded-full font-semibold text-sm transition-colors border-2"
+            [class.bg-monefy-red]="selectedType() === 'expense'"
+            [class.text-white]="selectedType() === 'expense'"
+            [class.border-monefy-red]="selectedType() === 'expense'"
+            [class.border-monefy-border]="selectedType() !== 'expense'"
+            [class.text-monefy-text-secondary]="selectedType() !== 'expense'"
+            (click)="onTypeSelect('expense')">
+            Gasto
+          </button>
+          <button type="button"
+            class="flex-1 py-2 rounded-full font-semibold text-sm transition-colors border-2"
+            [class.bg-monefy-green]="selectedType() === 'income'"
+            [class.text-white]="selectedType() === 'income'"
+            [class.border-monefy-green]="selectedType() === 'income'"
+            [class.border-monefy-border]="selectedType() !== 'income'"
+            [class.text-monefy-text-secondary]="selectedType() !== 'income'"
+            (click)="onTypeSelect('income')">
+            Ingreso
+          </button>
+        </div>
       </ion-item>
 
     </ion-list>

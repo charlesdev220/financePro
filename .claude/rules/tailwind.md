@@ -8,6 +8,7 @@ sistema de tematización (variables CSS) — mezclarlos genera inconsistencias e
 ## Reglas
 - Nunca utilizar !important
 - LOS COLORES DEBEN SER DEFINIDOS en un archivo de constantes, nunca ir en los HTML como HEXADECIMAL
+- tailwind.scss es el archivo principal de estilos globales
 
 ## Cuándo usar Tailwind vs variables Ionic CSS
 

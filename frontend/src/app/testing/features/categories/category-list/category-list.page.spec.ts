@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { Store } from '@ngrx/store';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
+import { signal } from '@angular/core';
 import { ActionSheetController, AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import { CategoryListPage } from '../../../../features/categories/category-list/category-list.page';
+import { CategoriesStateService } from '../../../../core/state/categories.state';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ICategory } from '../../../../models/category.model';
 
@@ -24,31 +24,44 @@ function makeCategory(categoryId: string, type: 'income' | 'expense' = 'expense'
   };
 }
 
-const INITIAL_STATE = {
-  transactions: { items: [], rowMap: {}, loading: false, error: null },
-  wallets:      { items: [], rowMap: {}, loading: false, error: null },
-  categories:   { items: [], rowMap: {}, loading: false, error: null },
-  budgets:      { items: [], rowMap: {}, loading: false, error: null },
-  currency:     { rates: {}, loading: false, error: null },
-};
-
 const mockToast       = { present: jasmine.createSpy('present').and.returnValue(Promise.resolve()) };
 const mockModal       = { present: jasmine.createSpy('present').and.returnValue(Promise.resolve()), onWillDismiss: jasmine.createSpy('onWillDismiss').and.returnValue(Promise.resolve({ role: 'cancel', data: null })) };
 const mockActionSheet = { present: jasmine.createSpy('present').and.returnValue(Promise.resolve()) };
 const mockAlert       = { present: jasmine.createSpy('present').and.returnValue(Promise.resolve()) };
+
+function buildCategoriesStateMock() {
+  const _items   = signal<ICategory[]>([]);
+  const _loading = signal(false);
+  const _error   = signal<string | null>(null);
+  const _rowMap  = signal<Record<string, number>>({});
+  return {
+    items:   _items.asReadonly(),
+    loading: _loading.asReadonly(),
+    error:   _error.asReadonly(),
+    rowMap:  _rowMap.asReadonly(),
+    load:    jasmine.createSpy('load'),
+    add:     jasmine.createSpy('add'),
+    update:  jasmine.createSpy('update'),
+    delete:  jasmine.createSpy('delete'),
+    _items,
+    _rowMap,
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CategoryListPage — selection mode (REQ-17)
 // ─────────────────────────────────────────────────────────────────────────────
 describe('CategoryListPage – selection mode (REQ-17)', () => {
   let component: CategoryListPage;
-  let store: MockStore;
+  let categoriesStateMock: ReturnType<typeof buildCategoriesStateMock>;
 
   beforeEach(async () => {
+    categoriesStateMock = buildCategoriesStateMock();
+
     await TestBed.configureTestingModule({
       imports: [CategoryListPage],
       providers: [
-        provideMockStore({ initialState: INITIAL_STATE }),
+        { provide: CategoriesStateService, useValue: categoriesStateMock },
         {
           provide: ModalController,
           useValue: { create: jasmine.createSpy('create').and.returnValue(Promise.resolve(mockModal)) },
@@ -72,98 +85,75 @@ describe('CategoryListPage – selection mode (REQ-17)', () => {
       ],
     }).compileComponents();
 
-    store = TestBed.inject<MockStore>(Store as any);
     const fixture = TestBed.createComponent(CategoryListPage);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
   afterEach(() => {
-    store.resetSelectors();
     mockActionSheet.present.calls.reset();
     mockAlert.present.calls.reset();
   });
 
-  // toggleSelection agrega el id al Set
   it('toggleSelection_shouldAddId_whenIdIsNotInSelectedIds', () => {
-    // When
     component.toggleSelection('cat-1');
-
-    // Then
     expect(component.selectedIds().has('cat-1')).toBeTrue();
   });
 
-  // toggleSelection llamado dos veces → quita el id
   it('toggleSelection_shouldRemoveId_whenCalledTwiceWithSameId', () => {
-    // Given
     component.toggleSelection('cat-1');
     expect(component.selectedIds().has('cat-1')).toBeTrue();
 
-    // When
     component.toggleSelection('cat-1');
 
-    // Then
     expect(component.selectedIds().has('cat-1')).toBeFalse();
   });
 
-  // selectedCount refleja el tamaño del Set
   it('selectedCount_shouldReflectSelectedIdsSize', () => {
-    // Given: inicialmente vacío
     expect(component.selectedCount()).toBe(0);
 
-    // When
     component.toggleSelection('cat-1');
     component.toggleSelection('cat-2');
 
-    // Then
     expect(component.selectedCount()).toBe(2);
   });
 
-  // toggleSelectionMode activa el modo selección
   it('toggleSelectionMode_shouldActivateSelectionMode_whenCalledWhileInactive', () => {
-    // Given
     expect(component.selectionMode()).toBeFalse();
 
-    // When
     component.toggleSelectionMode();
 
-    // Then
     expect(component.selectionMode()).toBeTrue();
   });
 
-  // toggleSelectionMode desactiva el modo y limpia la selección
   it('toggleSelectionMode_shouldDeactivateModeAndClearSelection_whenCalledWhileActive', () => {
-    // Given: modo activo con categorías seleccionadas
-    component.toggleSelectionMode(); // activar
+    component.toggleSelectionMode();
     component.toggleSelection('cat-1');
     component.toggleSelection('cat-2');
     expect(component.selectionMode()).toBeTrue();
     expect(component.selectedIds().size).toBe(2);
 
-    // When
-    component.toggleSelectionMode(); // desactivar
+    component.toggleSelectionMode();
 
-    // Then
     expect(component.selectionMode()).toBeFalse();
     expect(component.selectedIds().size).toBe(0);
   });
 
-  // onTilePress en modo selección → llama toggleSelection, no abre action sheet
   it('onTilePress_shouldCallToggleSelection_whenSelectionModeIsActive', async () => {
-    // Given
     const cat = makeCategory('cat-1');
-    component.toggleSelectionMode(); // activar modo selección
+    component.toggleSelectionMode();
     const toggleSpy = spyOn(component, 'toggleSelection').and.callThrough();
     const actionSheetCtrl = TestBed.inject(ActionSheetController);
     const createSpy = actionSheetCtrl.create as jasmine.Spy;
     createSpy.calls.reset();
 
-    // When
     await component.onTilePress(cat);
 
-    // Then: toggleSelection fue invocado con el id correcto
     expect(toggleSpy).toHaveBeenCalledWith('cat-1');
-    // Y el action sheet NO fue creado
     expect(createSpy).not.toHaveBeenCalled();
+  });
+
+  it('ngOnInit_shouldCallCategoriesStateLoad', () => {
+    expect(categoriesStateMock.load).toHaveBeenCalled();
   });
 });

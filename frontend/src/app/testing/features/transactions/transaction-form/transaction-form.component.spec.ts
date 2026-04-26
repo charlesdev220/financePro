@@ -1,12 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Store } from '@ngrx/store';
-import { provideMockStore, MockStore } from '@ngrx/store/testing';
+import { signal } from '@angular/core';
 import { ModalController } from '@ionic/angular/standalone';
-import { of } from 'rxjs';
 import { TransactionFormComponent } from '../../../../features/transactions/transaction-form/transaction-form.component';
-import { ConceptsService } from '../../../../features/transactions/services/concepts.service';
+import { TransactionsStateService } from '../../../../core/state/transactions.state';
+import { WalletsStateService } from '../../../../core/state/wallets.state';
+import { CategoriesStateService } from '../../../../core/state/categories.state';
+import { BudgetsStateService } from '../../../../core/state/budgets.state';
 import { IBudget } from '../../../../models/budget.model';
 import { ITransaction } from '../../../../models/transaction.model';
+import { IWallet } from '../../../../models/wallet.model';
+import { ICategory } from '../../../../models/category.model';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -50,13 +53,60 @@ function makeExpenseTx(amount: number, categoryId: string, date: string): ITrans
   };
 }
 
-const INITIAL_STATE = {
-  transactions: { items: [], rowMap: {}, loading: false, error: null },
-  wallets:      { items: [], rowMap: {}, loading: false, error: null },
-  categories:   { items: [], rowMap: {}, loading: false, error: null },
-  budgets:      { items: [], rowMap: {}, loading: false, error: null },
-  currency:     { rates: {}, loading: false, error: null },
-};
+function buildBudgetsStateMock() {
+  const _items = signal<IBudget[]>([]);
+  return {
+    items:   _items.asReadonly(),
+    loading: signal(false).asReadonly(),
+    error:   signal<string|null>(null).asReadonly(),
+    rowMap:  signal<Record<string,number>>({}).asReadonly(),
+    load:       jasmine.createSpy('load'),
+    save:       jasmine.createSpy('save'),
+    update:     jasmine.createSpy('update'),
+    delete:     jasmine.createSpy('delete'),
+    recalculate: jasmine.createSpy('recalculate'),
+    _items,
+  };
+}
+
+function buildTxStateMock() {
+  return {
+    items:   signal<ITransaction[]>([]).asReadonly(),
+    loading: signal(false).asReadonly(),
+    error:   signal<string|null>(null).asReadonly(),
+    rowMap:  signal<Record<string,number>>({}).asReadonly(),
+    load:    jasmine.createSpy('load'),
+    add:     jasmine.createSpy('add'),
+    update:  jasmine.createSpy('update'),
+    delete:  jasmine.createSpy('delete'),
+  };
+}
+
+function buildWalletsStateMock() {
+  return {
+    items:   signal<IWallet[]>([]).asReadonly(),
+    loading: signal(false).asReadonly(),
+    error:   signal<string|null>(null).asReadonly(),
+    rowMap:  signal<Record<string,number>>({}).asReadonly(),
+    load:    jasmine.createSpy('load'),
+    add:     jasmine.createSpy('add'),
+    update:  jasmine.createSpy('update'),
+    delete:  jasmine.createSpy('delete'),
+  };
+}
+
+function buildCategoriesStateMock() {
+  return {
+    items:   signal<ICategory[]>([]).asReadonly(),
+    loading: signal(false).asReadonly(),
+    error:   signal<string|null>(null).asReadonly(),
+    rowMap:  signal<Record<string,number>>({}).asReadonly(),
+    load:    jasmine.createSpy('load'),
+    add:     jasmine.createSpy('add'),
+    update:  jasmine.createSpy('update'),
+    delete:  jasmine.createSpy('delete'),
+  };
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TransactionFormComponent — getActiveBudget / getBudgetWarning (REQ-13)
@@ -64,13 +114,20 @@ const INITIAL_STATE = {
 describe('TransactionFormComponent – budget logic (REQ-13)', () => {
   let component: TransactionFormComponent;
   let fixture: ComponentFixture<TransactionFormComponent>;
-  let store: MockStore;
+  let budgetsStateMock: ReturnType<typeof buildBudgetsStateMock>;
+  let txStateMock: ReturnType<typeof buildTxStateMock>;
 
   beforeEach(async () => {
+    budgetsStateMock = buildBudgetsStateMock();
+    txStateMock = buildTxStateMock();
+
     await TestBed.configureTestingModule({
       imports: [TransactionFormComponent],
       providers: [
-        provideMockStore({ initialState: INITIAL_STATE }),
+        { provide: TransactionsStateService, useValue: txStateMock },
+        { provide: WalletsStateService,       useValue: buildWalletsStateMock() },
+        { provide: CategoriesStateService,    useValue: buildCategoriesStateMock() },
+        { provide: BudgetsStateService,       useValue: budgetsStateMock },
         {
           provide: ModalController,
           useValue: {
@@ -78,38 +135,20 @@ describe('TransactionFormComponent – budget logic (REQ-13)', () => {
             dismiss: jasmine.createSpy('dismiss').and.returnValue(Promise.resolve()),
           },
         },
-        {
-          provide: ConceptsService,
-          useValue: {
-            loadConcepts: () => of([]),
-            getSuggestions: () => [],
-            upsertConcept: async () => {},
-          },
-        },
       ],
     }).compileComponents();
 
-    store = TestBed.inject<MockStore>(Store as any);
     fixture = TestBed.createComponent(TransactionFormComponent);
     component = fixture.componentInstance;
-    // Proveer inputs requeridos antes de ngOnInit
     fixture.componentRef.setInput('userId', 'usr_001');
     fixture.componentRef.setInput('userBaseCurrency', 'EUR');
-    fixture.detectChanges(); // trigger ngOnInit → crea el form
+    fixture.detectChanges();
   });
-
-  afterEach(() => {
-    store.resetSelectors();
-  });
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // getActiveBudget
-  // ─────────────────────────────────────────────────────────────────────────
 
   // REQ-13 sc1: tipo income → no hay presupuesto activo → null
   it('getActiveBudget_shouldReturnNull_whenTypeIsIncome', () => {
     const budget = makeBudget('cat-1', '2026-04', 500, 200, 'ok');
-    store.setState({ ...INITIAL_STATE, budgets: { items: [budget], rowMap: {}, loading: false, error: null } });
+    budgetsStateMock._items.set([budget]);
     component.form.patchValue({ type: 'income', categoryId: 'cat-1', date: '2026-04-10' });
 
     expect(component.getActiveBudget()).toBeNull();
@@ -118,7 +157,7 @@ describe('TransactionFormComponent – budget logic (REQ-13)', () => {
   // REQ-13 sc2: expense con categoría y período que tienen presupuesto → retorna budget
   it('getActiveBudget_shouldReturnBudget_whenExpenseHasMatchingBudget', () => {
     const budget = makeBudget('cat-1', '2026-04', 500, 200, 'ok');
-    store.setState({ ...INITIAL_STATE, budgets: { items: [budget], rowMap: {}, loading: false, error: null } });
+    budgetsStateMock._items.set([budget]);
     component.form.patchValue({ type: 'expense', categoryId: 'cat-1', date: '2026-04-10' });
 
     const result = component.getActiveBudget();
@@ -134,21 +173,17 @@ describe('TransactionFormComponent – budget logic (REQ-13)', () => {
   });
 
   // REQ-13 sc1 (edge): expense con categoría pero sin presupuesto → null
-  it('getActiveBudget_shouldReturnNull_whenNobudgetExistsForCategory', () => {
-    store.setState({ ...INITIAL_STATE });
+  it('getActiveBudget_shouldReturnNull_whenNoBudgetExistsForCategory', () => {
+    budgetsStateMock._items.set([]);
     component.form.patchValue({ type: 'expense', categoryId: 'cat-sin-budget', date: '2026-04-10' });
 
     expect(component.getActiveBudget()).toBeNull();
   });
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // getBudgetWarning
-  // ─────────────────────────────────────────────────────────────────────────
-
   // REQ-13 sc3: monto nuevo + spentAmount > budgetAmount → warning
   it('getBudgetWarning_shouldReturnTrue_whenProjectedSpentExceedsBudget', () => {
     const budget = makeBudget('cat-1', '2026-04', 500, 400, 'warning');
-    store.setState({ ...INITIAL_STATE, budgets: { items: [budget], rowMap: {}, loading: false, error: null } });
+    budgetsStateMock._items.set([budget]);
     component.form.patchValue({ type: 'expense', categoryId: 'cat-1', date: '2026-04-10', amount: 200 });
 
     expect(component.getBudgetWarning()).toBeTrue();
@@ -157,7 +192,7 @@ describe('TransactionFormComponent – budget logic (REQ-13)', () => {
   // REQ-13 sc3: monto nuevo + spentAmount <= budgetAmount → sin warning
   it('getBudgetWarning_shouldReturnFalse_whenProjectedSpentIsWithinBudget', () => {
     const budget = makeBudget('cat-1', '2026-04', 500, 200, 'ok');
-    store.setState({ ...INITIAL_STATE, budgets: { items: [budget], rowMap: {}, loading: false, error: null } });
+    budgetsStateMock._items.set([budget]);
     component.form.patchValue({ type: 'expense', categoryId: 'cat-1', date: '2026-04-10', amount: 100 });
 
     expect(component.getBudgetWarning()).toBeFalse();
@@ -167,7 +202,7 @@ describe('TransactionFormComponent – budget logic (REQ-13)', () => {
   it('getBudgetWarning_shouldAdjustProjection_whenInEditMode', () => {
     fixture.componentRef.setInput('transaction', makeExpenseTx(150, 'cat-1', '2026-04-05'));
     const budget = makeBudget('cat-1', '2026-04', 500, 400, 'warning');
-    store.setState({ ...INITIAL_STATE, budgets: { items: [budget], rowMap: {}, loading: false, error: null } });
+    budgetsStateMock._items.set([budget]);
     component.form.patchValue({ type: 'expense', categoryId: 'cat-1', date: '2026-04-05', amount: 100 });
 
     expect(component.getBudgetWarning()).toBeFalse();
@@ -177,7 +212,7 @@ describe('TransactionFormComponent – budget logic (REQ-13)', () => {
   it('getBudgetWarning_shouldReturnTrue_whenEditedAmountStillExceedsBudget', () => {
     fixture.componentRef.setInput('transaction', makeExpenseTx(50, 'cat-1', '2026-04-05'));
     const budget = makeBudget('cat-1', '2026-04', 500, 450, 'warning');
-    store.setState({ ...INITIAL_STATE, budgets: { items: [budget], rowMap: {}, loading: false, error: null } });
+    budgetsStateMock._items.set([budget]);
     component.form.patchValue({ type: 'expense', categoryId: 'cat-1', date: '2026-04-05', amount: 300 });
 
     expect(component.getBudgetWarning()).toBeTrue();
@@ -189,14 +224,18 @@ describe('TransactionFormComponent – budget logic (REQ-13)', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 describe('TransactionFormComponent – numpad sign, delete and save guard (REQ-16)', () => {
   let component: TransactionFormComponent;
-  let fixture: ReturnType<typeof TestBed.createComponent<TransactionFormComponent>>;
-  let store: MockStore;
+  let txStateMock: ReturnType<typeof buildTxStateMock>;
 
   beforeEach(async () => {
+    txStateMock = buildTxStateMock();
+
     await TestBed.configureTestingModule({
       imports: [TransactionFormComponent],
       providers: [
-        provideMockStore({ initialState: INITIAL_STATE }),
+        { provide: TransactionsStateService, useValue: txStateMock },
+        { provide: WalletsStateService,       useValue: buildWalletsStateMock() },
+        { provide: CategoriesStateService,    useValue: buildCategoriesStateMock() },
+        { provide: BudgetsStateService,       useValue: buildBudgetsStateMock() },
         {
           provide: ModalController,
           useValue: {
@@ -204,80 +243,50 @@ describe('TransactionFormComponent – numpad sign, delete and save guard (REQ-1
             dismiss: jasmine.createSpy('dismiss').and.returnValue(Promise.resolve()),
           },
         },
-        {
-          provide: ConceptsService,
-          useValue: {
-            loadConcepts: () => of([]),
-            getSuggestions: () => [],
-            upsertConcept: async () => {},
-          },
-        },
       ],
     }).compileComponents();
 
-    store = TestBed.inject<MockStore>(Store as any);
-    fixture = TestBed.createComponent(TransactionFormComponent);
+    const fixture = TestBed.createComponent(TransactionFormComponent);
     component = fixture.componentInstance;
     fixture.componentRef.setInput('userId', 'usr_001');
     fixture.componentRef.setInput('userBaseCurrency', 'EUR');
     fixture.detectChanges();
   });
 
-  afterEach(() => {
-    store.resetSelectors();
-  });
-
-  // onToggleSign con valor positivo → agrega prefijo '-'
   it('onToggleSign_shouldPrependMinus_whenAmountStringIsPositive', () => {
-    // Given
     component.amountString.set('150');
 
-    // When
     component.onToggleSign();
 
-    // Then
     expect(component.amountString()).toBe('-150');
   });
 
-  // onToggleSign con valor negativo → elimina el prefijo '-'
   it('onToggleSign_shouldRemoveMinus_whenAmountStringIsNegative', () => {
-    // Given
     component.amountString.set('-150');
 
-    // When
     component.onToggleSign();
 
-    // Then
     expect(component.amountString()).toBe('150');
   });
 
-  // onToggleSign con '0' → no opera, permanece '0'
   it('onToggleSign_shouldNotAlterAmountString_whenValueIsZero', () => {
-    // Given
     component.amountString.set('0');
 
-    // When
     component.onToggleSign();
 
-    // Then
     expect(component.amountString()).toBe('0');
   });
 
-  // onDelete con '-1' → resetea a '0', no deja '-' colgado
   it('onDelete_shouldResetToZero_whenDeletingLastDigitOfNegativeOneDigitValue', () => {
-    // Given
     component.amountString.set('-1');
 
-    // When
     component.onDelete();
 
-    // Then: '-' solo no es válido, debe quedar '0'
     expect(component.amountString()).toBe('0');
   });
 
-  // save() no despacha ninguna acción cuando amount === 0
-  it('save_shouldNotDispatchAnyAction_whenAmountIsZero', async () => {
-    // Given: formulario válido pero amount = 0
+  // save() no llama a txState.add() cuando amount === 0
+  it('save_shouldNotCallTxStateAdd_whenAmountIsZero', async () => {
     component.form.patchValue({
       type: 'expense',
       amount: 0,
@@ -286,12 +295,9 @@ describe('TransactionFormComponent – numpad sign, delete and save guard (REQ-1
       categoryId: 'cat-1',
       date: '2026-04-10',
     });
-    const dispatchSpy = spyOn(store, 'dispatch');
 
-    // When
     await component.save();
 
-    // Then: el guard debe haber cortado la ejecución antes del dispatch
-    expect(dispatchSpy).not.toHaveBeenCalled();
+    expect(txStateMock.add).not.toHaveBeenCalled();
   });
 });

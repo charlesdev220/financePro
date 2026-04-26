@@ -2,7 +2,6 @@ import { TestBed } from '@angular/core/testing';
 import { AppComponent } from '../app.component';
 import { provideRouter } from '@angular/router';
 import { routes } from '../app.routes';
-import { provideStore } from '@ngrx/store';
 import { provideIonicAngular } from '@ionic/angular/standalone';
 
 describe('AppComponent', () => {
@@ -11,7 +10,6 @@ describe('AppComponent', () => {
       imports: [AppComponent],
       providers: [
         provideRouter(routes),
-        provideStore({}),
         provideIonicAngular(),
       ],
     }).compileComponents();

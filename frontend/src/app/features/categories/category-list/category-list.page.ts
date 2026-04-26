@@ -1,15 +1,12 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { ActionSheetController, AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
 import {
   IonContent, IonHeader, IonTitle, IonToolbar,
-  IonFab, IonFabButton, IonIcon, IonButton, IonButtons, IonSpinner,
+  IonIcon, IonButton, IonButtons, IonSpinner,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { addOutline, gridOutline, checkmarkOutline, closeOutline } from 'ionicons/icons';
-import { CategoriesActions } from '@store/categories/categories.actions';
-import { selectActiveCategories, selectCategoriesRowMap, selectCategoriesLoading } from '@store/categories/categories.selectors';
+import { addOutline, gridOutline, checkmarkOutline, closeOutline, pencilOutline, trashOutline } from 'ionicons/icons';
+import { CategoriesStateService } from '@core/state/categories.state';
 import { ICategory } from '@models/category.model';
 import { AuthService } from '@core/services/auth.service';
 import { CategoryFormComponent } from '@features/categories/category-form/category-form.component';
@@ -23,23 +20,23 @@ import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     IonContent, IonHeader, IonTitle, IonToolbar,
-    IonFab, IonFabButton, IonIcon, IonButton, IonButtons, IonSpinner,
+    IonIcon, IonButton, IonButtons, IonSpinner,
   ],
 })
 export class CategoryListPage implements OnInit {
-  private readonly store           = inject(Store);
-  private readonly modalCtrl       = inject(ModalController);
-  private readonly toastCtrl       = inject(ToastController);
-  private readonly actionSheetCtrl = inject(ActionSheetController);
-  private readonly alertCtrl       = inject(AlertController);
-  private readonly authService     = inject(AuthService);
+  private readonly categoriesState  = inject(CategoriesStateService);
+  private readonly modalCtrl        = inject(ModalController);
+  private readonly toastCtrl        = inject(ToastController);
+  private readonly actionSheetCtrl  = inject(ActionSheetController);
+  private readonly alertCtrl        = inject(AlertController);
+  private readonly authService      = inject(AuthService);
 
-  /** Estado de carga de categorías para mostrar spinner mientras llegan del store. */
-  readonly loading = toSignal(this.store.select(selectCategoriesLoading), { initialValue: false });
-  /** Categorías activas del usuario desde el store NgRx. */
-  readonly categories = toSignal(this.store.select(selectActiveCategories), { initialValue: [] });
+  /** Estado de carga de categorías para mostrar spinner mientras llegan del state service. */
+  readonly loading    = this.categoriesState.loading;
+  /** Categorías activas del usuario desde el state service. */
+  readonly categories = this.categoriesState.items;
   /** Mapa categoryId → rowNumber en Sheets, necesario para el borrado. */
-  private readonly rowMap = toSignal(this.store.select(selectCategoriesRowMap), { initialValue: {} as Record<string, number> });
+  private readonly rowMap = this.categoriesState.rowMap;
 
   /** Categorías de tipo gasto para la sección "Gastos" del grid. */
   readonly expenseCategories = computed(() =>
@@ -59,11 +56,11 @@ export class CategoryListPage implements OnInit {
   readonly selectedCount = computed(() => this.selectedIds().size);
 
   constructor() {
-    addIcons({ addOutline, gridOutline, checkmarkOutline, closeOutline });
+    addIcons({ addOutline, gridOutline, checkmarkOutline, closeOutline, pencilOutline, trashOutline });
   }
 
   ngOnInit(): void {
-    this.store.dispatch(CategoriesActions.loadCategories());
+    this.categoriesState.load();
   }
 
   /** Activa o desactiva el modo selección. Al desactivar, limpia la selección. */
@@ -108,6 +105,7 @@ export class CategoryListPage implements OnInit {
       this.toggleSelection(cat.categoryId);
       return;
     }
+    if (window.innerWidth >= 768) return;
     const actionSheet = await this.actionSheetCtrl.create({
       header: cat.name,
       buttons: [
@@ -144,7 +142,7 @@ export class CategoryListPage implements OnInit {
           handler: () => {
             this.selectedIds().forEach(id => {
               const rn = this.rowMap()[id];
-              if (rn) this.store.dispatch(CategoriesActions.deleteCategory({ categoryId: id, rowNumber: rn }));
+              if (rn) this.categoriesState.delete(id, rn);
             });
             this.selectionMode.set(false);
             this.selectedIds.set(new Set());
@@ -156,10 +154,18 @@ export class CategoryListPage implements OnInit {
     await alert.present();
   }
 
+  async openEditCategory(cat: ICategory): Promise<void> {
+    await this.openEditModal(cat);
+  }
+
+  async confirmDeleteCategory(cat: ICategory): Promise<void> {
+    await this.deleteCategory(cat);
+  }
+
   private async deleteCategory(cat: ICategory): Promise<void> {
     const rowNumber = this.rowMap()[cat.categoryId];
     if (!rowNumber) return;
-    this.store.dispatch(CategoriesActions.deleteCategory({ categoryId: cat.categoryId, rowNumber }));
+    this.categoriesState.delete(cat.categoryId, rowNumber);
     const toast = await this.toastCtrl.create({
       message: 'Categoría desactivada',
       duration: 2000,

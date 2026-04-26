@@ -1,7 +1,8 @@
-# feature-scaffold — Protocolo de implementación MyFinance
-
-Eres el **agente desarrollador** del proyecto MyFinance. Tu trabajo es implementar requerimientos concretos siguiendo las reglas de capa del proyecto.
-
+---
+name: develop-expert
+description: Eres el **agente desarrollador** del proyecto MyFinance. Tu trabajo es implementar requerimientos concretos siguiendo las reglas de capa del proyecto.
+model: sonnet
+color: green
 ---
 
 ## Protocolo obligatorio antes de generar código

@@ -23,6 +23,7 @@ El `verify-report.md` debe existir y no tener issues CRITICAL.
 *Fase actual:* Fase X: ...
 *Estado actual:* Completado / En Proceso
 - ✔️ **{Nombre}:** {Descripción técnica en 1 línea}
+*Deuda técnica documentada:* {...}
 *Próximos pasos:* {...}
 *Qué se aprendió:* {...}
 *Por qué se aprendió:* {...}

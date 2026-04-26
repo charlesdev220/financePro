@@ -1,6 +1,4 @@
 import { ChangeDetectionStrategy, Component, OnInit, effect, inject, signal } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { toSignal } from '@angular/core/rxjs-interop';
 import {
   IonContent,
   IonHeader,
@@ -20,9 +18,7 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { refreshOutline, createOutline, checkmarkOutline, closeOutline, starOutline, starSharp, addOutline, cashOutline } from 'ionicons/icons';
-import { map } from 'rxjs';
-import { CurrencyActions } from '@store/currency/currency.actions';
-import { selectAllCurrencies, selectBaseCurrency, selectCurrenciesLoading, selectCurrencyState } from '@store/currency/currency.selectors';
+import { CurrencyStateService } from '@core/state/currency.state';
 import { ICurrency } from '@models/currency.model';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -94,21 +90,18 @@ const ISO_CURRENCIES: { code: string; name: string }[] = [
   ],
 })
 export class CurrencySettingsPage implements OnInit {
-  private readonly store = inject(Store);
-  private readonly alertCtrl = inject(AlertController);
-  private readonly toastCtrl = inject(ToastController);
+  private readonly currencyState = inject(CurrencyStateService);
+  private readonly alertCtrl     = inject(AlertController);
+  private readonly toastCtrl     = inject(ToastController);
 
   /** Lista de divisas persistidas en Sheets para este usuario. */
-  readonly currencies = toSignal(this.store.select(selectAllCurrencies), { initialValue: [] });
+  readonly currencies   = this.currencyState.items;
   /** Código de la moneda base del usuario desde USER_SETTINGS. */
-  readonly baseCurrency = toSignal(this.store.select(selectBaseCurrency), { initialValue: 'EUR' });
-  /** Estado de carga del slice currency — controla spinners y botones. */
-  readonly loading = toSignal(this.store.select(selectCurrenciesLoading), { initialValue: false });
-  /** Error del slice currency — dispara toast cuando llega un nuevo mensaje. */
-  private readonly currencyError = toSignal(
-    this.store.select(selectCurrencyState).pipe(map(s => s.error)),
-    { initialValue: null as string | null }
-  );
+  readonly baseCurrency = this.currencyState.baseCurrency;
+  /** Estado de carga del state service — controla spinners y botones. */
+  readonly loading      = this.currencyState.loading;
+  /** Error del state service — dispara toast cuando llega un nuevo mensaje. */
+  readonly currencyError = this.currencyState.error;
 
   readonly searchQuery = signal<string>('');
   readonly editingCode = signal<string | null>(null);
@@ -125,7 +118,7 @@ export class CurrencySettingsPage implements OnInit {
   }
 
   ngOnInit(): void {
-    this.store.dispatch(CurrencyActions.loadCurrencies());
+    this.currencyState.load();
   }
 
   private async showErrorToast(message: string): Promise<void> {
@@ -148,7 +141,7 @@ export class CurrencySettingsPage implements OnInit {
 
   onRefresh(code: string): void {
     const base = this.baseCurrency() ?? 'EUR';
-    this.store.dispatch(CurrencyActions.fetchAndPersistRate({ from: code, to: base }));
+    this.currencyState.fetchAndPersistRate(code, base);
   }
 
   onStartEdit(currency: ICurrency): void {
@@ -168,7 +161,7 @@ export class CurrencySettingsPage implements OnInit {
       lastUpdated: new Date().toISOString(),
       source: 'manual',
     };
-    this.store.dispatch(CurrencyActions.saveCurrency({ currency: updated }));
+    this.currencyState.saveCurrency(updated);
     this.editingCode.set(null);
   }
 
@@ -177,7 +170,7 @@ export class CurrencySettingsPage implements OnInit {
   }
 
   onSetBase(code: string): void {
-    this.store.dispatch(CurrencyActions.setBaseCurrency({ currencyCode: code }));
+    this.currencyState.setBaseCurrency(code);
   }
 
   onRateInput(event: CustomEvent): void {
@@ -208,6 +201,6 @@ export class CurrencySettingsPage implements OnInit {
     }
     this.searchQuery.set('');
     const base = this.baseCurrency() ?? 'EUR';
-    this.store.dispatch(CurrencyActions.fetchAndPersistRate({ from: code, to: base }));
+    this.currencyState.fetchAndPersistRate(code, base);
   }
 }

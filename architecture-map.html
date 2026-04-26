@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>MyFinance — Architecture Map</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0f1117; color: #e2e8f0; font-family: 'SF Mono', 'Fira Code', monospace; overflow: hidden; }
+
+  #canvas { width: 100vw; height: 100vh; cursor: grab; }
+  #canvas:active { cursor: grabbing; }
+
+  /* Legend */
+  #legend {
+    position: fixed; top: 20px; left: 20px;
+    background: rgba(15,17,23,0.92); border: 1px solid #2d3748;
+    border-radius: 12px; padding: 16px 20px; backdrop-filter: blur(12px);
+    min-width: 200px;
+  }
+  #legend h3 { font-size: 11px; letter-spacing: 2px; color: #4a5568; text-transform: uppercase; margin-bottom: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; cursor: pointer; padding: 4px 6px; border-radius: 6px; transition: background .15s; }
+  .legend-item:hover { background: rgba(255,255,255,.05); }
+  .legend-item.dimmed { opacity: .3; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Tooltip */
+  #tooltip {
+    position: fixed; pointer-events: none;
+    background: rgba(10,12,18,0.97); border: 1px solid #2d3748;
+    border-radius: 10px; padding: 14px 18px; font-size: 12px;
+    max-width: 320px; z-index: 1000; display: none; backdrop-filter: blur(16px);
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+  }
+  #tooltip h4 { font-size: 14px; color: #f7fafc; margin-bottom: 6px; }
+  #tooltip .file { color: #4a5568; font-size: 10px; margin-bottom: 10px; }
+  #tooltip .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 10px; margin-bottom: 10px; }
+  #tooltip section { margin-bottom: 8px; }
+  #tooltip section h5 { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: #4a5568; margin-bottom: 4px; }
+  #tooltip ul { list-style: none; }
+  #tooltip ul li { font-size: 11px; color: #a0aec0; padding: 1px 0; }
+  #tooltip ul li::before { content: '›  '; color: #4a5568; }
+
+  /* Controls */
+  #controls {
+    position: fixed; bottom: 20px; right: 20px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .ctrl-btn {
+    width: 36px; height: 36px; border-radius: 8px;
+    background: rgba(45,55,72,.9); border: 1px solid #2d3748;
+    color: #a0aec0; font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .ctrl-btn:hover { background: rgba(74,85,104,.9); color: #f7fafc; }
+
+  /* Search */
+  #search-wrap {
+    position: fixed; top: 20px; right: 20px;
+    display: flex; gap: 8px; align-items: center;
+  }
+  #search {
+    background: rgba(15,17,23,.92); border: 1px solid #2d3748;
+    border-radius: 8px; padding: 8px 14px; color: #e2e8f0;
+    font-size: 13px; font-family: inherit; width: 220px;
+    backdrop-filter: blur(12px); outline: none;
+    transition: border-color .2s;
+  }
+  #search:focus { border-color: #5bad8f; }
+  #search::placeholder { color: #4a5568; }
+
+  /* Info bar */
+  #info-bar {
+    position: fixed; bottom: 20px; left: 20px;
+    background: rgba(15,17,23,.85); border: 1px solid #2d3748;
+    border-radius: 8px; padding: 8px 14px; font-size: 11px;
+    color: #4a5568; backdrop-filter: blur(12px);
+  }
+  #info-bar span { color: #a0aec0; }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div id="legend">
+  <h3>Tipo de nodo</h3>
+  <div class="legend-item" data-type="page">
+    <div class="legend-dot" style="background:#5bad8f"></div><span>Page (smart)</span>
+  </div>
+  <div class="legend-item" data-type="component">
+    <div class="legend-dot" style="background:#7cc4a4"></div><span>Component (dumb)</span>
+  </div>
+  <div class="legend-item" data-type="store">
+    <div class="legend-dot" style="background:#e57373"></div><span>State Service</span>
+  </div>
+  <div class="legend-item" data-type="service">
+    <div class="legend-dot" style="background:#f6ad55"></div><span>Service</span>
+  </div>
+  <div class="legend-item" data-type="pipe">
+    <div class="legend-dot" style="background:#b794f4"></div><span>Pipe</span>
+  </div>
+  <div class="legend-item" data-type="model">
+    <div class="legend-dot" style="background:#4a5568"></div><span>Model</span>
+  </div>
+  <div style="margin-top:14px; padding-top:12px; border-top:1px solid #2d3748">
+    <h3 style="margin-bottom:10px">Tipo de relación</h3>
+    <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#a0aec0;margin-bottom:6px">
+      <svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="#5bad8f" stroke-width="2" stroke-dasharray="0"/></svg>
+      Estado / Signal
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#a0aec0;margin-bottom:6px">
+      <svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="#e57373" stroke-width="2" stroke-dasharray="4,3"/></svg>
+      Modal / Abre
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#a0aec0;margin-bottom:6px">
+      <svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="#f6ad55" stroke-width="2" stroke-dasharray="2,3"/></svg>
+      Servicio
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#a0aec0">
+      <svg width="30" height="8"><line x1="0" y1="4" x2="30" y2="4" stroke="#b794f4" stroke-width="1.5" stroke-dasharray="0"/></svg>
+      Componente hijo
+    </div>
+  </div>
+</div>
+
+<div id="search-wrap">
+  <input id="search" type="text" placeholder="Buscar componente...">
+</div>
+
+<div id="tooltip"></div>
+
+<div id="controls">
+  <button class="ctrl-btn" id="zoom-in" title="Acercar">+</button>
+  <button class="ctrl-btn" id="zoom-out" title="Alejar">−</button>
+  <button class="ctrl-btn" id="zoom-reset" title="Reset" style="font-size:13px">⌂</button>
+</div>
+
+<div id="info-bar">
+  <span id="node-count">—</span> nodos · <span id="edge-count">—</span> relaciones · Scroll para zoom · Drag para mover · Click para detalle
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const NODES = [
+  // MODELS
+  { id: 'transaction',       label: 'ITransaction',           file: 'models/transaction.model.ts',                       type: 'model',     selectors:[], dispatches:[], inputs:[], outputs:[], services:[], opensModals:[], imports:[] },
+  { id: 'wallet',            label: 'IWallet',                file: 'models/wallet.model.ts',                            type: 'model',     selectors:[], dispatches:[], inputs:[], outputs:[], services:[], opensModals:[], imports:[] },
+  { id: 'category',          label: 'ICategory',              file: 'models/category.model.ts',                          type: 'model',     selectors:[], dispatches:[], inputs:[], outputs:[], services:[], opensModals:[], imports:[] },
+  { id: 'budget-model',      label: 'IBudget',                file: 'models/budget.model.ts',                            type: 'model',     selectors:[], dispatches:[], inputs:[], outputs:[], services:[], opensModals:[], imports:[] },
+  { id: 'currency-model',    label: 'ICurrency',              file: 'models/currency.model.ts',                          type: 'model',     selectors:[], dispatches:[], inputs:[], outputs:[], services:[], opensModals:[], imports:[] },
+  { id: 'concept-model',     label: 'IConcept',               file: 'models/concept.model.ts',                           type: 'model',     selectors:[], dispatches:[], inputs:[], outputs:[], services:[], opensModals:[], imports:[] },
+  { id: 'user-settings',     label: 'IUserSettings',          file: 'models/user-settings.model.ts',                     type: 'model',     selectors:[], dispatches:[], inputs:[], outputs:[], services:[], opensModals:[], imports:[] },
+  // CORE SERVICES
+  { id: 'sheets-api',        label: 'SheetsApiService',       file: 'core/services/sheets-api.service.ts',               type: 'service',   selectors:[], dispatches:[], inputs:[], outputs:[], services:['auth-service'], opensModals:[], imports:[] },
+  { id: 'auth-service',      label: 'AuthService',            file: 'core/services/auth.service.ts',                     type: 'service',   selectors:[], dispatches:[], inputs:[], outputs:[], services:['sheets-api','crypto-service'], opensModals:[], imports:[] },
+  { id: 'crypto-service',    label: 'CryptoService',          file: 'core/services/crypto.service.ts',                   type: 'service',   selectors:[], dispatches:[], inputs:[], outputs:[], services:[], opensModals:[], imports:[] },
+  { id: 'currency-api',      label: 'CurrencyApiService',     file: 'core/services/currency-api.service.ts',             type: 'service',   selectors:[], dispatches:[], inputs:[], outputs:[], services:[], opensModals:[], imports:[] },
+  { id: 'data-seed',         label: 'DataSeedService',        file: 'core/services/data-seed.service.ts',                type: 'service',   selectors:[], dispatches:[], inputs:[], outputs:[], services:['sheets-api'], opensModals:[], imports:[] },
+  // FEATURE SERVICES
+  { id: 'tx-service',        label: 'TransactionService',     file: 'features/transactions/services/transaction.service.ts', type: 'service', selectors:[], dispatches:[], inputs:[], outputs:[], services:['sheets-api','currency-api','auth-service'], opensModals:[], imports:[] },
+  { id: 'concepts-service',  label: 'ConceptsService',        file: 'features/transactions/services/concepts.service.ts',    type: 'service', selectors:[], dispatches:[], inputs:[], outputs:[], services:['sheets-api'], opensModals:[], imports:[] },
+  { id: 'budget-service',    label: 'BudgetService',          file: 'features/budgets/services/budget.service.ts',           type: 'service', selectors:[], dispatches:[], inputs:[], outputs:[], services:['sheets-api'], opensModals:[], imports:[] },
+  { id: 'wallet-service',    label: 'WalletService',          file: 'features/wallets/services/wallet.service.ts',           type: 'service', selectors:[], dispatches:[], inputs:[], outputs:[], services:['sheets-api','auth-service'], opensModals:[], imports:[] },
+  { id: 'category-service',  label: 'CategoryService',        file: 'features/categories/services/category.service.ts',      type: 'service', selectors:[], dispatches:[], inputs:[], outputs:[], services:['sheets-api','auth-service'], opensModals:[], imports:[] },
+  { id: 'analytics-service', label: 'AnalyticsService',       file: 'features/analytics/services/analytics.service.ts',      type: 'service', selectors:[], dispatches:[], inputs:[], outputs:[], services:[], opensModals:[], imports:[] },
+  { id: 'dashboard-service', label: 'DashboardService',       file: 'features/dashboard/services/dashboard.service.ts',      type: 'service', selectors:[], dispatches:[], inputs:[], outputs:[], services:[], opensModals:[], imports:[] },
+  // STATE SERVICES
+  { id: 'tx-state',          label: 'TransactionsState',      file: 'core/state/transactions.state.ts',                  type: 'store',     selectors:['items','loading','error','rowMap'], dispatches:['load()','add()','update()','delete()'], inputs:[], outputs:[], services:['tx-service','concepts-service','currency-api','budgets-state'], opensModals:[], imports:[] },
+  { id: 'wallets-state',     label: 'WalletsState',           file: 'core/state/wallets.state.ts',                       type: 'store',     selectors:['items','loading','error','rowMap'], dispatches:['load()','add()','update()','delete()'], inputs:[], outputs:[], services:['wallet-service'], opensModals:[], imports:[] },
+  { id: 'budgets-state',     label: 'BudgetsState',           file: 'core/state/budgets.state.ts',                       type: 'store',     selectors:['items','loading','error','rowMap'], dispatches:['load()','save()','update()','delete()','recalculate()'], inputs:[], outputs:[], services:['budget-service'], opensModals:[], imports:[] },
+  { id: 'categories-state',  label: 'CategoriesState',        file: 'core/state/categories.state.ts',                    type: 'store',     selectors:['items','loading','error','rowMap'], dispatches:['load()','add()','update()','delete()'], inputs:[], outputs:[], services:['category-service'], opensModals:[], imports:[] },
+  { id: 'currency-state',    label: 'CurrencyState',          file: 'core/state/currency.state.ts',                      type: 'store',     selectors:['items','loading','error','baseCurrency'], dispatches:['load()','fetchAndPersistRate()','saveCurrency()','setBaseCurrency()'], inputs:[], outputs:[], services:['currency-api','sheets-api','auth-service'], opensModals:[], imports:[] },
+  // PIPES
+  { id: 'currency-pipe',     label: 'CurrencyFormatPipe',     file: 'shared/pipes/currency-format.pipe.ts',              type: 'pipe',      selectors:[], dispatches:[], inputs:[], outputs:[], services:[], opensModals:[], imports:[] },
+  { id: 'date-pipe',         label: 'RelativeDatePipe',       file: 'shared/pipes/relative-date.pipe.ts',                type: 'pipe',      selectors:[], dispatches:[], inputs:[], outputs:[], services:[], opensModals:[], imports:[] },
+  // SHARED COMPONENTS
+  { id: 'option-picker',     label: 'OptionPickerComponent',  file: 'shared/components/option-picker/option-picker.component.ts', type: 'component', selectors:[], dispatches:[], inputs:['title','items','selectedValue','mode'], outputs:[], services:[], opensModals:[], imports:[] },
+  { id: 'period-selector',   label: 'PeriodSelectorComponent',file: 'shared/components/period-selector/period-selector.component.ts', type: 'component', selectors:[], dispatches:[], inputs:['period'], outputs:['periodChange'], services:[], opensModals:[], imports:[] },
+  { id: 'budget-indicator',  label: 'BudgetIndicatorComponent',file:'shared/components/budget-indicator/budget-indicator.component.ts', type: 'component', selectors:[], dispatches:[], inputs:['budget','userCurrency'], outputs:[], services:[], opensModals:[], imports:['currency-pipe'] },
+  { id: 'chart-pie',         label: 'ChartPieComponent',      file: 'shared/components/chart-pie/chart-pie.component.ts', type: 'component', selectors:[], dispatches:[], inputs:['data'], outputs:[], services:[], opensModals:[], imports:[] },
+  { id: 'chart-bar',         label: 'ChartBarComponent',      file: 'shared/components/chart-bar/chart-bar.component.ts', type: 'component', selectors:[], dispatches:[], inputs:['datasets','labels','type','ariaLabel'], outputs:[], services:[], opensModals:[], imports:[] },
+  { id: 'autocomplete',      label: 'AutocompleteInputComponent', file: 'shared/components/autocomplete-input/autocomplete-input.component.ts', type: 'component', selectors:[], dispatches:[], inputs:['suggestions$','placeholder','value'], outputs:['selected','inputChange'], services:[], opensModals:[], imports:[] },
+  // FEATURE COMPONENTS
+  { id: 'dashboard-chart',   label: 'DashboardChartComponent',file: 'features/dashboard/components/dashboard-chart/dashboard-chart.component.ts', type: 'component', selectors:[], dispatches:[], inputs:['breakdown','balance','currency'], outputs:[], services:[], opensModals:[], imports:['chart-pie','currency-pipe'] },
+  { id: 'analytics-chart',   label: 'AnalyticsChartComponent',file: 'features/analytics/components/analytics-chart/analytics-chart.component.ts', type: 'component', selectors:[], dispatches:[], inputs:['data'], outputs:[], services:[], opensModals:[], imports:['chart-bar'] },
+  { id: 'projections',       label: 'ProjectionsComponent',   file: 'features/analytics/components/projections/projections.component.ts', type: 'component', selectors:[], dispatches:[], inputs:['data','horizon'], outputs:[], services:['analytics-service'], opensModals:[], imports:['chart-bar'] },
+  { id: 'spending-ranking',  label: 'SpendingRankingComponent',file: 'features/analytics/components/spending-ranking/spending-ranking.component.ts', type: 'component', selectors:[], dispatches:[], inputs:['recurrentes','superfluos','userCurrency'], outputs:[], services:[], opensModals:[], imports:['currency-pipe'] },
+  // PAGES
+  { id: 'login-page',        label: 'LoginPage',              file: 'features/login/login.page.ts',                      type: 'page',      selectors:[], dispatches:[], inputs:[], outputs:[], services:['auth-service'], opensModals:[], imports:[] },
+  { id: 'tabs-page',         label: 'TabsPage',               file: 'features/tabs/tabs.page.ts',                        type: 'page',      selectors:[], dispatches:[], inputs:[], outputs:[], services:['auth-service'], opensModals:[], imports:[] },
+  { id: 'dashboard-page',    label: 'DashboardPage',          file: 'features/dashboard/dashboard.page.ts',              type: 'page',      selectors:['tx-state.items','budgets-state.items','wallets-state.items','categories-state.items','currency-state.baseCurrency'], dispatches:['txState.load()','budgetsState.load()','walletsState.load()','categoriesState.load()','currencyState.load()'], inputs:[], outputs:[], services:['auth-service','dashboard-service','data-seed'], opensModals:['transaction-form'], imports:['dashboard-chart','period-selector','transaction-form','currency-pipe','date-pipe'] },
+  { id: 'transaction-list',  label: 'TransactionListPage',    file: 'features/transactions/transaction-list/transaction-list.page.ts', type: 'page', selectors:['tx-state.items','tx-state.error','wallets-state.items','categories-state.items','currency-state.baseCurrency'], dispatches:['txState.load()','walletsState.load()','categoriesState.load()','txState.delete()'], inputs:[], outputs:[], services:['tx-state','wallets-state','categories-state','currency-state','auth-service'], opensModals:['transaction-form'], imports:['transaction-form','currency-pipe','date-pipe'] },
+  { id: 'wallet-list',       label: 'WalletListPage',         file: 'features/wallets/wallet-list/wallet-list.page.ts',  type: 'page',      selectors:['wallets-state.items','wallets-state.loading','tx-state.items'], dispatches:['walletsState.load()','walletsState.delete()'], inputs:[], outputs:[], services:['wallets-state','tx-state','auth-service'], opensModals:['wallet-form'], imports:['wallet-form','currency-pipe'] },
+  { id: 'budget-list',       label: 'BudgetListPage',         file: 'features/budgets/budget-list/budget-list.page.ts',  type: 'page',      selectors:['budgets-state.items','categories-state.items','currency-state.baseCurrency'], dispatches:['budgetsState.load()','categoriesState.load()','currencyState.load()','budgetsState.delete()'], inputs:[], outputs:[], services:['budgets-state','categories-state','currency-state'], opensModals:['budget-form'], imports:['period-selector','budget-indicator','budget-form'] },
+  { id: 'category-list',     label: 'CategoryListPage',       file: 'features/categories/category-list/category-list.page.ts', type: 'page', selectors:['categories-state.items','categories-state.loading'], dispatches:['categoriesState.load()','categoriesState.delete()'], inputs:[], outputs:[], services:['categories-state','auth-service'], opensModals:['category-form'], imports:['category-form'] },
+  { id: 'analytics-page',    label: 'AnalyticsPage',          file: 'features/analytics/analytics.page.ts',              type: 'page',      selectors:['tx-state.items','categories-state.items','currency-state.baseCurrency'], dispatches:['txState.load()','categoriesState.load()'], inputs:[], outputs:[], services:['analytics-service'], opensModals:[], imports:['period-selector','analytics-chart','projections','spending-ranking','currency-pipe'] },
+  { id: 'currency-settings', label: 'CurrencySettingsPage',   file: 'features/settings/currency-settings/currency-settings.page.ts', type: 'page', selectors:['currency-state.items','currency-state.baseCurrency','currency-state.loading','currency-state.error'], dispatches:['currencyState.load()','currencyState.fetchAndPersistRate()','currencyState.saveCurrency()','currencyState.setBaseCurrency()'], inputs:[], outputs:[], services:['currency-state'], opensModals:[], imports:[] },
+  { id: 'settings-page',     label: 'SettingsPage',           file: 'features/settings/settings.page.ts',                type: 'page',      selectors:[], dispatches:[], inputs:[], outputs:[], services:['auth-service'], opensModals:[], imports:[] },
+  // FORM COMPONENTS
+  { id: 'transaction-form',  label: 'TransactionFormComponent',file:'features/transactions/transaction-form/transaction-form.component.ts', type: 'component', selectors:[], dispatches:['txState.add()','txState.update()'], inputs:['transaction','userId','userBaseCurrency','rowNumber','initialType'], outputs:['dismiss'], services:['tx-state','wallets-state','categories-state','budgets-state'], opensModals:['option-picker'], imports:['option-picker','budget-indicator'] },
+  { id: 'wallet-form',       label: 'WalletFormComponent',    file: 'features/wallets/wallet-form/wallet-form.component.ts', type: 'component', selectors:[], dispatches:['walletsState.add()','walletsState.update()'], inputs:['wallet','userId','rowNumber'], outputs:[], services:['wallets-state'], opensModals:[], imports:[] },
+  { id: 'budget-form',       label: 'BudgetFormComponent',    file: 'features/budgets/budget-form/budget-form.component.ts', type: 'component', selectors:[], dispatches:['budgetsState.save()','budgetsState.update()'], inputs:['budget','period','rowNumber'], outputs:[], services:['budgets-state','categories-state','auth-service'], opensModals:[], imports:[] },
+  { id: 'category-form',     label: 'CategoryFormComponent',  file: 'features/categories/category-form/category-form.component.ts', type: 'component', selectors:[], dispatches:['categoriesState.add()','categoriesState.update()'], inputs:['category','userId','rowNumber'], outputs:[], services:['categories-state'], opensModals:[], imports:[] },
+];
+
+// ─── EDGES ────────────────────────────────────────────────────────────────────
+// type: 'state' | 'modal' | 'service' | 'child'
+const EDGES = [];
+const addEdge = (from, to, type, label='') => {
+  if (NODES.find(n=>n.id===from) && NODES.find(n=>n.id===to))
+    EDGES.push({from,to,type,label});
+};
+
+// State subscriptions
+[
+  ['dashboard-page',   'tx-state',         'state', 'items'],
+  ['dashboard-page',   'budgets-state',    'state', 'items'],
+  ['dashboard-page',   'wallets-state',    'state', 'items'],
+  ['dashboard-page',   'categories-state', 'state', 'items'],
+  ['dashboard-page',   'currency-state',   'state', 'baseCurrency'],
+  ['transaction-list', 'tx-state',         'state', 'items · error'],
+  ['transaction-list', 'wallets-state',    'state', 'items'],
+  ['transaction-list', 'categories-state', 'state', 'items'],
+  ['transaction-list', 'currency-state',   'state', 'baseCurrency'],
+  ['wallet-list',      'wallets-state',    'state', 'items · loading'],
+  ['wallet-list',      'tx-state',         'state', 'items'],
+  ['budget-list',      'budgets-state',    'state', 'items'],
+  ['budget-list',      'categories-state', 'state', 'items'],
+  ['budget-list',      'currency-state',   'state', 'baseCurrency'],
+  ['category-list',    'categories-state', 'state', 'items · loading'],
+  ['analytics-page',   'tx-state',         'state', 'items'],
+  ['analytics-page',   'categories-state', 'state', 'items'],
+  ['analytics-page',   'currency-state',   'state', 'baseCurrency'],
+  ['currency-settings','currency-state',   'state', 'items · baseCurrency'],
+  ['transaction-form', 'tx-state',         'state', 'dispatch add/update'],
+  ['transaction-form', 'wallets-state',    'state', 'items'],
+  ['transaction-form', 'categories-state', 'state', 'items'],
+  ['transaction-form', 'budgets-state',    'state', 'items'],
+  ['wallet-form',      'wallets-state',    'state', 'dispatch add/update'],
+  ['budget-form',      'budgets-state',    'state', 'dispatch save/update'],
+  ['budget-form',      'categories-state', 'state', 'items'],
+  ['category-form',    'categories-state', 'state', 'dispatch add/update'],
+].forEach(([f,t,type,l]) => addEdge(f,t,type,l));
+
+// Modal opens
+[
+  ['dashboard-page',   'transaction-form', 'modal', 'open form'],
+  ['transaction-list', 'transaction-form', 'modal', 'open form'],
+  ['wallet-list',      'wallet-form',      'modal', 'open form'],
+  ['budget-list',      'budget-form',      'modal', 'open form'],
+  ['category-list',    'category-form',    'modal', 'open form'],
+  ['transaction-form', 'option-picker',    'modal', 'open picker'],
+].forEach(([f,t,type,l]) => addEdge(f,t,type,l));
+
+// Service dependencies
+[
+  ['tx-state',         'tx-service',       'service'],
+  ['tx-state',         'concepts-service', 'service'],
+  ['tx-state',         'budgets-state',    'service', 'recalculate'],
+  ['wallets-state',    'wallet-service',   'service'],
+  ['budgets-state',    'budget-service',   'service'],
+  ['categories-state', 'category-service', 'service'],
+  ['currency-state',   'currency-api',     'service'],
+  ['currency-state',   'sheets-api',       'service'],
+  ['tx-service',       'sheets-api',       'service'],
+  ['tx-service',       'currency-api',     'service'],
+  ['wallet-service',   'sheets-api',       'service'],
+  ['category-service', 'sheets-api',       'service'],
+  ['budget-service',   'sheets-api',       'service'],
+  ['concepts-service', 'sheets-api',       'service'],
+  ['data-seed',        'sheets-api',       'service'],
+  ['auth-service',     'sheets-api',       'service'],
+  ['auth-service',     'crypto-service',   'service'],
+  ['sheets-api',       'auth-service',     'service', 'token'],
+  ['dashboard-page',   'auth-service',     'service'],
+  ['dashboard-page',   'dashboard-service','service'],
+  ['dashboard-page',   'data-seed',        'service'],
+  ['analytics-page',   'analytics-service','service'],
+  ['projections',      'analytics-service','service'],
+  ['login-page',       'auth-service',     'service'],
+  ['tabs-page',        'auth-service',     'service'],
+  ['settings-page',    'auth-service',     'service'],
+  ['wallet-list',      'auth-service',     'service'],
+  ['category-list',    'auth-service',     'service'],
+  ['transaction-list', 'auth-service',     'service'],
+].forEach(([f,t,type,l='']) => addEdge(f,t,type,l));
+
+// Child components
+[
+  ['dashboard-page',  'dashboard-chart',  'child'],
+  ['dashboard-page',  'period-selector',  'child'],
+  ['analytics-page',  'analytics-chart',  'child'],
+  ['analytics-page',  'projections',      'child'],
+  ['analytics-page',  'spending-ranking', 'child'],
+  ['analytics-page',  'period-selector',  'child'],
+  ['budget-list',     'period-selector',  'child'],
+  ['budget-list',     'budget-indicator', 'child'],
+  ['dashboard-chart', 'chart-pie',        'child'],
+  ['analytics-chart', 'chart-bar',        'child'],
+  ['projections',     'chart-bar',        'child'],
+  ['transaction-form','option-picker',    'child'],
+  ['transaction-form','budget-indicator', 'child'],
+  ['budget-indicator','currency-pipe',    'child'],
+  ['spending-ranking','currency-pipe',    'child'],
+  ['dashboard-chart', 'currency-pipe',    'child'],
+  ['transaction-list','currency-pipe',    'child'],
+  ['transaction-list','date-pipe',        'child'],
+  ['dashboard-page',  'currency-pipe',    'child'],
+  ['dashboard-page',  'date-pipe',        'child'],
+  ['wallet-list',     'currency-pipe',    'child'],
+].forEach(([f,t,type]) => addEdge(f,t,type));
+
+// ─── COLORS ──────────────────────────────────────────────────────────────────
+const TYPE_COLOR = {
+  page:      '#5bad8f',
+  component: '#7cc4a4',
+  store:     '#e57373',
+  service:   '#f6ad55',
+  pipe:      '#b794f4',
+  model:     '#4a5568',
+};
+
+const EDGE_COLOR = {
+  state:   '#5bad8f',
+  modal:   '#e57373',
+  service: '#f6ad55',
+  child:   '#b794f4',
+};
+
+const EDGE_DASH = {
+  state:   [],
+  modal:   [6, 4],
+  service: [2, 4],
+  child:   [],
+};
+
+// ─── LAYOUT POSITIONS ────────────────────────────────────────────────────────
+// Manual layout in groups
+const LAYOUT = {
+  // Core Infrastructure (left column)
+  'auth-service':     { x: 100, y: 400 },
+  'sheets-api':       { x: 100, y: 280 },
+  'crypto-service':   { x: 100, y: 160 },
+  'currency-api':     { x: 100, y: 520 },
+  'data-seed':        { x: 100, y: 640 },
+
+  // State services (second column)
+  'tx-state':         { x: 360, y: 240 },
+  'wallets-state':    { x: 360, y: 380 },
+  'budgets-state':    { x: 360, y: 520 },
+  'categories-state': { x: 360, y: 660 },
+  'currency-state':   { x: 360, y: 800 },
+
+  // Feature services (third column, between state and pages)
+  'tx-service':       { x: 240, y: 180 },
+  'concepts-service': { x: 240, y: 290 },
+  'wallet-service':   { x: 240, y: 380 },
+  'budget-service':   { x: 240, y: 480 },
+  'category-service': { x: 240, y: 580 },
+  'analytics-service':{ x: 240, y: 680 },
+  'dashboard-service':{ x: 240, y: 780 },
+
+  // Pages (fourth column)
+  'login-page':       { x: 660, y: 100 },
+  'tabs-page':        { x: 660, y: 210 },
+  'dashboard-page':   { x: 660, y: 340 },
+  'transaction-list': { x: 660, y: 480 },
+  'wallet-list':      { x: 660, y: 610 },
+  'budget-list':      { x: 660, y: 740 },
+  'category-list':    { x: 660, y: 870 },
+  'analytics-page':   { x: 660, y: 1000 },
+  'currency-settings':{ x: 660, y: 1120 },
+  'settings-page':    { x: 660, y: 1240 },
+
+  // Form components (fifth column)
+  'transaction-form': { x: 920, y: 400 },
+  'wallet-form':      { x: 920, y: 560 },
+  'budget-form':      { x: 920, y: 700 },
+  'category-form':    { x: 920, y: 840 },
+
+  // Shared components (sixth column)
+  'period-selector':  { x: 1140, y: 300 },
+  'budget-indicator': { x: 1140, y: 450 },
+  'option-picker':    { x: 1140, y: 580 },
+  'autocomplete':     { x: 1140, y: 700 },
+  'chart-pie':        { x: 1140, y: 820 },
+  'chart-bar':        { x: 1140, y: 940 },
+
+  // Feature-specific components
+  'dashboard-chart':  { x: 1360, y: 360 },
+  'analytics-chart':  { x: 1360, y: 500 },
+  'projections':      { x: 1360, y: 640 },
+  'spending-ranking': { x: 1360, y: 780 },
+
+  // Pipes
+  'currency-pipe':    { x: 1580, y: 480 },
+  'date-pipe':        { x: 1580, y: 620 },
+
+  // Models
+  'transaction':      { x: 1580, y: 200 },
+  'wallet':           { x: 1580, y: 310 },
+  'category':         { x: 1700, y: 200 },
+  'budget-model':     { x: 1700, y: 310 },
+  'currency-model':   { x: 1700, y: 420 },
+  'concept-model':    { x: 1700, y: 530 },
+  'user-settings':    { x: 1700, y: 640 },
+};
+
+// Apply layout to nodes
+NODES.forEach(n => {
+  if (LAYOUT[n.id]) { n.x = LAYOUT[n.id].x; n.y = LAYOUT[n.id].y; }
+  else { n.x = Math.random()*1600+100; n.y = Math.random()*900+100; }
+});
+
+// ─── CANVAS ENGINE ───────────────────────────────────────────────────────────
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const tooltip = document.getElementById('tooltip');
+
+let W, H;
+let transform = { x: 0, y: 0, scale: 0.65 };
+let dragging = false, lastMouse = {x:0, y:0};
+let hoveredNode = null;
+let selectedNode = null;
+let activeFilters = new Set(Object.keys(TYPE_COLOR));
+let searchQuery = '';
+
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  draw();
+}
+
+// Node size by type
+function nodeRadius(n) {
+  if (n.type === 'page')    return 28;
+  if (n.type === 'store')   return 26;
+  if (n.type === 'service') return 20;
+  if (n.type === 'component') return 22;
+  if (n.type === 'pipe')    return 16;
+  if (n.type === 'model')   return 14;
+  return 18;
+}
+
+function worldToScreen(wx, wy) {
+  return {
+    x: wx * transform.scale + transform.x,
+    y: wy * transform.scale + transform.y,
+  };
+}
+function screenToWorld(sx, sy) {
+  return {
+    x: (sx - transform.x) / transform.scale,
+    y: (sy - transform.y) / transform.scale,
+  };
+}
+
+function isNodeVisible(n) {
+  if (!activeFilters.has(n.type)) return false;
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    return n.label.toLowerCase().includes(q) || n.file.toLowerCase().includes(q);
+  }
+  return true;
+}
+
+function isEdgeVisible(e) {
+  const from = NODES.find(n=>n.id===e.from);
+  const to   = NODES.find(n=>n.id===e.to);
+  if (!from || !to) return false;
+  if (!activeFilters.has(from.type) || !activeFilters.has(to.type)) return false;
+  if (searchQuery) return isNodeVisible(from) || isNodeVisible(to);
+  return true;
+}
+
+function drawArrow(x1,y1,x2,y2,color,dash,width=1.5) {
+  const dx = x2-x1, dy = y2-y1;
+  const dist = Math.sqrt(dx*dx+dy*dy);
+  if (dist < 1) return;
+  const nx = dx/dist, ny = dy/dist;
+  const ex = x2 - nx*8, ey = y2 - ny*8; // end with arrowhead gap
+
+  ctx.save();
+  ctx.setLineDash(dash);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.globalAlpha = 0.45;
+  ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(ex,ey); ctx.stroke();
+
+  // arrowhead
+  const angle = Math.atan2(dy,dx);
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 0.7;
+  ctx.beginPath();
+  ctx.moveTo(ex, ey);
+  ctx.lineTo(ex - 7*Math.cos(angle-0.4), ey - 7*Math.sin(angle-0.4));
+  ctx.lineTo(ex - 7*Math.cos(angle+0.4), ey - 7*Math.sin(angle+0.4));
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawNode(n, highlight) {
+  const s = worldToScreen(n.x, n.y);
+  const r = nodeRadius(n) * transform.scale;
+  const color = TYPE_COLOR[n.type] || '#4a5568';
+
+  ctx.save();
+
+  // Glow for selected/hovered
+  if (highlight === 'selected') {
+    ctx.shadowBlur = 24; ctx.shadowColor = color;
+  } else if (highlight === 'hover') {
+    ctx.shadowBlur = 14; ctx.shadowColor = color;
+  }
+
+  // Outer ring
+  ctx.beginPath(); ctx.arc(s.x, s.y, r+2, 0, Math.PI*2);
+  ctx.fillStyle = highlight ? color + '33' : 'transparent'; ctx.fill();
+
+  // Main circle
+  ctx.beginPath(); ctx.arc(s.x, s.y, r, 0, Math.PI*2);
+  ctx.fillStyle = '#1a1f2e';
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = highlight ? 2.5 : 1.5;
+  ctx.stroke();
+
+  // Inner dot
+  ctx.beginPath(); ctx.arc(s.x, s.y, r*0.35, 0, Math.PI*2);
+  ctx.fillStyle = color + (highlight ? 'ff' : 'aa');
+  ctx.fill();
+
+  ctx.restore();
+
+  // Label
+  const minScaleForLabel = n.type === 'model' ? 0.5 : 0.35;
+  if (transform.scale > minScaleForLabel) {
+    ctx.save();
+    ctx.font = `${Math.max(9, Math.min(13, 11 * transform.scale))}px 'SF Mono', monospace`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    const alpha = Math.min(1, (transform.scale - minScaleForLabel) * 5);
+    ctx.globalAlpha = highlight ? 1 : alpha * 0.8;
+    ctx.fillStyle = highlight ? '#f7fafc' : '#a0aec0';
+    // Wrap long labels
+    const parts = n.label.replace(/Component|Service|Page|State|Pipe/, m => '\n'+m).split('\n');
+    const lineH = 13 * transform.scale;
+    parts.forEach((p, i) => ctx.fillText(p, s.x, s.y + r + 4 + i * lineH));
+    ctx.restore();
+  }
+}
+
+function draw() {
+  ctx.clearRect(0,0,W,H);
+
+  // BG grid
+  ctx.save();
+  ctx.strokeStyle = '#1a1f2e';
+  ctx.lineWidth = 1;
+  const gridSize = 80 * transform.scale;
+  const offX = transform.x % gridSize, offY = transform.y % gridSize;
+  for (let x = offX; x < W; x += gridSize) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  for (let y = offY; y < H; y += gridSize) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  ctx.restore();
+
+  // Draw edges
+  EDGES.forEach(e => {
+    if (!isEdgeVisible(e)) return;
+    const from = NODES.find(n=>n.id===e.from);
+    const to   = NODES.find(n=>n.id===e.to);
+    if (!from || !to) return;
+
+    const fs = worldToScreen(from.x, from.y);
+    const ts = worldToScreen(to.x, to.y);
+
+    const isHighlighted = selectedNode &&
+      (selectedNode.id===from.id || selectedNode.id===to.id);
+
+    const color = EDGE_COLOR[e.type] || '#4a5568';
+    const alpha = isHighlighted ? 1 : (selectedNode ? 0.08 : 1);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    drawArrow(fs.x, fs.y, ts.x, ts.y, color, EDGE_DASH[e.type]);
+
+    // Edge label on hover
+    if (e.label && isHighlighted && transform.scale > 0.4) {
+      const mx = (fs.x+ts.x)/2, my = (fs.y+ts.y)/2;
+      ctx.font = `${Math.max(8,9*transform.scale)}px 'SF Mono', monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillStyle = color;
+      ctx.globalAlpha = 0.9;
+      ctx.fillText(e.label, mx, my-6);
+    }
+    ctx.restore();
+  });
+
+  // Draw nodes
+  const visibleNodes = NODES.filter(isNodeVisible);
+  const dimmed = selectedNode !== null;
+
+  visibleNodes.forEach(n => {
+    const isConnected = selectedNode && (
+      selectedNode.id === n.id ||
+      EDGES.some(e => (e.from===selectedNode.id && e.to===n.id) || (e.to===selectedNode.id && e.from===n.id))
+    );
+
+    ctx.save();
+    if (dimmed && !isConnected) ctx.globalAlpha = 0.12;
+
+    const hl = n === selectedNode ? 'selected' : (n === hoveredNode ? 'hover' : null);
+    drawNode(n, hl);
+    ctx.restore();
+  });
+}
+
+// ─── INTERACTION ─────────────────────────────────────────────────────────────
+function getNodeAt(sx, sy) {
+  const w = screenToWorld(sx, sy);
+  let best = null, bestDist = Infinity;
+  NODES.forEach(n => {
+    if (!isNodeVisible(n)) return;
+    const dx = n.x - w.x, dy = n.y - w.y;
+    const dist = Math.sqrt(dx*dx+dy*dy);
+    const r = nodeRadius(n);
+    if (dist < r + 4 && dist < bestDist) { best=n; bestDist=dist; }
+  });
+  return best;
+}
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.1 : 0.91;
+  const mx = e.clientX, my = e.clientY;
+  transform.x = mx + (transform.x - mx) * factor;
+  transform.y = my + (transform.y - my) * factor;
+  transform.scale = Math.max(0.15, Math.min(3, transform.scale * factor));
+  draw();
+}, { passive: false });
+
+canvas.addEventListener('mousedown', e => {
+  if (e.button !== 0) return;
+  const n = getNodeAt(e.clientX, e.clientY);
+  if (n) {
+    selectedNode = selectedNode?.id === n.id ? null : n;
+    if (selectedNode) showTooltip(e, selectedNode);
+    else hideTooltip();
+    draw();
+  } else {
+    dragging = true;
+    lastMouse = {x:e.clientX, y:e.clientY};
+    if (selectedNode) { selectedNode=null; hideTooltip(); draw(); }
+  }
+});
+
+canvas.addEventListener('mousemove', e => {
+  if (dragging) {
+    transform.x += e.clientX - lastMouse.x;
+    transform.y += e.clientY - lastMouse.y;
+    lastMouse = {x:e.clientX, y:e.clientY};
+    draw();
+    return;
+  }
+  const n = getNodeAt(e.clientX, e.clientY);
+  if (n !== hoveredNode) {
+    hoveredNode = n;
+    canvas.style.cursor = n ? 'pointer' : 'grab';
+    draw();
+  }
+  if (selectedNode) updateTooltipPos(e);
+});
+
+canvas.addEventListener('mouseup', () => { dragging = false; });
+canvas.addEventListener('mouseleave', () => { dragging=false; hoveredNode=null; draw(); });
+
+// Touch support
+let lastTouchDist = 0;
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) {
+    dragging = true;
+    lastMouse = {x:e.touches[0].clientX, y:e.touches[0].clientY};
+  } else if (e.touches.length === 2) {
+    lastTouchDist = Math.hypot(
+      e.touches[0].clientX-e.touches[1].clientX,
+      e.touches[0].clientY-e.touches[1].clientY
+    );
+  }
+}, {passive:true});
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (e.touches.length === 1 && dragging) {
+    transform.x += e.touches[0].clientX - lastMouse.x;
+    transform.y += e.touches[0].clientY - lastMouse.y;
+    lastMouse = {x:e.touches[0].clientX, y:e.touches[0].clientY};
+    draw();
+  } else if (e.touches.length === 2) {
+    const dist = Math.hypot(
+      e.touches[0].clientX-e.touches[1].clientX,
+      e.touches[0].clientY-e.touches[1].clientY
+    );
+    const factor = dist / lastTouchDist;
+    transform.scale = Math.max(0.15, Math.min(3, transform.scale * factor));
+    lastTouchDist = dist;
+    draw();
+  }
+}, {passive:false});
+
+canvas.addEventListener('touchend', () => { dragging=false; });
+
+// ─── TOOLTIP ─────────────────────────────────────────────────────────────────
+function showTooltip(e, n) {
+  const connectedEdges = EDGES.filter(ed => ed.from===n.id || ed.to===n.id);
+  const stateEdges   = connectedEdges.filter(ed=>ed.type==='state');
+  const modalEdges   = connectedEdges.filter(ed=>ed.type==='modal');
+  const serviceEdges = connectedEdges.filter(ed=>ed.type==='service');
+  const childEdges   = connectedEdges.filter(ed=>ed.type==='child');
+
+  const color = TYPE_COLOR[n.type];
+  const typeLabel = {page:'Page',component:'Component',store:'State Service',service:'Service',pipe:'Pipe',model:'Model'}[n.type]||n.type;
+
+  let html = `
+    <h4>${n.label}</h4>
+    <div class="file">${n.file}</div>
+    <span class="badge" style="background:${color}22;color:${color};border:1px solid ${color}44">${typeLabel}</span>
+  `;
+
+  if (n.selectors?.length) {
+    html += `<section><h5>Señales que consume</h5><ul>${n.selectors.map(s=>`<li>${s}</li>`).join('')}</ul></section>`;
+  }
+  if (n.dispatches?.length) {
+    html += `<section><h5>Acciones que dispara</h5><ul>${n.dispatches.map(s=>`<li>${s}</li>`).join('')}</ul></section>`;
+  }
+  if (n.inputs?.length) {
+    html += `<section><h5>Inputs recibe</h5><ul>${n.inputs.map(s=>`<li>${s}</li>`).join('')}</ul></section>`;
+  }
+  if (n.outputs?.length) {
+    html += `<section><h5>Outputs emite</h5><ul>${n.outputs.map(s=>`<li>${s}</li>`).join('')}</ul></section>`;
+  }
+  if (modalEdges.length) {
+    html += `<section><h5>Modales</h5><ul>${modalEdges.map(ed=>{
+      const other = ed.from===n.id ? NODES.find(x=>x.id===ed.to) : NODES.find(x=>x.id===ed.from);
+      const dir = ed.from===n.id ? '→ abre' : '← abierto por';
+      return `<li>${dir} ${other?.label||'?'}</li>`;
+    }).join('')}</ul></section>`;
+  }
+  if (serviceEdges.length) {
+    const out = serviceEdges.filter(ed=>ed.from===n.id).map(ed=>NODES.find(x=>x.id===ed.to)?.label||'?');
+    const inn = serviceEdges.filter(ed=>ed.to===n.id).map(ed=>NODES.find(x=>x.id===ed.from)?.label||'?');
+    if (out.length) html += `<section><h5>Servicios que usa</h5><ul>${out.map(s=>`<li>${s}</li>`).join('')}</ul></section>`;
+    if (inn.length) html += `<section><h5>Usado por</h5><ul>${inn.map(s=>`<li>${s}</li>`).join('')}</ul></section>`;
+  }
+  if (childEdges.length) {
+    const children = childEdges.filter(ed=>ed.from===n.id).map(ed=>NODES.find(x=>x.id===ed.to)?.label||'?');
+    const parents  = childEdges.filter(ed=>ed.to===n.id).map(ed=>NODES.find(x=>x.id===ed.from)?.label||'?');
+    if (children.length) html += `<section><h5>Componentes hijos</h5><ul>${children.map(s=>`<li>${s}</li>`).join('')}</ul></section>`;
+    if (parents.length)  html += `<section><h5>Usado en</h5><ul>${parents.map(s=>`<li>${s}</li>`).join('')}</ul></section>`;
+  }
+
+  tooltip.innerHTML = html;
+  tooltip.style.display = 'block';
+  updateTooltipPos(e);
+}
+
+function updateTooltipPos(e) {
+  if (!selectedNode) return;
+  let x = e.clientX + 18, y = e.clientY - 10;
+  const r = tooltip.getBoundingClientRect();
+  if (x + r.width > window.innerWidth - 10) x = e.clientX - r.width - 18;
+  if (y + r.height > window.innerHeight - 10) y = window.innerHeight - r.height - 10;
+  tooltip.style.left = x + 'px';
+  tooltip.style.top  = y + 'px';
+}
+
+function hideTooltip() { tooltip.style.display = 'none'; }
+
+// ─── CONTROLS ────────────────────────────────────────────────────────────────
+document.getElementById('zoom-in').onclick = () => {
+  transform.scale = Math.min(3, transform.scale * 1.2);
+  transform.x = W/2 + (transform.x - W/2) * 1.2;
+  transform.y = H/2 + (transform.y - H/2) * 1.2;
+  draw();
+};
+document.getElementById('zoom-out').onclick = () => {
+  transform.scale = Math.max(0.15, transform.scale * 0.83);
+  transform.x = W/2 + (transform.x - W/2) * 0.83;
+  transform.y = H/2 + (transform.y - H/2) * 0.83;
+  draw();
+};
+document.getElementById('zoom-reset').onclick = () => {
+  // Fit all nodes
+  const xs = NODES.map(n=>n.x), ys = NODES.map(n=>n.y);
+  const minX=Math.min(...xs), maxX=Math.max(...xs);
+  const minY=Math.min(...ys), maxY=Math.max(...ys);
+  const pad = 80;
+  const scaleX = (W - pad*2) / (maxX - minX);
+  const scaleY = (H - pad*2) / (maxY - minY);
+  transform.scale = Math.min(scaleX, scaleY, 1);
+  transform.x = pad - minX * transform.scale + (W - pad*2 - (maxX-minX)*transform.scale)/2;
+  transform.y = pad - minY * transform.scale + (H - pad*2 - (maxY-minY)*transform.scale)/2;
+  draw();
+};
+
+// Legend filter
+document.querySelectorAll('.legend-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const type = item.dataset.type;
+    if (activeFilters.has(type)) {
+      if (activeFilters.size > 1) { activeFilters.delete(type); item.classList.add('dimmed'); }
+    } else { activeFilters.add(type); item.classList.remove('dimmed'); }
+    selectedNode = null; hideTooltip(); draw();
+  });
+});
+
+// Search
+document.getElementById('search').addEventListener('input', e => {
+  searchQuery = e.target.value.trim();
+  selectedNode = null; hideTooltip(); draw();
+});
+
+// Info bar
+document.getElementById('node-count').textContent = NODES.length;
+document.getElementById('edge-count').textContent = EDGES.length;
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+window.addEventListener('resize', resize);
+resize();
+
+// Auto-fit on load
+setTimeout(() => {
+  document.getElementById('zoom-reset').click();
+}, 50);
+</script>
+</body>
+</html>

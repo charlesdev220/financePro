@@ -6,7 +6,7 @@ Recibís: **$ARGUMENTS** (nombre del cambio).
 ## Agente responsable
 
 **`qa-automation`** ejecuta esta fase. Lee `spec.md` y `tasks.md`, revisa el código implementado,
-corre los tests existentes, y emite el `verify-report.md`.
+corre los tests existentes, que la funcionalidad anterior se mantiene y emite el `verify-report.md`.
 
 ## Pre-requisitos
 

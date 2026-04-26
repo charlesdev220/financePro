@@ -31,6 +31,8 @@ Chart.register(ArcElement, DoughnutController, Tooltip, Legend);
 })
 export class ChartPieComponent implements AfterViewInit, OnDestroy {
   data = input<ChartData<'doughnut'> | null>(null);
+  /** Incrementar desde la página padre en ionViewDidEnter para forzar chart.resize() al volver al tab. */
+  refreshTrigger = input<number>(0);
 
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
 
@@ -47,6 +49,12 @@ export class ChartPieComponent implements AfterViewInit, OnDestroy {
         queueMicrotask(() => { if (!this.chart) this.createChart(data); });
       }
     });
+
+    effect(() => {
+      this.refreshTrigger();
+      if (!this.initialized() || !this.chart) return;
+      this.chart.resize();
+    });
   }
 
   ngAfterViewInit(): void {
@@ -54,6 +62,7 @@ export class ChartPieComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.initialized.set(false);
     this.chart?.destroy();
     this.chart = null;
   }

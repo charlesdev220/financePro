@@ -1,15 +1,14 @@
 import { ChangeDetectionStrategy, Component, Input, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Store } from '@ngrx/store';
 import { ModalController } from '@ionic/angular/standalone';
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
   IonContent, IonList, IonItem, IonLabel, IonInput,
-  IonSelect, IonSelectOption, IonToggle, IonNote, IonIcon,
+  IonToggle, IonNote, IonIcon,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { chevronDownOutline } from 'ionicons/icons';
-import { WalletsActions } from '@store/wallets/wallets.actions';
+import { WalletsStateService } from '@core/state/wallets.state';
 import { IWallet } from '@models/wallet.model';
 
 const SUPPORTED_CURRENCIES = ['EUR', 'USD', 'GBP', 'ARS', 'BRL', 'MXN', 'CLP', 'COP'];
@@ -25,7 +24,7 @@ const COLOR_OPTIONS = ['#4CAF50','#2196F3','#9C27B0','#FF9800','#F44336','#00968
     ReactiveFormsModule,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
     IonContent, IonList, IonItem, IonLabel, IonInput,
-    IonSelect, IonSelectOption, IonToggle, IonNote, IonIcon,
+    IonToggle, IonNote, IonIcon,
   ],
 })
 export class WalletFormComponent implements OnInit {
@@ -41,9 +40,9 @@ export class WalletFormComponent implements OnInit {
   /** @see wallet — misma excepción. */
   @Input() rowNumber?: number;
 
-  private readonly fb        = inject(FormBuilder);
-  private readonly store     = inject(Store);
-  private readonly modalCtrl = inject(ModalController);
+  private readonly fb            = inject(FormBuilder);
+  private readonly walletsState  = inject(WalletsStateService);
+  private readonly modalCtrl     = inject(ModalController);
 
   form!: FormGroup;
   readonly currencies = SUPPORTED_CURRENCIES;
@@ -52,6 +51,12 @@ export class WalletFormComponent implements OnInit {
 
   /** Controla la visibilidad del grid de iconos de cartera. */
   readonly showIconPicker = signal(false);
+  /** Controla la visibilidad del accordion de divisa. Mutex con showIconPicker. */
+  readonly showCurrencyPicker = signal(false);
+  /** Activa el input inline para emoji personalizado. */
+  readonly customIconMode = signal(false);
+  /** Valor del emoji personalizado siendo ingresado. */
+  readonly customIconValue = signal('');
 
   /** True cuando se recibió una cartera existente, indicando modo edición. */
   get isEditMode(): boolean { return !!this.wallet; }
@@ -74,6 +79,33 @@ export class WalletFormComponent implements OnInit {
   onIconSelect(icon: string): void {
     this.form.patchValue({ icon });
     this.showIconPicker.set(false);
+    this.customIconMode.set(false);
+    this.customIconValue.set('');
+  }
+
+  toggleCurrencyPicker(): void {
+    this.showCurrencyPicker.update(v => !v);
+    if (this.showCurrencyPicker()) this.showIconPicker.set(false);
+  }
+
+  onCurrencySelect(currency: string): void {
+    this.form.patchValue({ currency });
+    this.showCurrencyPicker.set(false);
+  }
+
+  onCustomIconInput(event: Event): void {
+    this.customIconValue.set((event.target as HTMLInputElement).value);
+  }
+
+  onCustomIconConfirm(): void {
+    const emoji = this.customIconValue().trim();
+    if (!emoji) return;
+    this.onIconSelect(emoji);
+  }
+
+  onCustomIconCancel(): void {
+    this.customIconMode.set(false);
+    this.customIconValue.set('');
   }
 
   onColorSelect(color: string): void {
@@ -86,10 +118,7 @@ export class WalletFormComponent implements OnInit {
     const now   = new Date().toISOString();
 
     if (this.wallet && this.rowNumber) {
-      this.store.dispatch(WalletsActions.updateWallet({
-        wallet: { ...this.wallet, ...value },
-        rowNumber: this.rowNumber,
-      }));
+      this.walletsState.update({ ...this.wallet, ...value }, this.rowNumber);
     } else {
       const newWallet: IWallet = {
         walletId:  crypto.randomUUID(),
@@ -102,7 +131,7 @@ export class WalletFormComponent implements OnInit {
         isDefault: value.isDefault,
         createdAt: now,
       };
-      this.store.dispatch(WalletsActions.addWallet({ wallet: newWallet }));
+      this.walletsState.add(newWallet);
     }
     await this.modalCtrl.dismiss();
   }

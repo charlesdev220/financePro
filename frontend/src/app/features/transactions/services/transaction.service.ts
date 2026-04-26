@@ -12,8 +12,7 @@ import { firstValueFrom } from 'rxjs';
 import { SheetsApiService } from '@core/services/sheets-api.service';
 import { CurrencyApiService } from '@core/services/currency-api.service';
 import { AuthService } from '@core/services/auth.service';
-import { ITransaction } from '@models/transaction.model';
-import { TransactionDraft } from '@store/transactions/transactions.actions';
+import { ITransaction, TransactionDraft } from '@models/transaction.model';
 
 // TRANSACTIONS schema (A:O — 15 columnas)
 // A: tx_id | B: user_id | C: wallet_id | D: category_id | E: amount

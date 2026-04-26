@@ -4,6 +4,51 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Migración NgRx → Angular Signals):
+*Fase actual:* Migración de infraestructura de estado — eliminación total de NgRx
+*Estado actual:* Completado ✅ | Archivado: 2026-04-26
+- ✔️ **TransactionsStateService:** `@Injectable({ providedIn: 'root' })` en `core/state/` — signals `_items/_loading/_error/_rowMap` readonly + `load/add/update/delete` con optimistic update + rollback + bridge a `BudgetsStateService.recalculate()`.
+- ✔️ **BudgetsStateService:** Mismo patrón base + `recalculate(categoryId, period, transactions[])` recibe transacciones como parámetro para evitar dependencia circular (ADR-04).
+- ✔️ **WalletsStateService:** Patrón base con `load/add/update/delete` y rollback.
+- ✔️ **CategoriesStateService:** Patrón base — `add()` re-invoca `load()` tras append para sincronizar `rowMap`; `delete()` usa soft-delete.
+- ✔️ **CurrencyStateService:** Señales adicionales `_baseCurrency/_baseCurrencyRowNumber`; `forkJoin` de CURRENCIES + USER_SETTINGS en `load()`; `fetchAndPersistRate/saveCurrency/setBaseCurrency` con upsert.
+- ✔️ **10 componentes migrados:** `dashboard`, `transaction-list`, `transaction-form`, `budget-list`, `budget-form`, `wallet-list`, `wallet-form`, `category-list`, `category-form`, `analytics`, `currency-settings` — `inject(Store)` eliminado en todos.
+- ✔️ **store/ eliminado:** Carpeta `src/app/store/` y todos sus artefactos NgRx (actions, reducers, effects, selectors) borrados.
+- ✔️ **Tests actualizados:** `provideMockStore` reemplazado por mocks de signal state services en los 3 specs de features; `testing/store/` eliminado; `app.component.spec.ts` limpiado.
+- ✔️ **0 referencias NgRx:** `grep "from '@ngrx/"` en todo `src/` devuelve 0 resultados.
+*Deuda técnica documentada:* Specs de state services (`transactions.state.spec.ts`, `budgets.state.spec.ts`, `currency.state.spec.ts`) no implementados — tareas 5.1, 5.2, 5.3 del tasks.md.
+*Próximos pasos:* Implementar los 3 specs de state services para cubrir REQ-03 al REQ-16 (carga, rollback, recalculo cross-feature).
+*Qué se aprendió:* Los signals `asReadonly()` expuestos en state services son directamente consumibles en templates de componentes OnPush sin necesidad de `toSignal()` — el sistema de signals de Angular detecta cambios automáticamente.
+*Por qué se aprendió:* La migración de `toSignal(store.select(...))` → `stateService.items` elimina la capa de conversión RxJS→Signal y simplifica la cadena de reactividad.
+*Dónde se aprendió:* `transaction-list.page.ts`, `analytics.page.ts`, `currency-settings.page.ts`.
+
+---
+
+### Qué hemos completado hasta ahora (Sprint 3 UI/UX — Bugs, Web Polish y Consistencia de Formularios):
+*Fase actual:* Sprint 3: 16 issues — 3 bugs bloqueantes + web polish + consistencia de formularios
+*Estado actual:* Completado ✅ | Archivado: 2026-04-25
+- ✔️ **I-11 — chart-pie race condition:** `initialized.set(false)` en `ngOnDestroy` antes de `chart?.destroy()` — el effect ya tiene el guard `if (!this.initialized()) return` que previene re-creaciones fantasma al navegar entre tabs.
+- ✔️ **I-06 — budget-form signal espejo:** `selectedCategoryId = signal<string>('')` reemplaza el `computed()` que leía `form.get('categoryId')?.value` directamente — patrón correcto para OnPush con ReactiveFormsModule.
+- ✔️ **I-07 — budget-form período:** `<input type="month">` nativo reemplaza `ion-input` de texto libre — fuerza formato YYYY-MM sin validación custom.
+- ✔️ **I-16 — transaction-form signals espejo:** Tres signals (`selectedCategoryId`, `selectedWalletId`, `selectedCurrency`) + signal mutex `openPicker` — los computeds de los tiles ahora son reactivos en OnPush.
+- ✔️ **I-01 — monto editable inline (web):** `<input type="number">` nativo con `md:hidden`/`hidden md:block` en el header del form; bloque inferior `ion-input` eliminado.
+- ✔️ **I-02 — pickers accordion (web):** Tres métodos `onXTileClick` con `window.innerWidth >= 768` para abrir accordion inline o modal según viewport; paneles `@if (openPicker() === ...)` fuera del `<form>`.
+- ✔️ **I-15 — category-form toggle pill:** Dos botones `[Gasto][Ingreso]` con `selectedType signal` reemplazan `ion-select`; `IonSelect`/`IonSelectOption` eliminados de imports.
+- ✔️ **I-13 — wallet-form accordion divisa:** Fila accordion + pills de divisa reemplazan `ion-select`; `IonSelect`/`IonSelectOption` eliminados.
+- ✔️ **I-12 — wallet-form custom emoji:** Tile `+` con borde punteado al final del grid de iconos; input inline con `onCustomIconConfirm`/`onCustomIconCancel`.
+- ✔️ **I-04 + I-05 — chips de filtro:** `text-sm`, `px-5 py-2`; icono `close-circle-outline` individual por chip activo con `$event.stopPropagation()`; métodos `clearWalletFilter`, `clearCategoryFilter`, `clearPeriodFilter`.
+- ✔️ **I-14 — panel categoría tiles Monefy:** `grid-cols-4 md:grid-cols-6 lg:grid-cols-8` con `[style.border-color]`/`[style.background-color]` de `cat.color` en el panel de filtro de transaction-list.
+- ✔️ **I-03 — dashboard padding web:** `class="px-8"` eliminado de `ion-content`; `md:px-8` añadido al wrapper interior — header verde queda full-width.
+- ✔️ **I-08 — analytics header resumen:** `computed currentPeriodSummary` + bloque verde glassmorphism "Saldo actual" + fila INGRESOS/GASTOS sobre el chart.
+- ✔️ **I-09 — category-list botón fijo:** `ion-fab` → `ion-button` fijo centrado `bottom: calc(56px + 12px)`; `IonFab`/`IonFabButton` eliminados.
+- ✔️ **I-10 — category-list acciones inline web:** `hidden md:flex` con ✏️/🗑️ en cada tile; `onTilePress` no abre ActionSheet en ≥768px.
+*Próximos pasos:* Tests automáticos para los scenarios nuevos del sprint (signals espejo, clear filters individuales, toggle pill, custom emoji, accordion mutex) — deuda técnica documentada en S-01 del verify-report.
+*Qué se aprendió:* `computed()` que lee `FormGroup.get().value` no es reactivo para Angular Signals — siempre usar una signal espejo como fuente de verdad para los bindings de template en componentes OnPush con ReactiveFormsModule.
+*Por qué se aprendió:* Los tiles de Cartera/Categoría/Divisa y el accordion de Categoría en budget-form no actualizaban visualmente al seleccionar porque el FormGroup no notifica al sistema de signals.
+*Dónde se aprendió:* `transaction-form.component.ts` (I-16), `budget-form.component.ts` (I-06), `category-form.component.ts` (I-15).
+
+---
+
 ### Qué hemos completado hasta ahora (Sprint 2 UI/UX — Pendientes de Interfaz):
 *Fase actual:* Sprint 2: 11 correcciones acumuladas de UI/UX
 *Estado actual:* Completado ✅ | Archivado: 2026-04-25

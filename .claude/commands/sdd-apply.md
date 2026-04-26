@@ -1,5 +1,6 @@
 # SDD Apply — MyFinance
 
+**`develop-expert`** ejecuta esta fase. Lee `spec.md`, `design.md` y `tasks.md`.
 Implementa las tareas del cambio activo escribiendo código real.
 Recibís: **$ARGUMENTS** (nombre del cambio, y opcionalmente qué tareas: "T-01, T-02").
 
@@ -15,7 +16,7 @@ Leer **obligatoriamente** antes de escribir una línea:
 
 | Tipo de tarea | Agente responsable |
 |---|---|
-| Componentes, pages, NgRx (actions/reducer/effects/selectors) | `ionic-angular-architect` → implementa con `feature-scaffold` |
+| Componentes, pages, NgRx (actions/reducer/effects/selectors) | `ionic-angular-architect` → implementa con `develop-expert` |
 | Cambios de esquema Sheets, modelos TypeScript en `models/` | `google-sheets-architect` |
 | Tests unitarios (Karma/Jasmine) o E2E (Playwright) | `qa-automation` |
 | Builds, CI/CD, variables de entorno | `devops-cloud` |

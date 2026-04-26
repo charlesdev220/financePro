@@ -19,6 +19,11 @@ export class TransactionListPage { ... }
 
 - Importar cada componente Ionic individualmente — nunca `IonicModule`.
 - Todos los `Ion*` que usa el template deben estar en `imports: []`.
+- **no utilizar `@ngrx/store`** en su lugar utilizar los Signals
+- Cualquier PR que use `template:` inline será rechazado.
+- los observable deben ser pasados a tosignal antes de ser usados en el template.
+- en las rutas hacer uso del :slug para un mejor SEO 
+- Se simplifica el codigo utilizando Vistas Anidadas (Router con Children y `<router-outlet>`)
 
 ## Navegación — Tab Bar
 

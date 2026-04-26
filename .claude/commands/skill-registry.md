@@ -43,7 +43,7 @@ Recibís: **$ARGUMENTS** (opcional: "list" para solo listar, "update" para regen
 
 | Agente | Responsabilidad |
 |---|---|
-| `feature-scaffold` | Implementa artefactos Angular/Ionic (page, component, effect, reducer, selector, model) |
+| `develop-expert` | Implementa artefactos Angular/Ionic (page, component, effect, reducer, selector, model) |
 | `ionic-angular-architect` | Diseño frontend — Ionic 8 + Angular 20 + NgRx v21 |
 | `google-sheets-architect` | Esquema Sheets, modelos TypeScript, Apps Script |
 | `qa-automation` | Tests unitarios Karma/Jasmine + E2E Playwright |

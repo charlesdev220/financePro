@@ -1,19 +1,18 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, input, signal, output } from '@angular/core';
-import { toSignal, takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Store } from '@ngrx/store';
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
-  IonContent, IonItem, IonTextarea, IonIcon, IonToggle, IonInput,
+  IonContent, IonItem, IonTextarea, IonIcon, IonToggle,
   ModalController,
 } from '@ionic/angular/standalone';
 import { OptionPickerComponent, PickerItem } from '@shared/components/option-picker/option-picker.component';
 import { backspaceOutline, calendarOutline, cashOutline, walletOutline, arrowBackOutline } from 'ionicons/icons';
 import { addIcons } from 'ionicons';
-import { TransactionsActions } from '@store/transactions/transactions.actions';
-import { selectByType } from '@store/categories/categories.selectors';
-import { selectAllWallets } from '@store/wallets/wallets.selectors';
-import { selectAllBudgets } from '@store/budgets/budgets.selectors';
+import { TransactionsStateService } from '@core/state/transactions.state';
+import { WalletsStateService } from '@core/state/wallets.state';
+import { CategoriesStateService } from '@core/state/categories.state';
+import { BudgetsStateService } from '@core/state/budgets.state';
 import { ITransaction } from '@models/transaction.model';
 import { IBudget } from '@models/budget.model';
 import { BudgetIndicatorComponent } from '@shared/components/budget-indicator/budget-indicator.component';
@@ -24,7 +23,7 @@ const SUPPORTED_CURRENCIES = ['EUR', 'USD', 'GBP', 'ARS', 'BRL', 'MXN', 'CLP', '
 /**
  * TransactionFormComponent — Formulario reactivo para la creación y edición de transacciones.
  * Integra autocompletado de conceptos basado en IA/Histórico, indicadores de presupuesto
- * en tiempo real y gestión de estado mediante NgRx.
+ * en tiempo real y gestión de estado mediante Signal State Services.
  */
 @Component({
   selector: 'app-transaction-form',
@@ -35,7 +34,7 @@ const SUPPORTED_CURRENCIES = ['EUR', 'USD', 'GBP', 'ARS', 'BRL', 'MXN', 'CLP', '
   imports: [
     ReactiveFormsModule,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
-    IonContent, IonItem, IonTextarea, IonIcon, IonToggle, IonInput,
+    IonContent, IonItem, IonTextarea, IonIcon, IonToggle,
     BudgetIndicatorComponent,
   ],
 })
@@ -59,7 +58,10 @@ export class TransactionFormComponent implements OnInit {
   dismiss = output<void>();
 
   private readonly fb = inject(FormBuilder);
-  private readonly store = inject(Store);
+  private readonly txState = inject(TransactionsStateService);
+  private readonly walletsState = inject(WalletsStateService);
+  private readonly categoriesState = inject(CategoriesStateService);
+  private readonly budgetsState = inject(BudgetsStateService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly modalCtrl = inject(ModalController);
 
@@ -81,44 +83,48 @@ export class TransactionFormComponent implements OnInit {
   });
 
   /** Todos los presupuestos para validación visual de límites de gasto. */
-  private readonly allBudgets = toSignal(
-    this.store.select(selectAllBudgets), { initialValue: [] as IBudget[] }
-  );
+  private readonly allBudgets = this.budgetsState.items;
 
   /** Categorías de tipo gasto disponibles. */
-  private readonly expenseCategories = toSignal(
-    this.store.select(selectByType('expense')), { initialValue: [] },
+  private readonly expenseCategories = computed(() =>
+    this.categoriesState.items().filter(c => c.type === 'expense')
   );
 
   /** Categorías de tipo ingreso disponibles. */
-  private readonly incomeCategories = toSignal(
-    this.store.select(selectByType('income')), { initialValue: [] },
+  private readonly incomeCategories = computed(() =>
+    this.categoriesState.items().filter(c => c.type === 'income')
   );
 
   /** Carteras disponibles del usuario. */
-  readonly wallets = toSignal(
-    this.store.select(selectAllWallets), { initialValue: [] }
-  );
+  readonly wallets = this.walletsState.items;
 
   /** Estado reactivo interno que rastrea el tipo seleccionado en el UI. */
   readonly typeValue = signal<TransactionType>(TRANSACTION_TYPES.EXPENSE);
 
+  /** Signal espejo del categoryId del FormGroup — fuente de verdad reactiva para OnPush. */
+  readonly selectedCategoryId = signal<string>('');
+  /** Signal espejo del walletId del FormGroup — fuente de verdad reactiva para OnPush. */
+  readonly selectedWalletId = signal<string>('');
+  /** Signal espejo de la divisa del FormGroup — fuente de verdad reactiva para OnPush. */
+  readonly selectedCurrency = signal<string>('EUR');
 
   /** Icono de la categoría seleccionada actualmente para visualización en el grid. */
-  readonly selectedCategoryIcon = computed(() => {
-    const catId = this.form?.get('categoryId')?.value;
-    return this.filteredCategories().find(c => c.categoryId === catId)?.icon || '📂';
-  });
+  readonly selectedCategoryIcon = computed(() =>
+    this.filteredCategories().find(c => c.categoryId === this.selectedCategoryId())?.icon ?? '📂'
+  );
 
   /** Nombre de la categoría seleccionada para mostrar en el tile del selector. */
   readonly selectedCategoryName = computed(() =>
-    this.filteredCategories().find(c => c.categoryId === this.form?.get('categoryId')?.value)?.name ?? 'Seleccioná'
+    this.filteredCategories().find(c => c.categoryId === this.selectedCategoryId())?.name ?? 'Seleccioná'
   );
 
   /** Cartera seleccionada actualmente para mostrar en el tile. */
   readonly selectedWallet = computed(() =>
-    this.wallets().find(w => w.walletId === this.form?.get('walletId')?.value)
+    this.wallets().find(w => w.walletId === this.selectedWalletId())
   );
+
+  /** Controla el accordion de pickers en web (≥768px). Mutex: solo uno abierto a la vez. */
+  readonly openPicker = signal<'wallet' | 'category' | 'currency' | null>(null);
 
   /** Representación en string del monto para el teclado personalizado. */
   readonly amountString = signal<string>('0');
@@ -168,7 +174,6 @@ export class TransactionFormComponent implements OnInit {
       this.amountString.set(tx.amount.toString());
     }
 
-    // 1. Inicialización inmediata para estabilidad en el renderizado
     this.form = this.fb.group({
       type: [initialType, Validators.required],
       amount: [tx?.amount ?? null, [Validators.required, Validators.min(-999999), Validators.max(999999)]],
@@ -184,7 +189,6 @@ export class TransactionFormComponent implements OnInit {
 
     this.typeValue.set(initialType as 'income' | 'expense');
 
-    // 2. Población defensiva de valores por defecto
     const wallets = this.wallets();
     const categories = this.filteredCategories();
 
@@ -195,18 +199,22 @@ export class TransactionFormComponent implements OnInit {
       });
     }
 
-    // 3. Suscripción reactiva a cambios de tipo para actualizar filtros en cascada
+    this.selectedCategoryId.set(this.form.get('categoryId')?.value ?? '');
+    this.selectedWalletId.set(this.form.get('walletId')?.value ?? '');
+    this.selectedCurrency.set(this.form.get('currency')?.value ?? this.userBaseCurrency() ?? 'EUR');
+
     this.form.get('type')!.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(v => {
         this.typeValue.set(v as 'income' | 'expense');
         const firstCategory = this.filteredCategories()[0];
         this.form.patchValue({ categoryId: firstCategory?.categoryId ?? '' });
+        this.selectedCategoryId.set(firstCategory?.categoryId ?? '');
       });
   }
 
   /**
-   * Valida y persiste la transacción disparando la acción de NgRx correspondiente.
+   * Valida y persiste la transacción mediante el state service correspondiente.
    */
   async save(): Promise<void> {
     if (this.form.invalid) return;
@@ -236,17 +244,9 @@ export class TransactionFormComponent implements OnInit {
         ...draft,
         updatedAt: new Date().toISOString(),
       };
-      this.store.dispatch(
-        TransactionsActions.updateTransaction({
-          transaction: updated,
-          rowNumber: rn,
-          userBaseCurrency: this.userBaseCurrency(),
-        }),
-      );
+      this.txState.update(updated, rn, this.userBaseCurrency());
     } else {
-      this.store.dispatch(
-        TransactionsActions.addTransaction({ draft, userBaseCurrency: this.userBaseCurrency() }),
-      );
+      this.txState.add(draft, this.userBaseCurrency());
     }
 
     this.dismiss.emit();
@@ -286,7 +286,10 @@ export class TransactionFormComponent implements OnInit {
     });
     await modal.present();
     const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm') this.form.get('walletId')?.setValue(data.value);
+    if (role === 'confirm') {
+      this.form.get('walletId')?.setValue(data.value);
+      this.selectedWalletId.set(data.value);
+    }
   }
 
   async openCategoryPicker(): Promise<void> {
@@ -309,7 +312,10 @@ export class TransactionFormComponent implements OnInit {
     });
     await modal.present();
     const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm') this.form.get('categoryId')?.setValue(data.value);
+    if (role === 'confirm') {
+      this.form.get('categoryId')?.setValue(data.value);
+      this.selectedCategoryId.set(data.value);
+    }
   }
 
   async openCurrencyPicker(): Promise<void> {
@@ -327,7 +333,58 @@ export class TransactionFormComponent implements OnInit {
     });
     await modal.present();
     const { data, role } = await modal.onWillDismiss();
-    if (role === 'confirm') this.form.get('currency')?.setValue(data.value);
+    if (role === 'confirm') {
+      this.form.get('currency')?.setValue(data.value);
+      this.selectedCurrency.set(data.value);
+    }
+  }
+
+  onWalletTileClick(): void {
+    if (window.innerWidth >= 768) {
+      this.openPicker.update(v => v === 'wallet' ? null : 'wallet');
+    } else {
+      this.openWalletPicker();
+    }
+  }
+
+  onCategoryTileClick(): void {
+    if (window.innerWidth >= 768) {
+      this.openPicker.update(v => v === 'category' ? null : 'category');
+    } else {
+      this.openCategoryPicker();
+    }
+  }
+
+  onCurrencyTileClick(): void {
+    if (window.innerWidth >= 768) {
+      this.openPicker.update(v => v === 'currency' ? null : 'currency');
+    } else {
+      this.openCurrencyPicker();
+    }
+  }
+
+  onPickerWalletSelect(walletId: string): void {
+    this.form.get('walletId')?.setValue(walletId);
+    this.selectedWalletId.set(walletId);
+    this.openPicker.set(null);
+  }
+
+  onPickerCategorySelect(categoryId: string): void {
+    this.form.get('categoryId')?.setValue(categoryId);
+    this.selectedCategoryId.set(categoryId);
+    this.openPicker.set(null);
+  }
+
+  onPickerCurrencySelect(currency: string): void {
+    this.form.get('currency')?.setValue(currency);
+    this.selectedCurrency.set(currency);
+    this.openPicker.set(null);
+  }
+
+  onWebAmountInputNative(event: Event): void {
+    const val = (event.target as HTMLInputElement).value;
+    this.amountString.set(val === '' ? '0' : val);
+    this.updateFormAmount();
   }
 
   onRecurringToggle(checked: boolean): void {

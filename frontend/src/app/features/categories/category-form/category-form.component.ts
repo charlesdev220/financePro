@@ -1,15 +1,14 @@
 import { ChangeDetectionStrategy, Component, Input, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Store } from '@ngrx/store';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
   IonContent, IonList, IonItem, IonLabel, IonInput,
-  IonSelect, IonSelectOption, IonNote, IonIcon,
+  IonNote, IonIcon,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { chevronDownOutline, checkmarkOutline } from 'ionicons/icons';
-import { CategoriesActions } from '@store/categories/categories.actions';
+import { CategoriesStateService } from '@core/state/categories.state';
 import { ICategory } from '@models/category.model';
 
 const ICON_OPTIONS = ['🏠', '🍔', '🚗', '✈️', '💊', '👕', '📱', '🎬', '📚', '💰', '🏋️', '🎵', '🐶', '💼', '🎮', '🏦', '💳', '🛒', '⚡', '🔧'];
@@ -42,7 +41,7 @@ const COLOR_OPTIONS: { label: string; value: string }[] = [
     ReactiveFormsModule,
     IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
     IonContent, IonList, IonItem, IonLabel, IonInput,
-    IonSelect, IonSelectOption, IonNote, IonIcon,
+    IonNote, IonIcon,
   ],
 })
 export class CategoryFormComponent implements OnInit {
@@ -58,14 +57,17 @@ export class CategoryFormComponent implements OnInit {
   /** @see category — misma excepción. */
   @Input() rowNumber?: number;
 
-  private readonly fb = inject(FormBuilder);
-  private readonly store = inject(Store);
-  private readonly modalCtrl = inject(ModalController);
-  private readonly alertCtrl = inject(AlertController);
+  private readonly fb               = inject(FormBuilder);
+  private readonly categoriesState  = inject(CategoriesStateService);
+  private readonly modalCtrl        = inject(ModalController);
+  private readonly alertCtrl        = inject(AlertController);
 
   form!: FormGroup;
   readonly icons = signal<string[]>([...ICON_OPTIONS]);
   readonly colorOptions = COLOR_OPTIONS;
+
+  /** Signal espejo del tipo del FormGroup — fuente de verdad reactiva para OnPush. */
+  readonly selectedType = signal<'expense' | 'income'>('expense');
 
   /** Controla la visibilidad del grid de iconos. */
   readonly showIconPicker = signal(false);
@@ -102,6 +104,12 @@ export class CategoryFormComponent implements OnInit {
       budgetAmount: [cat?.budgetAmount ?? null],
       budgetPeriod: [cat?.budgetPeriod ?? 'monthly'],
     });
+    this.selectedType.set((this.form.get('type')?.value ?? 'expense') as 'expense' | 'income');
+  }
+
+  onTypeSelect(type: 'expense' | 'income'): void {
+    this.form.get('type')?.setValue(type);
+    this.selectedType.set(type);
   }
 
   onIconSelect(icon: string): void {
@@ -155,7 +163,7 @@ export class CategoryFormComponent implements OnInit {
         ...value,
         budgetAmount: value.budgetAmount ? Number(value.budgetAmount) : null,
       };
-      this.store.dispatch(CategoriesActions.updateCategory({ category: updated, rowNumber: this.rowNumber }));
+      this.categoriesState.update(updated, this.rowNumber);
     } else {
       const newCategory: ICategory = {
         categoryId: crypto.randomUUID(),
@@ -169,7 +177,7 @@ export class CategoryFormComponent implements OnInit {
         isActive: true,
         createdAt: now,
       };
-      this.store.dispatch(CategoriesActions.addCategory({ category: newCategory }));
+      this.categoriesState.add(newCategory);
     }
     await this.modalCtrl.dismiss();
   }

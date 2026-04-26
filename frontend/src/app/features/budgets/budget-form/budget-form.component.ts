@@ -1,7 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { Store } from '@ngrx/store';
 import {
   IonHeader,
   IonToolbar,
@@ -19,8 +17,8 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
-import { BudgetsActions } from '@store/budgets/budgets.actions';
-import { selectByType } from '@store/categories/categories.selectors';
+import { BudgetsStateService } from '@core/state/budgets.state';
+import { CategoriesStateService } from '@core/state/categories.state';
 import { AuthService } from '@core/services/auth.service';
 import { IBudget } from '@models/budget.model';
 import { BUDGET_STATUS } from '@core/constants/budget.constants';
@@ -60,10 +58,11 @@ export class BudgetFormComponent implements OnInit {
   /** @see budget — número de fila en Sheets para actualizar en modo edición. */
   @Input() rowNumber?: number;
 
-  private readonly fb          = inject(FormBuilder);
-  private readonly store       = inject(Store);
-  private readonly modalCtrl   = inject(ModalController);
-  private readonly authService = inject(AuthService);
+  private readonly fb               = inject(FormBuilder);
+  private readonly budgetsState     = inject(BudgetsStateService);
+  private readonly categoriesState  = inject(CategoriesStateService);
+  private readonly modalCtrl        = inject(ModalController);
+  private readonly authService      = inject(AuthService);
 
   form!: FormGroup;
 
@@ -71,17 +70,19 @@ export class BudgetFormComponent implements OnInit {
   get isEditMode(): boolean { return !!this.budget; }
 
   /** Categorías de tipo gasto para el grid del accordion de categoría. */
-  readonly expenseCategories = toSignal(
-    this.store.select(selectByType('expense')),
-    { initialValue: [] },
+  readonly expenseCategories = computed(() =>
+    this.categoriesState.items().filter(c => c.type === 'expense')
   );
 
   /** Controla la visibilidad del grid de tiles de categoría. */
   showCategoryPicker = signal(false);
 
+  /** Signal espejo del categoryId del FormGroup — fuente de verdad reactiva para OnPush. */
+  readonly selectedCategoryId = signal<string>('');
+
   /** Categoría seleccionada actualmente, para mostrar en el accordion cerrado. */
   readonly selectedCategory = computed(() =>
-    this.expenseCategories().find(c => c.categoryId === this.form?.get('categoryId')?.value)
+    this.expenseCategories().find(c => c.categoryId === this.selectedCategoryId())
   );
 
   onToggleCategoryPicker(): void {
@@ -91,6 +92,7 @@ export class BudgetFormComponent implements OnInit {
   onSelectCategory(categoryId: string): void {
     this.form.get('categoryId')?.setValue(categoryId);
     this.form.get('categoryId')?.markAsDirty();
+    this.selectedCategoryId.set(categoryId);
     this.showCategoryPicker.set(false);
   }
 
@@ -103,6 +105,7 @@ export class BudgetFormComponent implements OnInit {
       period:       [defaultPeriod, Validators.required],
       budgetAmount: [b?.budgetAmount ?? null, [Validators.required, Validators.min(1)]],
     });
+    this.selectedCategoryId.set(this.form.get('categoryId')?.value ?? '');
   }
 
   async save(): Promise<void> {
@@ -121,7 +124,7 @@ export class BudgetFormComponent implements OnInit {
         budgetAmount: Number(value.budgetAmount),
         lastUpdated:  now,
       };
-      this.store.dispatch(BudgetsActions.updateBudget({ budget: updatedBudget, rowNumber: rn }));
+      this.budgetsState.update(updatedBudget, rn);
     } else {
       const user = this.authService.getUser();
       if (!user) return;
@@ -136,7 +139,7 @@ export class BudgetFormComponent implements OnInit {
         status:       BUDGET_STATUS.OK,
         lastUpdated:  now,
       };
-      this.store.dispatch(BudgetsActions.saveBudget({ budget: newBudget }));
+      this.budgetsState.save(newBudget);
     }
 
     await this.modalCtrl.dismiss();

@@ -16,20 +16,32 @@
   <!-- Filtros Rápidos (Monefy Style) -->
   <div class="bg-[var(--color-primary)] pb-4 rounded-b-[40px] shadow-lg">
     <div class="flex gap-2 p-4 overflow-x-auto no-scrollbar max-w-screen-xl mx-auto">
-      <div (click)="toggleFilter('wallet')" class="bg-white/20 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform cursor-pointer"
-           [class.bg-white/40]="openFilter() === 'wallet'">
-        <ion-icon name="wallet-outline" class="text-xs"></ion-icon>
-        <span class="text-xs font-bold">{{ filterWalletLabel() }}</span>
+      <div class="bg-white/20 backdrop-blur-md px-5 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform cursor-pointer"
+           [class.bg-white/40]="openFilter() === 'wallet'"
+           (click)="toggleFilter('wallet')">
+        <ion-icon name="wallet-outline" class="text-sm"></ion-icon>
+        <span class="text-sm font-bold">{{ filterWalletLabel() }}</span>
+        @if (filterWallet()) {
+          <ion-icon name="close-circle-outline" class="text-sm ml-1" (click)="clearWalletFilter(); $event.stopPropagation()"></ion-icon>
+        }
       </div>
-      <div (click)="toggleFilter('category')" class="bg-white/20 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform cursor-pointer"
-           [class.bg-white/40]="openFilter() === 'category'">
-        <ion-icon name="sparkles-outline" class="text-xs"></ion-icon>
-        <span class="text-xs font-bold">{{ filterCategoryLabel() }}</span>
+      <div class="bg-white/20 backdrop-blur-md px-5 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform cursor-pointer"
+           [class.bg-white/40]="openFilter() === 'category'"
+           (click)="toggleFilter('category')">
+        <ion-icon name="sparkles-outline" class="text-sm"></ion-icon>
+        <span class="text-sm font-bold">{{ filterCategoryLabel() }}</span>
+        @if (filterCategory()) {
+          <ion-icon name="close-circle-outline" class="text-sm ml-1" (click)="clearCategoryFilter(); $event.stopPropagation()"></ion-icon>
+        }
       </div>
-      <div (click)="toggleFilter('period')" class="bg-white/20 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform cursor-pointer"
-           [class.bg-white/40]="openFilter() === 'period'">
-        <ion-icon name="calendar-outline" class="text-xs"></ion-icon>
-        <span class="text-xs font-bold">{{ filterPeriodLabel() }}</span>
+      <div class="bg-white/20 backdrop-blur-md px-5 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform cursor-pointer"
+           [class.bg-white/40]="openFilter() === 'period'"
+           (click)="toggleFilter('period')">
+        <ion-icon name="calendar-outline" class="text-sm"></ion-icon>
+        <span class="text-sm font-bold">{{ filterPeriodLabel() }}</span>
+        @if (filterDateFrom() || filterDateTo()) {
+          <ion-icon name="close-circle-outline" class="text-sm ml-1" (click)="clearPeriodFilter(); $event.stopPropagation()"></ion-icon>
+        }
       </div>
     </div>
   </div>
@@ -57,22 +69,26 @@
 
   <!-- Panel inline: Categoría -->
   @if (openFilter() === 'category') {
-    <div class="bg-white mx-4 mt-2 rounded-2xl shadow-md p-4 border border-gray-100 z-10 relative max-h-56 overflow-y-auto">
+    <div class="bg-white mx-4 mt-2 rounded-2xl shadow-md p-3 border border-gray-100 z-10 relative max-h-72 overflow-y-auto">
       <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">Filtrar por Categoría</h4>
-      <div class="grid grid-cols-3 gap-2">
-        <button (click)="setCategoryFilter('')"
-                class="flex flex-col items-center p-3 rounded-xl border-2 transition-all gap-1"
-                [class]="!filterCategory() ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)]' : 'border-gray-100 text-gray-500'">
-          <span class="text-xl">📂</span>
-          <span class="text-[10px] font-bold">Todas</span>
-        </button>
+      <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+        <div class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2 bg-white"
+             style="height: 72px; border-color: var(--color-gray-200)"
+             [class.ring-2]="!filterCategory()"
+             [class.ring-monefy-green]="!filterCategory()"
+             (click)="onCategoryFilterSelect('')">
+          <span style="font-size: 24px; line-height: 1;">🗂️</span>
+          <span class="text-[10px] text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">Todas</span>
+        </div>
         @for (c of categories(); track c.categoryId) {
-          <button (click)="setCategoryFilter(c.categoryId)"
-                  class="flex flex-col items-center p-3 rounded-xl border-2 transition-all gap-1"
-                  [class]="filterCategory() === c.categoryId ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)]' : 'border-gray-100 text-gray-500'">
-            <span class="text-xl">{{ c.icon }}</span>
-            <span class="text-[10px] font-bold truncate w-full text-center">{{ c.name }}</span>
-          </button>
+          <div class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2"
+               style="height: 72px;"
+               [style.border-color]="c.color"
+               [style.background-color]="filterCategory() === c.categoryId ? c.color + '33' : c.color + '1a'"
+               (click)="onCategoryFilterSelect(c.categoryId)">
+            <span style="font-size: 24px; line-height: 1;">{{ c.icon }}</span>
+            <span class="text-[10px] text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ c.name }}</span>
+          </div>
         }
       </div>
     </div>

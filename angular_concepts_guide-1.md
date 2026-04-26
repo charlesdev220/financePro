@@ -593,3 +593,745 @@ export const appConfig: ApplicationConfig = {
   ]
 };
 ```
+
+---
+
+## 13. effect()
+**¿Qué es?** Es la función de Angular para ejecutar **efectos secundarios** de forma reactiva. A diferencia de `computed()` que devuelve un valor derivado, `effect()` no devuelve nada — reacciona a cambios de Signals y ejecuta código imperativo: sincronizar con `localStorage`, llamar a una librería externa, hacer logging, manipular el DOM, etc. Se ejecuta automáticamente cada vez que alguno de los Signals que lee cambia de valor.
+
+**Regla de oro:** si necesitás un *valor* → `computed()`. Si necesitás una *acción* → `effect()`.
+
+**Ejemplo:**
+```typescript
+import { Component, signal, effect } from '@angular/core';
+
+@Component({
+  selector: 'app-theme',
+  standalone: true,
+  template: `
+    <button (click)="toggleDark()">Cambiar tema</button>
+  `,
+})
+export class ThemeComponent {
+  isDark = signal<boolean>(false);
+
+  constructor() {
+    // Se ejecuta cada vez que 'isDark' cambia
+    effect(() => {
+      // Efecto secundario: sincronizar con el DOM/localStorage
+      document.body.classList.toggle('dark-mode', this.isDark());
+      localStorage.setItem('theme', this.isDark() ? 'dark' : 'light');
+    });
+  }
+
+  toggleDark() {
+    this.isDark.update(v => !v);
+  }
+}
+```
+
+**Cuándo NO usarlo:**
+```typescript
+// ❌ Para derivar valores — eso es computed()
+effect(() => {
+  this.total.set(this.precio() * this.cantidad()); // MAL: usar computed() para esto
+});
+
+// ✅ computed() para derivar, effect() para actuar
+total = computed(() => this.precio() * this.cantidad());
+```
+
+---
+
+## 14. linkedSignal()
+**¿Qué es?** Es una Signal especial (Angular 19+) que se comporta como un `computed()` con la capacidad extra de ser **sobreescrita manualmente**. El problema que resuelve: querés que un valor se actualice automáticamente cuando una fuente cambia, pero también permitir que el usuario lo modifique localmente sin romper la reactividad.
+
+**Analogía:** es como un campo de formulario que se pre-rellena desde los datos del servidor, pero el usuario puede editarlo.
+
+**Ejemplo:**
+```typescript
+import { Component, signal, linkedSignal } from '@angular/core';
+
+@Component({
+  selector: 'app-product-editor',
+  standalone: true,
+  template: `
+    <select (change)="onProductChange($event)">
+      <option value="1">Teclado</option>
+      <option value="2">Mouse</option>
+    </select>
+
+    <!-- El precio se sincroniza con el producto, pero el usuario puede editarlo -->
+    <input [value]="editablePrice()" (input)="editablePrice.set(+$any($event.target).value)" />
+    <p>Precio a facturar: {{ editablePrice() }}</p>
+  `,
+})
+export class ProductEditorComponent {
+  selectedProductId = signal<number>(1);
+
+  // Precios de referencia (simulando datos del servidor)
+  private catalog: Record<number, number> = { 1: 150, 2: 45 };
+
+  // Se recalcula cuando 'selectedProductId' cambia,
+  // pero también permite que el usuario lo sobreescriba
+  editablePrice = linkedSignal(() => this.catalog[this.selectedProductId()] ?? 0);
+
+  onProductChange(event: Event) {
+    const id = Number((event.target as HTMLSelectElement).value);
+    this.selectedProductId.set(id);
+    // editablePrice se resetea automáticamente al precio del nuevo producto
+  }
+}
+```
+
+---
+
+## 15. @let (Variables de Plantilla)
+**¿Qué es?** Es una sintaxis de Angular 18+ para declarar **variables locales dentro del template HTML**. Permite guardar el resultado de una expresión o un Signal en una variable con nombre para reutilizarla sin llamarla múltiples veces. Mejora la legibilidad y evita cálculos repetidos en el template.
+
+**Ejemplo:**
+```html
+<!-- Sin @let: se llama al signal/pipe varias veces — ineficiente y verboso -->
+<p>{{ usuario()?.nombre }}</p>
+<p>Bienvenido, {{ usuario()?.nombre }}</p>
+<img [src]="usuario()?.avatar" [alt]="usuario()?.nombre" />
+
+<!-- ✅ Con @let: se evalúa una vez y se reutiliza -->
+@let user = usuario();
+@let nombre = user?.nombre ?? 'Invitado';
+
+<p>{{ nombre }}</p>
+<p>Bienvenido, {{ nombre }}</p>
+<img [src]="user?.avatar" [alt]="nombre" />
+```
+
+```html
+<!-- Caso común: resultado de pipe o expresión larga -->
+@let total = (transacciones() | sumaPipe) * tipoCambio();
+
+<span class="text-2xl font-bold">{{ total | currency:'USD' }}</span>
+<p>IVA (21%): {{ total * 0.21 | currency:'USD' }}</p>
+```
+
+**Restricciones de `@let`:**
+- Solo existe dentro del bloque donde fue declarado (no "sube" al padre).
+- No puede mutar signals — es de solo lectura en el template.
+- No reemplaza a `computed()` en el `.ts` cuando la lógica es reutilizable entre métodos.
+
+---
+
+## 16. SSR — Server-Side Rendering
+**¿Qué es?** Es la técnica por la cual Angular pre-renderiza el HTML de la aplicación **en el servidor** antes de enviarlo al navegador. El resultado: el usuario ve contenido real instantáneamente (no una pantalla en blanco mientras carga el JS), y los crawlers de Google indexan el contenido correctamente sin ejecutar JavaScript.
+
+**Flujo SSR vs CSR:**
+```
+SIN SSR (Client-Side Rendering):
+Browser → descarga app.js (500 KB) → ejecuta Angular → renderiza HTML → usuario ve contenido
+   [vacio ~1-3 seg]
+
+CON SSR:
+Servidor → ejecuta Angular → genera HTML completo → Browser recibe HTML ya renderizado → usuario ve contenido [inmediato]
+Angular luego "hidrata" el HTML estático con interactividad → proceso llamado Hydration
+```
+
+**Configuración en Angular (`@angular/ssr`):**
+```typescript
+// app.config.server.ts — configuración específica del servidor
+import { mergeApplicationConfig, ApplicationConfig } from '@angular/core';
+import { provideServerRendering } from '@angular/platform-server';
+import { appConfig } from './app.config';
+
+const serverConfig: ApplicationConfig = {
+  providers: [
+    provideServerRendering(),
+  ]
+};
+
+export const config = mergeApplicationConfig(appConfig, serverConfig);
+```
+
+**Problema clásico de SSR — acceso al navegador:**
+```typescript
+import { isPlatformBrowser } from '@angular/common';
+import { PLATFORM_ID, inject } from '@angular/core';
+
+export class StorageService {
+  private platformId = inject(PLATFORM_ID);
+
+  getItem(key: string): string | null {
+    // ❌ En el servidor no existe 'window' ni 'localStorage' — esto crashea
+    // return localStorage.getItem(key);
+
+    // ✅ Verificar la plataforma antes de acceder a APIs del browser
+    if (isPlatformBrowser(this.platformId)) {
+      return localStorage.getItem(key);
+    }
+    return null;
+  }
+}
+```
+
+**Cuándo usar SSR:**
+| Escenario | SSR necesario |
+|-----------|--------------|
+| App de finanzas privada (requiere login) | ❌ No — el contenido ya es privado, SEO no importa |
+| Blog, e-commerce, landing page | ✅ Sí — SEO y primera carga son críticos |
+| Dashboard interno de empresa | ❌ No — UX sobre SEO |
+| App con Ionic/Capacitor (móvil nativo) | ❌ No — el browser es el del webview, no Google |
+
+---
+
+## 17. Signal Input — `input()` e `input.required()`
+**¿Qué es?** Es la API moderna (Angular 17.1+) para declarar **propiedades de entrada** en componentes. A diferencia del decorador clásico `@Input()`, `input()` devuelve una **Signal**, lo que significa que el valor es reactivo y se puede usar directamente en `computed()`, `effect()` y en el template con `()`. Es la forma preferida en código nuevo.
+
+**Comparación directa:**
+```typescript
+// ❌ Forma clásica (no reactiva, decorator-based)
+@Input() nombre: string = '';
+@Input({ required: true }) usuario!: User;
+
+// ✅ Forma moderna con Signals (reactiva, type-safe)
+nombre   = input<string>('');          // con valor por defecto
+usuario  = input.required<User>();     // obligatorio — Angular lanza error si no se pasa
+filtro   = input<string>('all');       // opcional con default
+```
+
+**Ventaja clave — reactividad directa:**
+```typescript
+import { Component, input, computed } from '@angular/core';
+
+@Component({
+  selector: 'app-greeting',
+  standalone: true,
+  template: `<h1>{{ saludo() }}</h1>`,
+})
+export class GreetingComponent {
+  // Input reactivo — puede usarse directamente en computed()
+  nombre = input.required<string>();
+  plan   = input<'free' | 'pro'>('free');
+
+  // ✅ computed() que depende de dos inputs — se recalcula automáticamente
+  saludo = computed(() =>
+    this.plan() === 'pro'
+      ? `¡Hola ${this.nombre()}, bienvenido al plan Pro! 🎉`
+      : `Hola ${this.nombre()}`
+  );
+}
+```
+
+```html
+<!-- Uso en el padre -->
+<app-greeting [nombre]="'María'" [plan]="'pro'" />
+```
+
+**Con `withComponentInputBinding()` — params de ruta como inputs:**
+```typescript
+// app.config.ts
+provideRouter(routes, withComponentInputBinding())
+
+// producto-detail.component.ts
+@Component({ ... })
+export class ProductoDetailComponent {
+  // Angular inyecta automáticamente el :id de la URL como Signal
+  id = input<string>();
+
+  producto = computed(() =>
+    this.allProductos().find(p => p.id === this.id())
+  );
+}
+```
+
+---
+
+## 18. Slug — Parámetros de Ruta Semánticos
+**¿Qué es?** Un *slug* es un segmento de URL legible por humanos y motores de búsqueda que identifica un recurso. En lugar de `/producto/1234`, usás `/producto/teclado-mecanico-rgb`. En Angular, los slugs se definen como parámetros de ruta con `:nombre` y se acceden como `input()` con `withComponentInputBinding()`.
+
+**¿Por qué importa?**
+- **SEO:** Google indexa `/transacciones/gastos-enero-2025` mejor que `/transacciones?filter=abc`.
+- **UX:** la URL es autoexplicativa y compartible.
+- **Bookmarks:** el usuario puede guardar y volver a un estado concreto.
+
+**Ejemplo — ruta con slug:**
+```typescript
+// app.routes.ts
+export const routes: Routes = [
+  {
+    path: 'categorias/:slug',           // ← el parámetro se llama 'slug'
+    loadComponent: () =>
+      import('./features/categories/category-detail/category-detail.page')
+        .then(m => m.CategoryDetailPage),
+  }
+];
+```
+
+```typescript
+// category-detail.page.ts
+import { Component, input, computed, inject } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { selectAllCategories } from '@store/categories/categories.selectors';
+
+@Component({ ... })
+export class CategoryDetailPage {
+  private store = inject(Store);
+
+  // Angular inyecta automáticamente el :slug de la URL
+  slug = input<string>();
+
+  /** Todas las categorías del store NgRx. */
+  readonly allCategories = toSignal(
+    this.store.select(selectAllCategories),
+    { initialValue: [] }
+  );
+
+  /** Categoría activa derivada del slug de la URL. */
+  readonly categoria = computed(() =>
+    this.allCategories().find(c => c.slug === this.slug())
+  );
+}
+```
+
+```typescript
+// Al navegar — nunca pasar el objeto entero, solo el slug
+this.router.navigate(['/categorias', categoria.slug]);
+// Genera: /categorias/gastos-hogar
+```
+
+**Generación de slug desde un nombre:**
+```typescript
+// shared/utils/slug.utils.ts
+export function toSlug(nombre: string): string {
+  return nombre
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '') // elimina acentos
+    .replace(/[^a-z0-9\s-]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
+// 'Gastos del Hogar' → 'gastos-del-hogar'
+```
+
+---
+
+## 19. EventEmitter — El Emisor de Eventos Clásico
+**¿Qué es?** `EventEmitter` es la clase de Angular usada históricamente con `@Output()` para que un componente hijo le comunique eventos al padre. Internamente es un Subject de RxJS envuelto en la API de Angular. En código moderno se reemplaza por `output()`, pero es importante entenderlo para leer proyectos existentes.
+
+**Comparación lado a lado:**
+```typescript
+// ❌ Estilo clásico — @Output() + EventEmitter
+import { Output, EventEmitter } from '@angular/core';
+
+@Component({ ... })
+export class FormClasico {
+  @Output() guardado = new EventEmitter<string>();
+  @Output() cancelado = new EventEmitter<void>();
+
+  onGuardar() {
+    this.guardado.emit('datos del formulario');
+  }
+}
+```
+
+```typescript
+// ✅ Estilo moderno — output() (Angular 17.1+)
+import { output } from '@angular/core';
+
+@Component({ ... })
+export class FormModerno {
+  guardado   = output<string>();
+  cancelado  = output<void>();
+
+  onGuardar() {
+    this.guardado.emit('datos del formulario');
+  }
+}
+```
+
+```html
+<!-- El template del PADRE es idéntico en ambos casos -->
+<app-form
+  (guardado)="onGuardado($event)"
+  (cancelado)="onCancelado()"
+/>
+```
+
+**¿Cuándo sigue siendo válido `EventEmitter`?**
+- Al mantener o extender componentes legacy.
+- Cuando la librería de UI usada (Ionic, Material) lo usa internamente.
+- Nunca en componentes nuevos — usar `output()`.
+
+**Truco: `EventEmitter` tiene `.subscribe()` (es un Observable)**
+```typescript
+// ✅ Se puede escuchar programáticamente si se necesita
+@ViewChild(FormClasico) form!: FormClasico;
+
+ngAfterViewInit() {
+  // Raro, pero válido para casos de integración
+  this.form.guardado.subscribe(datos => console.log(datos));
+}
+```
+
+---
+
+## 20. State — Estado del Componente con Signals
+**¿Qué es?** El "state" (estado) de un componente es el conjunto de datos que determinan qué muestra en pantalla en cada momento. En Angular moderno con Signals, el estado se divide en dos categorías con estrategias distintas:
+
+| Tipo | Herramienta | Cuándo |
+|------|------------|--------|
+| Estado local / UI | `signal()` + `computed()` | Filtros activos, modales abiertos, loading local, tabs |
+| Estado global / colecciones | NgRx Store | Transacciones, carteras, categorías — datos del servidor |
+
+**Patrón de estado local (solo UI):**
+```typescript
+@Component({ ... })
+export class TransactionListPage {
+  // ── Estado local de UI ──────────────────────────────────
+  filterType  = signal<'all' | 'income' | 'expense'>('all');
+  searchQuery = signal<string>('');
+  isLoading   = signal<boolean>(false);
+  modalOpen   = signal<boolean>(false);
+
+  // ── Estado global desde el store ────────────────────────
+  /** Todas las transacciones del usuario desde NgRx. */
+  readonly allTransactions = toSignal(
+    this.store.select(selectAllTransactions),
+    { initialValue: [] }
+  );
+
+  // ── Estado derivado (computed) ───────────────────────────
+  /** Transacciones filtradas por tipo y búsqueda activos. */
+  readonly transactions = computed(() => {
+    const type  = this.filterType();
+    const query = this.searchQuery().toLowerCase();
+
+    return this.allTransactions()
+      .filter(t => type === 'all' || t.type === type)
+      .filter(t => t.description.toLowerCase().includes(query));
+  });
+
+  // ── Mutaciones de estado ─────────────────────────────────
+  onFilterChange(type: 'all' | 'income' | 'expense') {
+    this.filterType.set(type);       // ✅ solo .set() desde métodos
+  }
+
+  onSearch(event: CustomEvent) {
+    this.searchQuery.set(event.detail.value ?? '');
+  }
+}
+```
+
+**Anti-patrones de estado a evitar:**
+```typescript
+// ❌ Estado en variables ordinarias — no reactivo
+filtroActivo = 'all';    // Angular no detecta cambios
+
+// ❌ Estado en el template — ilegible y sin tipo
+// (click)="filterType.set('income')"   // lógica inline prohibida
+
+// ❌ Duplicar en Signal lo que ya está en el store
+transactions = signal<Transaction[]>([]); // usar toSignal(store.select(...))
+```
+
+---
+
+## 21. model() / model.required() — Two-Way Binding con Signals
+**¿Qué es?** `model()` (Angular 17.2+) es una Signal especial que combina `input()` y `output()` en uno: permite que el componente hijo **lea** un valor del padre **y también lo modifique** de vuelta, sincronizando ambos automáticamente. Es el reemplazo moderno de `[(ngModel)]` para componentes custom y del patrón clásico `@Input() + @Output() cambioChange`.
+
+**Analogía:** si `input()` es una calle de un solo sentido (padre → hijo), `model()` es una autopista de doble mano (padre ↔ hijo).
+
+**Ejemplo — selector de cantidad reutilizable:**
+```typescript
+// quantity-selector.component.ts (HIJO)
+import { Component, model, ChangeDetectionStrategy } from '@angular/core';
+
+@Component({
+  selector: 'app-quantity-selector',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <button (click)="decrement()">−</button>
+    <span>{{ cantidad() }}</span>
+    <button (click)="increment()">+</button>
+  `,
+})
+export class QuantitySelectorComponent {
+  // model() — bidireccional: el padre le pasa el valor Y el hijo puede cambiarlo
+  cantidad = model.required<number>();
+
+  increment() { this.cantidad.update(v => v + 1); } // notifica al padre automáticamente
+  decrement() { this.cantidad.update(v => Math.max(0, v - 1)); }
+}
+```
+
+```typescript
+// cart.component.ts (PADRE)
+@Component({
+  selector: 'app-cart',
+  standalone: true,
+  imports: [QuantitySelectorComponent],
+  template: `
+    <p>Unidades: {{ unidades() }}</p>
+    <!--
+      [(cantidad)] es azúcar sintáctico de Angular para:
+      [cantidad]="unidades()" (cantidadChange)="unidades.set($event)"
+    -->
+    <app-quantity-selector [(cantidad)]="unidades" />
+  `,
+})
+export class CartComponent {
+  unidades = signal<number>(1);
+}
+```
+
+**Diferencia `input()` vs `model()`:**
+| | `input()` | `model()` |
+|---|---|---|
+| Dirección | Padre → Hijo | Padre ↔ Hijo |
+| El hijo puede mutar | ❌ No | ✅ Sí |
+| Sintaxis en padre | `[valor]="sig"` | `[(valor)]="sig"` |
+| Cuándo usar | Datos de solo lectura | Campos editables, toggles, selectores |
+
+---
+
+## 22. resource() y rxResource() — Carga Asíncrona Declarativa
+**¿Qué son?** Son APIs de Angular 19+ para gestionar el ciclo de vida completo de una petición asíncrona (loading → success → error) de forma declarativa con Signals. Eliminan el boilerplate de tener que manejar manualmente `loading = signal(false)`, `error = signal(null)`, etc.
+
+- **`resource()`** → para funciones `async/await`.
+- **`rxResource()`** → para Observables de RxJS (HttpClient, etc.).
+
+**Ejemplo con `resource()` (async/await):**
+```typescript
+import { Component, signal, resource, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+
+@Component({
+  selector: 'app-user-profile',
+  standalone: true,
+  template: `
+    @if (usuarioResource.isLoading()) {
+      <ion-spinner />
+    } @else if (usuarioResource.error()) {
+      <p class="text-red-500">Error al cargar el usuario</p>
+    } @else {
+      <h2>{{ usuarioResource.value()?.nombre }}</h2>
+    }
+  `,
+})
+export class UserProfileComponent {
+  private http = inject(HttpClient);
+  userId = signal<string>('usr_001');
+
+  // Cuando 'userId' cambia, la petición se re-ejecuta automáticamente
+  usuarioResource = resource({
+    request: () => ({ id: this.userId() }),
+    loader: async ({ request }) => {
+      return firstValueFrom(
+        this.http.get<User>(`/api/users/${request.id}`)
+      );
+    },
+  });
+}
+```
+
+**Ejemplo con `rxResource()` (Observable/RxJS):**
+```typescript
+import { rxResource } from '@angular/core/rxjs-interop';
+
+@Component({ ... })
+export class TransactionListComponent {
+  private http = inject(HttpClient);
+  walletId = signal<string>('wal_001');
+
+  // rxResource acepta directamente un Observable — no necesita firstValueFrom
+  transaccionesResource = rxResource({
+    request: () => ({ walletId: this.walletId() }),
+    loader: ({ request }) =>
+      this.http.get<Transaction[]>(`/api/transactions?wallet=${request.walletId}`),
+  });
+}
+```
+
+**Estados disponibles en el resource:**
+```typescript
+resource.isLoading()  // boolean — la petición está en curso
+resource.value()      // T | undefined — los datos cuando éxito
+resource.error()      // unknown — el error cuando falla
+resource.status()     // 'idle' | 'loading' | 'resolved' | 'error' | 'refreshing'
+resource.reload()     // método — forzar una recarga manual
+```
+
+**`resource()` vs `toSignal()` vs `effect()`:**
+| | `toSignal()` | `resource()` / `rxResource()` |
+|---|---|---|
+| Gestiona loading/error | ❌ Manual | ✅ Automático |
+| Re-ejecuta al cambiar params | ❌ No | ✅ Sí |
+| Para Observables simples | ✅ Ideal | Funciona |
+| Para peticiones parametrizadas | Complejo | ✅ Ideal |
+
+---
+
+## 23. @ViewChild vs viewChild() — Referencia a Elementos Hijos
+**¿Qué son?** Permiten obtener una referencia directa a un componente hijo, directiva o elemento del DOM desde el componente padre. Se usan cuando necesitás llamar métodos de un hijo, acceder al DOM nativo, o interactuar con librerías de terceros (Chart.js, mapas, etc.).
+
+**Forma clásica — `@ViewChild()` (decorator):**
+```typescript
+import { Component, ViewChild, AfterViewInit, ElementRef } from '@angular/core';
+import { ChartComponent } from './chart/chart.component';
+
+@Component({
+  selector: 'app-dashboard',
+  template: `
+    <canvas #myCanvas></canvas>
+    <app-chart #chart />
+  `,
+})
+export class DashboardComponent implements AfterViewInit {
+  // Referencia a un elemento del DOM
+  @ViewChild('myCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
+
+  // Referencia a un componente hijo
+  @ViewChild(ChartComponent) chartComponent!: ChartComponent;
+
+  ngAfterViewInit() {
+    // Solo disponible DESPUÉS de que la vista se renderice
+    const ctx = this.canvasRef.nativeElement.getContext('2d');
+    this.chartComponent.render();
+  }
+}
+```
+
+**Forma moderna — `viewChild()` Signal (Angular 17.3+):**
+```typescript
+import { Component, viewChild, ElementRef, AfterViewInit } from '@angular/core';
+
+@Component({
+  selector: 'app-dashboard',
+  template: `
+    <canvas #myCanvas></canvas>
+    <app-chart #chart />
+  `,
+})
+export class DashboardComponent implements AfterViewInit {
+  // Signal — el valor puede ser undefined antes del render
+  canvasRef     = viewChild<ElementRef<HTMLCanvasElement>>('myCanvas');
+  chartComponent = viewChild(ChartComponent);
+
+  // viewChild.required() — lanza error si el elemento no existe en el template
+  canvasRequired = viewChild.required<ElementRef<HTMLCanvasElement>>('myCanvas');
+
+  ngAfterViewInit() {
+    // Con viewChild() — acceder con ()
+    const ctx = this.canvasRef()?.nativeElement.getContext('2d');
+
+    // Con viewChild.required() — siempre definido, sin '?'
+    const ctx2 = this.canvasRequired().nativeElement.getContext('2d');
+  }
+}
+```
+
+**Tabla comparativa:**
+| | `@ViewChild()` | `viewChild()` Signal |
+|---|---|---|
+| Retorna | Valor directo (puede ser undefined) | Signal — llamar con `()` |
+| Requiere `!` (non-null assertion) | ✅ Sí — `!: ElementRef` | ❌ No |
+| Integra con `computed()` / `effect()` | ❌ No reactivo | ✅ Sí |
+| `.required()` disponible | ❌ No nativo | ✅ `viewChild.required()` |
+| Cuándo usar | Código legacy / librerías sin soporte Signal | Todo código nuevo |
+
+**Caso de uso real — inicializar Chart.js:**
+```typescript
+export class AnalyticsPage implements AfterViewInit {
+  // viewChild.required() — el canvas SIEMPRE existe en este template
+  canvasEl = viewChild.required<ElementRef<HTMLCanvasElement>>('barCanvas');
+
+  private chartInstance: Chart | null = null;
+
+  ngAfterViewInit() {
+    this.chartInstance = new Chart(this.canvasEl().nativeElement, {
+      type: 'bar',
+      data: { labels: [], datasets: [] },
+    });
+  }
+
+  ngOnDestroy() {
+    this.chartInstance?.destroy();
+  }
+}
+```
+
+---
+
+## 24. BehaviorSubject — Observable con Estado Actual
+**¿Qué es?** Es un tipo especial de Subject de RxJS que almacena y emite el **último valor emitido** a cualquier nuevo suscriptor. A diferencia de un Subject común (que solo emite a suscriptores activos en el momento), un `BehaviorSubject` siempre tiene un valor actual y lo entrega inmediatamente al suscribirse.
+
+**Analogía:** es como un tablero de anuncios que siempre muestra el último aviso. Quien llegue tarde igual lo ve.
+
+**Comparación Subject vs BehaviorSubject:**
+```typescript
+import { Subject, BehaviorSubject } from 'rxjs';
+
+const subject$ = new Subject<number>();
+subject$.next(1);
+subject$.subscribe(v => console.log('Subject:', v));
+// No imprime nada — llegó tarde, se perdió el '1'
+
+const behavior$ = new BehaviorSubject<number>(0); // valor inicial obligatorio
+behavior$.next(1);
+behavior$.subscribe(v => console.log('Behavior:', v));
+// Imprime: 'Behavior: 1' — recibe el último valor inmediatamente
+```
+
+**Cuándo usar `BehaviorSubject` en Angular:**
+```typescript
+// ✅ Servicios de configuración/preferencias del usuario
+@Injectable({ providedIn: 'root' })
+export class UserPreferencesService {
+  // Persiste el estado actual de las preferencias
+  private _currency$ = new BehaviorSubject<string>('USD');
+
+  // Exponés el observable (read-only) — nadie externo puede llamar .next()
+  readonly currency$ = this._currency$.asObservable();
+
+  // Getter para leer el valor actual sin suscribirse
+  get currentCurrency(): string {
+    return this._currency$.getValue();
+  }
+
+  setCurrency(currency: string): void {
+    this._currency$.next(currency);
+  }
+}
+```
+
+```typescript
+// Consumo en componente — convertir a Signal con toSignal()
+@Component({ ... })
+export class HeaderComponent {
+  private prefs = inject(UserPreferencesService);
+
+  /** Moneda activa del usuario desde el servicio de preferencias. */
+  readonly currency = toSignal(this.prefs.currency$, { initialValue: 'USD' });
+}
+```
+
+**`BehaviorSubject` vs `Signal` — cuándo usar cada uno:**
+| Criterio | `BehaviorSubject` | `signal()` |
+|---|---|---|
+| Estado local del componente | ❌ Sobredimensionado | ✅ Ideal |
+| Estado compartido entre servicios | ✅ Válido | ✅ También funciona |
+| Se puede observar con RxJS (`pipe`, `combineLatest`) | ✅ Sí — es un Observable | ❌ No directamente |
+| Integra con `toSignal()` | ✅ Sí | No necesario |
+| Valor actual sin suscribirse | `.getValue()` | `signal()` — directamente |
+| En colecciones de negocio | ❌ Usar NgRx | ❌ Usar NgRx |
+
+**Regla del proyecto MyFinance:**
+```typescript
+// ✅ BehaviorSubject solo en servicios de config/preferencias
+private _theme$ = new BehaviorSubject<'light' | 'dark'>('light');
+
+// ❌ Nunca BehaviorSubject para colecciones (transacciones, carteras)
+private _transactions$ = new BehaviorSubject<Transaction[]>([]);  // usar NgRx
+```

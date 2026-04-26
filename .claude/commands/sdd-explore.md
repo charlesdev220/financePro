@@ -1,6 +1,6 @@
 # SDD Explore
 
-Investiga el tema o feature indicado antes de proponer solución.  
+**`ionic-angular-architect`** ejecuta esta fase. Investiga el tema o feature indicado antes de proponer solución.  
 Recibís: **$ARGUMENTS** (tema o feature a explorar, y opcionalmente un nombre de cambio).
 
 ## Qué hacer
@@ -32,6 +32,12 @@ Recibís: **$ARGUMENTS** (tema o feature a explorar, y opcionalmente un nombre d
 
 ### Risks
 - {Riesgo 1}
+
+### Resume
+{Resumen corto del tema investigado}
+- *Qué se va a cambiar:* {...}
+- *Por qué se cambiar:* {...}
+- *Dónde se cambiar:* {...}
 
 ### Ready for Proposal
 {Sí/No — qué falta aclarar}

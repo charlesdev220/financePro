@@ -1,6 +1,4 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 import {
   IonContent, IonHeader, IonTitle, IonToolbar,
@@ -9,14 +7,12 @@ import {
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { addOutline, trashOutline, createOutline } from 'ionicons/icons';
-import { WalletsActions } from '@store/wallets/wallets.actions';
-import { selectAllWallets, selectWalletsRowMap, selectWalletsLoading } from '@store/wallets/wallets.selectors';
-import { selectAllTransactions } from '@store/transactions/transactions.selectors';
+import { WalletsStateService } from '@core/state/wallets.state';
+import { TransactionsStateService } from '@core/state/transactions.state';
 import { IWallet } from '@models/wallet.model';
 import { AuthService } from '@core/services/auth.service';
 import { WalletFormComponent } from '@features/wallets/wallet-form/wallet-form.component';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
-import { AppState } from '@store/app.state';
 import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 
 @Component({
@@ -33,19 +29,20 @@ import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
   ],
 })
 export class WalletListPage implements OnInit {
-  private readonly store       = inject(Store<AppState>);
-  private readonly modalCtrl   = inject(ModalController);
-  private readonly toastCtrl   = inject(ToastController);
-  private readonly authService = inject(AuthService);
+  private readonly walletsState    = inject(WalletsStateService);
+  private readonly txState         = inject(TransactionsStateService);
+  private readonly modalCtrl       = inject(ModalController);
+  private readonly toastCtrl       = inject(ToastController);
+  private readonly authService     = inject(AuthService);
 
-  /** Estado de carga de carteras para mostrar spinner mientras llegan del store. */
-  readonly loading = toSignal(this.store.select(selectWalletsLoading), { initialValue: false });
+  /** Estado de carga de carteras para mostrar spinner mientras llegan del state service. */
+  readonly loading = this.walletsState.loading;
   /** Carteras del usuario para renderizar la lista. */
-  readonly wallets  = toSignal(this.store.select(selectAllWallets),  { initialValue: [] });
+  readonly wallets = this.walletsState.items;
   /** Mapa walletId → rowNumber en Sheets, necesario para edición y borrado. */
-  private readonly rowMap = toSignal(this.store.select(selectWalletsRowMap), { initialValue: {} as Record<string, number> });
-  /** Todas las transacciones del store, base para calcular balances por cartera. */
-  private readonly allTransactions = toSignal(this.store.select(selectAllTransactions), { initialValue: [] });
+  private readonly rowMap = this.walletsState.rowMap;
+  /** Todas las transacciones, base para calcular balances por cartera. */
+  private readonly allTransactions = this.txState.items;
 
   /** Balance acumulado por cartera (walletId → número): income suma, expense resta en divisa nativa. */
   readonly balanceMap = computed(() =>
@@ -61,7 +58,7 @@ export class WalletListPage implements OnInit {
   }
 
   ngOnInit(): void {
-    this.store.dispatch(WalletsActions.loadWallets());
+    this.walletsState.load();
   }
 
   getBalance(walletId: string): number {
@@ -92,7 +89,7 @@ export class WalletListPage implements OnInit {
   async deleteWallet(wallet: IWallet): Promise<void> {
     const rowNumber = this.rowMap()[wallet.walletId];
     if (!rowNumber) return;
-    this.store.dispatch(WalletsActions.deleteWallet({ walletId: wallet.walletId, rowNumber }));
+    this.walletsState.delete(wallet.walletId, rowNumber);
     const toast = await this.toastCtrl.create({
       message: 'Cartera eliminada',
       duration: 2000,

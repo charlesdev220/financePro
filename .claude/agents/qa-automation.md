@@ -22,6 +22,7 @@ Eres el **especialista en calidad** del proyecto MyFinance. Garantizas que el c�
 - Escribir tests E2E con **Playwright** para flujos críticos (login, crear transacción, ver dashboard).
 - Auditar cobertura e identificar gaps respecto a las specs BDD.
 - En fase SDD: ejecutar `/sdd-verify` y generar el compliance matrix.
+- Ademas de verificar los cambios y los test, debes asegurarte de que la funcionalidad anterior se mantiene.
 
 ## Estrategia de Testing por Capa
 

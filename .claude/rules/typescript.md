@@ -6,6 +6,23 @@
 - Un archivo por modelo: `src/app/models/{nombre}.model.ts` en singular.
 - Exportar siempre con `export interface`.
 
+
+# USO de CONSTANTES
+
+```typescript
+export const TRANSACTION_TYPES = {
+  INCOME: 'INCOME' as const,
+  EXPENSE: 'EXPENSE' as const,
+};
+```
+```typescript
+// ✅
+signal<TransactionType>(TRANSACTION_TYPES.EXPENSE);
+
+// ❌
+signal<'income' | 'expense'>('expense'); 
+```
+## DTOs
 ```typescript
 // ✅
 export interface Transaction {

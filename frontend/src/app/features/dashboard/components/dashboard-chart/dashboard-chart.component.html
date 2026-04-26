@@ -1,7 +1,7 @@
 <div class="relative flex flex-col items-center">
   @if (chartData()) {
     <div class="relative w-full aspect-square max-h-[280px]">
-      <app-chart-pie [data]="chartData()"></app-chart-pie>
+      <app-chart-pie [data]="chartData()" [refreshTrigger]="refreshTick()"></app-chart-pie>
       
       <!-- Balance central (Monefy soul) -->
       <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">

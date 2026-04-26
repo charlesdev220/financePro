@@ -19,6 +19,7 @@ export class {Nombre}Page {}
 - `styleUrls` o `styles: []` vacío si no hay estilos propios (Tailwind en HTML).
 - `changeDetection: ChangeDetectionStrategy.OnPush` en todos los componentes.
 - Nunca `NgModule` en componentes nuevos.
+- Se simplifica el codigo utilizando Vistas Anidadas (Router con Children y `<router-outlet>`)
 
 ## Separación de plantillas — REGLA DE ORO
 
@@ -27,6 +28,7 @@ export class {Nombre}Page {}
 - Cualquier PR que use `template:` inline será rechazado.
 - los observable deben ser pasados a tosignal antes de ser usados en el template.
 - en las rutas hacer uso del :slug para un mejor SEO 
+- **no utilizar `@ngrx/store`** en su lugar utilizar los Signals
 
 ## Smart vs Dumb
 

@@ -56,17 +56,17 @@
         }
 
         <!-- Período -->
-        <ion-item>
-          <ion-label position="stacked">Período (YYYY-MM) *</ion-label>
-          <ion-input
-            formControlName="period"
-            placeholder="2026-04"
-            pattern="^\d{4}-\d{2}$">
-          </ion-input>
+        <ion-item lines="none" class="ion-no-padding mb-1">
+          <ion-label position="stacked" class="mb-2">Período *</ion-label>
         </ion-item>
+        <div class="px-1 mb-1">
+          <input type="month"
+                 formControlName="period"
+                 class="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-monefy-text-primary bg-white focus:outline-none focus:ring-2 focus:ring-monefy-green" />
+        </div>
         @if (form.get('period')?.invalid && form.get('period')?.touched) {
           <ion-note color="danger" class="ion-padding-horizontal">
-            El período es obligatorio (formato YYYY-MM)
+            El período es obligatorio
           </ion-note>
         }
 

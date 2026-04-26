@@ -93,7 +93,7 @@ Prompt
   └── CLAUDE.md                    ← QUÉ construir y por qué (este archivo, actúa como orchestrator)
         ├── ionic-angular-architect   ← implementa frontend (UI, componentes, páginas, store)
         │     ├── lee: typescript · angular · html · ionic · ngrx · tailwind · ux-ui
-        │     └── delega implementación atómica → feature-scaffold
+        │     └── delega implementación atómica → develop-expert
         ├── google-sheets-architect   ← mantiene el esquema de datos y los modelos
         │     └── lee: sheets-api · typescript
         ├── qa-automation             ← escribe y ejecuta tests contra spec.md
@@ -184,7 +184,7 @@ Antes de ejecutar algo, preguntate: **¿esto infla mi contexto sin necesidad?**
 ### Agente de implementación
 | Agente | Cuándo usarlo |
 |--------|--------------|
-| `feature-scaffold` | Implementar cualquier artefacto Angular/Ionic (page, component, effect, reducer…) |
+| `develop-expert` | Implementar cualquier artefacto Angular/Ionic (page, component, effect, reducer…) |
 
 ### SDD Workflow — artefactos en `.sdd/changes/{change-name}/`
 | Comando | Cuándo usarlo |
@@ -234,6 +234,7 @@ explore → propose → spec → tasks → apply → verify → archive
 *Fase actual:* Fase X: ...
 *Estado actual:* Completado / En Proceso
 - ✔️ **{Nombre}:** {Descripción técnica en 1 línea}
+*Deuda técnica documentada:* {...}
 *Próximos pasos:* {...}
 *Qué se aprendió:* {...}
 *Por qué se aprendió:* {...}

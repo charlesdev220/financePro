@@ -1,6 +1,4 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { Store } from '@ngrx/store';
 import {
   IonContent,
   IonHeader,
@@ -8,18 +6,15 @@ import {
   IonToolbar,
 } from '@ionic/angular/standalone';
 
-import { selectAllTransactions } from '@store/transactions/transactions.selectors';
-import { selectActiveCategories } from '@store/categories/categories.selectors';
-import { map } from 'rxjs';
-import { selectBaseCurrency } from '@store/currency/currency.selectors';
-import { ITransaction } from '@models/transaction.model';
-import { TransactionsActions } from '@store/transactions/transactions.actions';
-import { CategoriesActions } from '@store/categories/categories.actions';
+import { TransactionsStateService } from '@core/state/transactions.state';
+import { CategoriesStateService } from '@core/state/categories.state';
+import { CurrencyStateService } from '@core/state/currency.state';
 import { AnalyticsService } from './services/analytics.service';
 import { AnalyticsChartComponent } from './components/analytics-chart/analytics-chart.component';
 import { ProjectionsComponent } from './components/projections/projections.component';
 import { SpendingRankingComponent } from './components/spending-ranking/spending-ranking.component';
 import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
+import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 
 function sixMonthsAgo(): string {
   const date = new Date();
@@ -42,22 +37,23 @@ function sixMonthsAgo(): string {
     AnalyticsChartComponent,
     ProjectionsComponent,
     SpendingRankingComponent,
+    CurrencyFormatPipe,
   ],
 })
 export class AnalyticsPage implements OnInit {
-  private readonly store           = inject(Store);
+  private readonly txState          = inject(TransactionsStateService);
+  private readonly categoriesState  = inject(CategoriesStateService);
+  private readonly currencyState    = inject(CurrencyStateService);
   private readonly analyticsService = inject(AnalyticsService);
 
   /** Todas las transacciones del usuario para calcular totales y clasificaciones. */
-  readonly allTxs = toSignal(this.store.select(selectAllTransactions), { initialValue: [] as ITransaction[] });
+  readonly allTxs = this.txState.items;
 
-  /** Moneda base del usuario desde USER_SETTINGS via NgRx. Fallback 'EUR' antes de cargar. */
-  readonly userBaseCurrency = toSignal(
-    this.store.select(selectBaseCurrency).pipe(map(c => c ?? 'EUR')),
-    { initialValue: 'EUR' }
-  );
+  /** Moneda base del usuario. Fallback 'EUR' antes de cargar. */
+  readonly userBaseCurrency = computed(() => this.currencyState.baseCurrency() ?? 'EUR');
+
   /** Categorías activas del usuario para el análisis de gastos. */
-  readonly categories = toSignal(this.store.select(selectActiveCategories), { initialValue: [] });
+  readonly categories = this.categoriesState.items;
 
   readonly startPeriod      = signal<string>(sixMonthsAgo());
   readonly selectedCategory = signal<string | null>(null);
@@ -75,14 +71,22 @@ export class AnalyticsPage implements OnInit {
   /** Períodos disponibles derivados de los totales mensuales, para el selector. */
   readonly periods = computed(() => this.monthlyTotals().map(t => t.period));
 
+  /** Totales del último período disponible para el header de resumen. */
+  readonly currentPeriodSummary = computed(() => {
+    const totals = this.monthlyTotals();
+    if (!totals.length) return { income: 0, expense: 0, balance: 0 };
+    const last = totals[totals.length - 1];
+    return { income: last.income, expense: last.expense, balance: last.income - last.expense };
+  });
+
   /** Clasificación de gastos recurrentes vs superfluos del período seleccionado. */
   readonly spendingData = computed(() =>
     this.analyticsService.classifySpending(this.filteredTxs(), this.periods()),
   );
 
   ngOnInit(): void {
-    this.store.dispatch(TransactionsActions.loadTransactions());
-    this.store.dispatch(CategoriesActions.loadCategories());
+    this.txState.load();
+    this.categoriesState.load();
   }
 
   onPeriodChange(period: string): void {

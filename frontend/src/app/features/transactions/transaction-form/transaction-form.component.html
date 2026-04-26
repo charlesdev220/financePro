@@ -34,8 +34,14 @@
       </button>
     </div>
     <div class="flex items-baseline text-white">
-      <span class="text-2xl font-bold opacity-80 mr-2">{{ form.get('currency')?.value }}</span>
-      <span class="text-6xl font-black tracking-tighter">{{ amountString() }}</span>
+      <span class="text-2xl font-bold opacity-80 mr-2">{{ selectedCurrency() }}</span>
+      <span class="md:hidden text-6xl font-black tracking-tighter">{{ amountString() }}</span>
+      <input type="number"
+             class="hidden md:block bg-transparent text-white font-black text-6xl tracking-tighter w-full text-center focus:outline-none"
+             [value]="amountString()"
+             (input)="onWebAmountInputNative($event)"
+             step="0.01"
+             placeholder="0" />
     </div>
   </div>
 </ion-header>
@@ -49,7 +55,7 @@
       <div class="grid grid-cols-2 gap-3 mb-3">
 
         <!-- Cartera -->
-        <button type="button" (click)="openWalletPicker()"
+        <button type="button" (click)="onWalletTileClick()"
           class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex items-center gap-3 active:scale-95 transition-transform overflow-hidden text-left w-full">
           <div
             class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl flex-shrink-0">
@@ -63,7 +69,7 @@
         </button>
 
         <!-- Categoría -->
-        <button type="button" (click)="openCategoryPicker()"
+        <button type="button" (click)="onCategoryTileClick()"
           class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex items-center gap-3 active:scale-95 transition-transform overflow-hidden text-left w-full">
           <div
             class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl flex-shrink-0">
@@ -91,7 +97,7 @@
         </div>
 
         <!-- Divisa -->
-        <button type="button" (click)="openCurrencyPicker()"
+        <button type="button" (click)="onCurrencyTileClick()"
           class="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm flex items-center gap-3 active:scale-95 transition-transform overflow-hidden text-left w-full">
           <div
             class="w-10 h-10 rounded-xl bg-green-50 text-green-600 flex items-center justify-center text-xl flex-shrink-0">
@@ -99,10 +105,68 @@
           </div>
           <div class="flex-1 min-w-0">
             <span class="text-[10px] uppercase font-bold text-gray-400 block">Divisa</span>
-            <span class="text-sm font-bold text-gray-800 block">{{ form.get('currency')?.value || 'EUR' }}</span>
+            <span class="text-sm font-bold text-gray-800 block">{{ selectedCurrency() }}</span>
           </div>
         </button>
       </div>
+
+      <!-- Accordeones inline web (≥768px) — se muestran debajo del grid de tiles -->
+      @if (openPicker() === 'wallet') {
+        <div class="hidden md:block bg-white rounded-2xl border border-gray-100 shadow-sm mb-3 p-3">
+          <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Seleccioná una cartera</h4>
+          <div class="grid grid-cols-2 gap-2">
+            @for (w of wallets(); track w.walletId) {
+              <button type="button"
+                class="flex items-center gap-2 p-2 rounded-xl border-2 text-sm font-semibold transition-all text-left"
+                [class.border-monefy-green]="selectedWalletId() === w.walletId"
+                [class.bg-monefy-mint]="selectedWalletId() === w.walletId"
+                [class.border-gray-100]="selectedWalletId() !== w.walletId"
+                (click)="onPickerWalletSelect(w.walletId)">
+                <span class="text-xl">{{ w.icon }}</span>
+                <span class="truncate">{{ w.name }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      @if (openPicker() === 'category') {
+        <div class="hidden md:block bg-white rounded-2xl border border-gray-100 shadow-sm mb-3 p-3">
+          <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Seleccioná una categoría</h4>
+          <div class="grid grid-cols-4 md:grid-cols-6 gap-2">
+            @for (cat of filteredCategories(); track cat.categoryId) {
+              <div class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2"
+                   style="height: 72px;"
+                   [style.border-color]="cat.color"
+                   [style.background-color]="selectedCategoryId() === cat.categoryId ? cat.color + '33' : cat.color + '1a'"
+                   (click)="onPickerCategorySelect(cat.categoryId)">
+                <span class="text-2xl leading-none">{{ cat.icon }}</span>
+                <span class="text-[10px] text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ cat.name }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (openPicker() === 'currency') {
+        <div class="hidden md:block bg-white rounded-2xl border border-gray-100 shadow-sm mb-3 p-3">
+          <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Seleccioná una divisa</h4>
+          <div class="flex flex-wrap gap-2">
+            @for (c of currencies; track c) {
+              <button type="button"
+                class="px-4 py-2 rounded-full text-sm font-bold border-2 transition-all"
+                [class.border-monefy-green]="selectedCurrency() === c"
+                [class.bg-monefy-mint]="selectedCurrency() === c"
+                [class.text-monefy-green]="selectedCurrency() === c"
+                [class.border-gray-200]="selectedCurrency() !== c"
+                [class.text-gray-600]="selectedCurrency() !== c"
+                (click)="onPickerCurrencySelect(c)">
+                {{ c }}
+              </button>
+            }
+          </div>
+        </div>
+      }
 
       <!-- Descripción y Notas -->
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-3">
@@ -159,12 +223,3 @@
   </div>
 </div>
 
-<!-- Input alternativo — visible solo en web (≥768px) -->
-<div class="hidden md:block bg-white border-t border-gray-200 px-4 py-3"
-  style="padding-bottom: env(safe-area-inset-bottom);">
-  <ion-item lines="none" class="ion-no-padding">
-    <ion-input type="number" [value]="amountString()" (ionInput)="onWebAmountInput($event)" placeholder="0.00"
-      class="text-2xl font-black text-center">
-    </ion-input>
-  </ion-item>
-</div>

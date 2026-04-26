@@ -40,6 +40,18 @@
               }
             </div>
           }
+          @if (!selectionMode()) {
+            <div class="hidden md:flex absolute bottom-1 right-1 gap-0.5">
+              <button type="button" class="p-1 rounded hover:bg-black/10"
+                      (click)="openEditCategory(cat); $event.stopPropagation()">
+                <ion-icon name="pencil-outline" class="text-monefy-text-secondary text-xs"></ion-icon>
+              </button>
+              <button type="button" class="p-1 rounded hover:bg-black/10"
+                      (click)="confirmDeleteCategory(cat); $event.stopPropagation()">
+                <ion-icon name="trash-outline" class="text-monefy-red text-xs"></ion-icon>
+              </button>
+            </div>
+          }
         </div>
         }
       </div>
@@ -64,6 +76,18 @@
               }
             </div>
           }
+          @if (!selectionMode()) {
+            <div class="hidden md:flex absolute bottom-1 right-1 gap-0.5">
+              <button type="button" class="p-1 rounded hover:bg-black/10"
+                      (click)="openEditCategory(cat); $event.stopPropagation()">
+                <ion-icon name="pencil-outline" class="text-monefy-text-secondary text-xs"></ion-icon>
+              </button>
+              <button type="button" class="p-1 rounded hover:bg-black/10"
+                      (click)="confirmDeleteCategory(cat); $event.stopPropagation()">
+                <ion-icon name="trash-outline" class="text-monefy-red text-xs"></ion-icon>
+              </button>
+            </div>
+          }
         </div>
         }
       </div>
@@ -73,11 +97,14 @@
   }
 
   @if (!selectionMode()) {
-    <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-      <ion-fab-button (click)="openAddModal()" color="primary">
-        <ion-icon name="add-outline"></ion-icon>
-      </ion-fab-button>
-    </ion-fab>
+    <div class="fixed left-0 right-0 flex justify-center px-4"
+         style="bottom: calc(56px + 12px); padding-bottom: env(safe-area-inset-bottom);">
+      <ion-button (click)="openAddModal()"
+                  class="w-full max-w-sm"
+                  style="--background: var(--color-green-500); --border-radius: 12px; text-transform: none; font-weight: 600;">
+        + Agregar categoría
+      </ion-button>
+    </div>
   }
 </ion-content>
 
