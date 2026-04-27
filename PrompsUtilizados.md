@@ -26,3 +26,12 @@ en un nuevo sdd implementa estas tareas:
 - la lista de movimientos del dashboard no esta ordenada de la misma forma que el tab de movimientos 
 
 - la pila de porcentaje por categoria delante del icono no es la misma que el porcentaje total de todas las categorias, una cosa es el porcentaje que llevamos gastado en una categoria y otra es el porcentaje que representa esa categoria sobre el total de gastos de todas las categorias que es el que esta al lado del monto total que lleva esa categoria
+
+-quiero analizar otras propuetas: A) quiero crear un md con la documentacion funcional del proyecto, por tabs con su tratamiento de datos entre       
+  features y la bd, este debe ser lo primero que vea el agente cuando lance una correccion o nueva implementacion. B) quiero un agente que enriquesca  
+  los prompts que envio ya sea una correccion o una nueva implementacion basandose en el fichero md creado en la opcion A. C) quiero eliminar el tab   
+  de presupuesto y trasladar su funcionalidad al tab de mas tomando como patron las opciones existentes. D) utilizar el componente entero del tab      
+  movimientos en el dashboard, elimiinando asi el tab de movimiento. E) quiero que el editar presupuesto sea mas entendible, las opciones deben ser    
+  presupuesto indefinido, presupuesto desde una fecha hasta otra fecha, y desabilitar presupuesto lo que incluye que no se muestre su barra de         
+  progreso en el dashboard como las demas categorias de gasto. todas estas propuestas deben ser añadidas a                                             
+  '/Users/charles/Documents/apps/FinancePro/WORKSPACES_PLAN.md' 
