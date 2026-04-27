@@ -1,0 +1,31 @@
+@if (chartData()) {
+  <div class="flex flex-col gap-4">
+    <!-- Bar chart columna -->
+    <div class="w-full" style="height: 220px;">
+      <app-chart-bar
+        [datasets]="chartData()!.datasets"
+        [labels]="chartData()!.labels"
+        type="bar"
+        [showLegend]="false"
+        ariaLabel="Gasto por categoría">
+      </app-chart-bar>
+    </div>
+
+    <!-- Leyenda -->
+    <div class="flex flex-col gap-2 px-2">
+      @for (item of itemsWithPct(); track item.categoryId) {
+        <div class="flex items-center gap-2">
+          <div class="w-3 h-3 rounded-full flex-shrink-0" [style.backgroundColor]="item.color"></div>
+          <span class="text-lg leading-none flex-shrink-0">{{ item.icon }}</span>
+          <span class="text-sm font-semibold text-monefy-text-primary flex-1 truncate">{{ item.name }}</span>
+          <span class="text-xs font-bold text-monefy-text-secondary mr-2">{{ item.pct }}%</span>
+          <span class="text-sm font-semibold text-monefy-red">{{ item.total | currencyFormat:currency() }}</span>
+        </div>
+      }
+    </div>
+  </div>
+} @else {
+  <div class="flex items-center justify-center h-36 text-monefy-text-secondary text-sm italic">
+    <p>Sin gastos en este período</p>
+  </div>
+}

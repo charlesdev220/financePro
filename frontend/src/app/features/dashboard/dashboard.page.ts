@@ -26,6 +26,7 @@ import {
   sparklesOutline,
 } from 'ionicons/icons';
 
+import { Router } from '@angular/router';
 import { AuthService } from '@core/services/auth.service';
 import { TransactionsStateService } from '@core/state/transactions.state';
 import { BudgetsStateService } from '@core/state/budgets.state';
@@ -69,6 +70,7 @@ export class DashboardPage implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly dashboardService = inject(DashboardService);
   private readonly seedService = inject(DataSeedService);
+  private readonly router = inject(Router);
 
   /** Transacciones del usuario sincronizadas desde el state service. */
   readonly txState = inject(TransactionsStateService);
@@ -108,6 +110,11 @@ export class DashboardPage implements OnInit {
   /** Datos del gráfico (desglose por categoría) calculados reactivamente. */
   readonly breakdown = computed(() =>
     this.dashboardService.calculateBreakdown(this.txState.items(), this.categoriesState.items(), this.period())
+  );
+
+  /** Presupuestos del período activo — pasados al dashboard-chart para los indicadores micro en la leyenda. */
+  readonly budgetsForPeriod = computed(() =>
+    this.budgetsState.items().filter(b => b.period === this.period())
   );
 
   /** Últimos movimientos del período, enriquecidos con metadatos de categoría, ordenados DESC por fecha. */
@@ -150,6 +157,10 @@ export class DashboardPage implements OnInit {
 
   onPeriodChange(p: string): void {
     this.period.set(p);
+  }
+
+  goToTransactions(): void {
+    this.router.navigate(['/tabs/transactions']);
   }
 
   openAddExpense(): void { this.openAddModal(TRANSACTION_TYPES.EXPENSE); }

@@ -67,6 +67,9 @@ export class TransactionsStateService {
                 this._items(),
               );
             }
+            // Recarga para sincronizar _rowMap con el número de fila real en Sheets.
+            // Sin esto, editar una transacción recién agregada en la misma sesión crea un duplicado.
+            this.load();
           })
           .catch(err => {
             this._items.set(prevItems);

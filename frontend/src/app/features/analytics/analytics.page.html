@@ -33,6 +33,11 @@
       <app-analytics-chart [data]="monthlyTotals()" />
     </section>
 
+    <section class="mb-6">
+      <h2 class="text-base font-semibold text-[var(--ion-text-color)] mb-3">Gasto por categoría</h2>
+      <app-category-spending-chart [data]="categorySpending()" [currency]="userBaseCurrency()" />
+    </section>
+
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <section>
         <h2 class="text-base font-semibold text-[var(--ion-text-color)] mb-3">Proyección de tendencia</h2>

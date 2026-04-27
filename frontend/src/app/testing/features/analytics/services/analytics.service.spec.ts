@@ -1,5 +1,6 @@
-import { AnalyticsService, MonthlyTotal } from '../../../../features/analytics/services/analytics.service';
+import { AnalyticsService, MonthlyTotal, CategorySpendingItem } from '../../../../features/analytics/services/analytics.service';
 import { ITransaction } from '../../../../models/transaction.model';
+import { ICategory } from '../../../../models/category.model';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers inline
@@ -280,6 +281,118 @@ describe('AnalyticsService', () => {
       // Then
       expect(result.recurrentes).toEqual([]);
       expect(result.superfluos).toEqual([]);
+    });
+  });
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // REQ-09: getCategorySpending
+  // ───────────────────────────────────────────────────────────────────────────
+  describe('getCategorySpending', () => {
+    function cat(id: string, name: string, icon: string, color: string): ICategory {
+      return {
+        categoryId: id,
+        userId: 'u1',
+        name,
+        icon,
+        color,
+        type: 'expense',
+        budgetAmount: null,
+        budgetPeriod: 'monthly',
+        isActive: true,
+        createdAt: '2026-01-01T00:00:00Z',
+      };
+    }
+
+    const categories: ICategory[] = [
+      cat('cat-1', 'Comida',      '🍔', '#4CAF50'),
+      cat('cat-2', 'Transporte',  '🚗', '#2196F3'),
+      cat('cat-3', 'Ocio',        '🎮', '#FF9800'),
+    ];
+
+    // REQ-09 sc1: transacciones mixtas → solo EXPENSE acumuladas
+    it('getCategorySpending_shouldIncludeOnlyExpenses_whenMixedTransactions', () => {
+      // Given
+      const txs: ITransaction[] = [
+        tx('t1', 'income',  1000, '2026-04-01', 'cat-1'),
+        tx('t2', 'expense',  300, '2026-04-05', 'cat-2'),
+        tx('t3', 'expense',  150, '2026-04-10', 'cat-2'),
+      ];
+
+      // When
+      const result: CategorySpendingItem[] = service.getCategorySpending(txs, categories);
+
+      // Then — solo cat-2 (gastos), income ignorado
+      expect(result.length).toBe(1);
+      expect(result[0].categoryId).toBe('cat-2');
+      expect(result[0].total).toBe(450);
+    });
+
+    // REQ-09 sc2: sin gastos → []
+    it('getCategorySpending_shouldReturnEmpty_whenNoExpenses', () => {
+      // Given
+      const txs: ITransaction[] = [
+        tx('t1', 'income', 500, '2026-04-01', 'cat-1'),
+      ];
+
+      // When
+      const result = service.getCategorySpending(txs, categories);
+
+      // Then
+      expect(result).toEqual([]);
+    });
+
+    // REQ-09 sc3: categoría sin match → fallback name/icon/color
+    it('getCategorySpending_shouldUseFallbacks_whenCategoryNotFound', () => {
+      // Given: categoryId 'cat-unknown' no existe en categories
+      const txs: ITransaction[] = [
+        tx('t1', 'expense', 200, '2026-04-01', 'cat-unknown'),
+      ];
+
+      // When
+      const result = service.getCategorySpending(txs, categories);
+
+      // Then
+      expect(result.length).toBe(1);
+      expect(result[0].name).toBe('Otros');
+      expect(result[0].icon).toBe('💰');
+      expect(result[0].color).toBe('#9E9E9E');
+    });
+
+    // REQ-09 sc4: varios gastos → ordenados DESC por total
+    it('getCategorySpending_shouldOrderDescByTotal', () => {
+      // Given: cat-3 tiene 800, cat-1 tiene 500, cat-2 tiene 200
+      const txs: ITransaction[] = [
+        tx('t1', 'expense', 500, '2026-04-01', 'cat-1'),
+        tx('t2', 'expense', 200, '2026-04-02', 'cat-2'),
+        tx('t3', 'expense', 800, '2026-04-03', 'cat-3'),
+      ];
+
+      // When
+      const result = service.getCategorySpending(txs, categories);
+
+      // Then
+      expect(result[0].categoryId).toBe('cat-3');
+      expect(result[0].total).toBe(800);
+      expect(result[1].categoryId).toBe('cat-1');
+      expect(result[1].total).toBe(500);
+      expect(result[2].categoryId).toBe('cat-2');
+      expect(result[2].total).toBe(200);
+    });
+
+    // REQ-09 sc5: metadatos correctamente enriquecidos
+    it('getCategorySpending_shouldEnrichWithCategoryMetadata', () => {
+      // Given
+      const txs: ITransaction[] = [
+        tx('t1', 'expense', 300, '2026-04-01', 'cat-1'),
+      ];
+
+      // When
+      const result = service.getCategorySpending(txs, categories);
+
+      // Then
+      expect(result[0].name).toBe('Comida');
+      expect(result[0].icon).toBe('🍔');
+      expect(result[0].color).toBe('#4CAF50');
     });
   });
 });

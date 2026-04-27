@@ -44,10 +44,11 @@ Chart.register(
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChartBarComponent implements AfterViewInit, OnDestroy {
-  datasets  = input<ChartDataset[]>([]);
-  labels    = input<string[]>([]);
-  type      = input<'bar' | 'line'>('bar');
-  ariaLabel = input<string>('Gráfico');
+  datasets    = input<ChartDataset[]>([]);
+  labels      = input<string[]>([]);
+  type        = input<'bar' | 'line'>('bar');
+  ariaLabel   = input<string>('Gráfico');
+  showLegend  = input<boolean>(true);
 
   @ViewChild('canvas') canvasRef!: ElementRef<HTMLCanvasElement>;
 
@@ -56,14 +57,15 @@ export class ChartBarComponent implements AfterViewInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      const datasets = this.datasets();
-      const labels   = this.labels();
-      const type     = this.type();
+      const datasets   = this.datasets();
+      const labels     = this.labels();
+      const type       = this.type();
+      const showLegend = this.showLegend();
       if (!this.initialized()) return;
       this.chart?.destroy();
       this.chart = null;
       if (datasets.length) {
-        this.createChart(datasets, labels, type);
+        this.createChart(datasets, labels, type, showLegend);
       }
     });
   }
@@ -77,14 +79,14 @@ export class ChartBarComponent implements AfterViewInit, OnDestroy {
     this.chart = null;
   }
 
-  private createChart(datasets: ChartDataset[], labels: string[], type: 'bar' | 'line'): void {
+  private createChart(datasets: ChartDataset[], labels: string[], type: 'bar' | 'line', showLegend: boolean): void {
     this.chart = new Chart(this.canvasRef.nativeElement, {
       type,
       data: { labels, datasets },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom' } },
+        plugins: { legend: { display: showLegend, position: 'bottom' } },
       },
     });
   }

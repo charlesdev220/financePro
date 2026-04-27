@@ -16,7 +16,7 @@ import {
   ToastController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { addOutline, trashOutline, createOutline, arrowUpOutline, arrowDownOutline, chevronUpOutline, chevronDownOutline, walletOutline, sparklesOutline, calendarOutline, closeCircleOutline } from 'ionicons/icons';
+import { addOutline, trashOutline, createOutline, arrowUpOutline, arrowDownOutline, chevronUpOutline, chevronDownOutline, walletOutline, sparklesOutline, calendarOutline, closeCircleOutline, listOutline, pricetagsOutline } from 'ionicons/icons';
 import { TransactionsStateService } from '@core/state/transactions.state';
 import { WalletsStateService } from '@core/state/wallets.state';
 import { CategoriesStateService } from '@core/state/categories.state';
@@ -133,21 +133,30 @@ export class TransactionListPage implements OnInit {
         const cat = cats.find(c => c.categoryId === t.categoryId);
         const isIncome = t.type === TRANSACTION_TYPES.INCOME;
         const isEffectiveIncome = isIncome || (t.type === TRANSACTION_TYPES.EXPENSE && t.amount < 0);
+        const d = t.createdAt ? new Date(t.createdAt) : null;
+        const timeLabel = d && !isNaN(d.getTime())
+          ? `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+          : '';
         return {
           ...t,
           categoryName: cat?.name || 'Varios',
           categoryIcon: cat?.icon || '💰',
           isEffectiveIncome,
           displayAmount: Math.abs(t.amount),
+          timeLabel,
         };
       })
-      .sort((a, b) => b.date.localeCompare(a.date));
+      .sort((a, b) => {
+        const ta = a.createdAt || a.date;
+        const tb = b.createdAt || b.date;
+        return tb.localeCompare(ta);
+      });
   });
 
   /** Transacciones agrupadas por fecha para la vista de lista cronológica. */
   readonly groupedTransactions = computed(() => {
     const txs = this.transactionsEnriched();
-    const groups: { date: string; transactions: (ITransaction & { categoryName: string; categoryIcon: string; isEffectiveIncome: boolean; displayAmount: number })[]; totalDaily: number }[] = [];
+    const groups: { date: string; transactions: (ITransaction & { categoryName: string; categoryIcon: string; isEffectiveIncome: boolean; displayAmount: number; timeLabel: string })[]; totalDaily: number }[] = [];
 
     txs.forEach(tx => {
       let group = groups.find(g => g.date === tx.date);
@@ -160,6 +169,21 @@ export class TransactionListPage implements OnInit {
     });
 
     return groups;
+  });
+
+  /** Modo de vista: lista cronológica agrupada o totales acumulados por categoría. */
+  readonly viewMode = signal<'list' | 'category'>('list');
+
+  /** Totales acumulados por categoría con los filtros activos, ordenados DESC por valor absoluto. */
+  readonly categoryTotals = computed(() => {
+    const txs = this.transactionsEnriched();
+    const map = new Map<string, { categoryId: string; categoryName: string; categoryIcon: string; total: number }>();
+    for (const tx of txs) {
+      const entry = map.get(tx.categoryId) ?? { categoryId: tx.categoryId, categoryName: tx.categoryName, categoryIcon: tx.categoryIcon, total: 0 };
+      entry.total += tx.isEffectiveIncome ? tx.amountBase : -tx.amountBase;
+      map.set(tx.categoryId, entry);
+    }
+    return Array.from(map.values()).sort((a, b) => Math.abs(b.total) - Math.abs(a.total));
   });
 
   /** Estado de visibilidad del modal de formulario. */
@@ -178,8 +202,12 @@ export class TransactionListPage implements OnInit {
 
   private _prevError = signal<string | null>(null);
 
+  toggleViewMode(): void {
+    this.viewMode.update(v => v === 'list' ? 'category' : 'list');
+  }
+
   constructor() {
-    addIcons({ addOutline, trashOutline, createOutline, arrowUpOutline, arrowDownOutline, chevronUpOutline, chevronDownOutline, walletOutline, sparklesOutline, calendarOutline, closeCircleOutline });
+    addIcons({ addOutline, trashOutline, createOutline, arrowUpOutline, arrowDownOutline, chevronUpOutline, chevronDownOutline, walletOutline, sparklesOutline, calendarOutline, closeCircleOutline, listOutline, pricetagsOutline });
 
     effect(() => {
       const err = this.error();

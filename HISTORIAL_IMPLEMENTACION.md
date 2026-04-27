@@ -4,6 +4,35 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Dashboard & Analytics Improvements):
+*Fase actual:* Fase Archive: ciclo SDD completo
+*Estado actual:* Completado ✅ | Archivado: 2026-04-27
+- ✔️ **Pilas de presupuesto en dashboard:** `DashboardChartComponent` recibe `budgets` como input; `expenseItems` computed incluye `budgetMeta` siempre visible — color de categoría < 80%, rojo ≥ 80% del límite.
+- ✔️ **Hora en movimientos:** `transactionsEnriched` agrega `timeLabel` (HH:mm de `createdAt`); sort actualizado a `createdAt` descendente para ordenar por hora dentro del mismo día.
+- ✔️ **"Ver todos" navega a transactions:** `Router.navigate(['/tabs/transactions'])` en `DashboardPage`.
+- ✔️ **Bar chart en "Gasto por categoría":** `CategorySpendingChartComponent` reemplaza `ChartPieComponent` por `ChartBarComponent` con `showLegend=false`; leyenda HTML intacta.
+- ✔️ **Fix rowMap tras add():** `TransactionsStateService.add()` llama `this.load()` tras `saveTransaction()` para sincronizar `_rowMap` y evitar duplicados al editar transacciones recién agregadas.
+- ✔️ **Guardia en save():** Si `tx` existe pero `rn` es undefined, cierra sin duplicar.
+- ✔️ **Fix NaN% en leyenda:** `breakdownWithPct` sanitiza NaN con `safeAmount()`; pct calculado por grupo (income/expense) separado.
+- ✔️ **showLegend input en ChartBarComponent:** Input `showLegend = input<boolean>(true)` añadido sin romper usos existentes.
+*Deuda técnica documentada:* Transacciones antiguas en Sheets con `createdAt` vacío no muestran hora (muestran `timeLabel = ''`). Un script de migración recalcularía `createdAt` desde la fecha de la transacción.
+*Próximos pasos:* sdd-verify pendiente de tests unitarios para los nuevos computeds.
+
+---
+
+### Qué hemos completado hasta ahora (Dashboard Enhancements):
+*Fase actual:* Fase Archive: ciclo SDD completo
+*Estado actual:* Completado ✅ | Archivado: 2026-04-26
+- ✔️ **CategoryBreakdown enriquecida:** agregados `icon` y `type` a la interfaz; `calculateBreakdown()` ahora produce dos grupos separados (income/expense) dentro del mismo array plano.
+- ✔️ **Dashboard-chart leyenda mejorada:** dos secciones "Ingresos" / "Gastos" con icono de categoría, porcentaje, y montos en verde/rojo según tipo.
+- ✔️ **Vista por categoría en Transactions:** toggle pricetags/list en toolbar; computed `categoryTotals` que acumula por categoría respetando filtros activos.
+- ✔️ **CategorySpendingChartComponent:** nuevo componente standalone en `analytics/components/`; doughnut + leyenda con icono, nombre, porcentaje y monto.
+- ✔️ **Analytics page:** sección "Gasto por categoría" insertada debajo de "Ingresos vs Gastos" usando `getCategorySpending()` en `AnalyticsService`.
+*Deuda técnica documentada:* Tests unitarios para los nuevos computed y métodos de servicio pendientes.
+*Próximos pasos:* sdd-verify contra spec.md.
+
+---
+
 ### Qué hemos completado hasta ahora (Migración NgRx → Angular Signals):
 *Fase actual:* Migración de infraestructura de estado — eliminación total de NgRx
 *Estado actual:* Completado ✅ | Archivado: 2026-04-26

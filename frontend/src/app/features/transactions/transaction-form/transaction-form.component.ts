@@ -126,6 +126,20 @@ export class TransactionFormComponent implements OnInit {
   /** Controla el accordion de pickers en web (≥768px). Mutex: solo uno abierto a la vez. */
   readonly openPicker = signal<'wallet' | 'category' | 'currency' | null>(null);
 
+  /** Fecha y hora de creación del registro formateada para mostrar en modo edición. Null en creación. */
+  readonly createdAtFormatted = computed(() => {
+    const createdAt = this.transaction()?.createdAt;
+    if (!createdAt) return null;
+    try {
+      const d = new Date(createdAt);
+      if (isNaN(d.getTime())) return null;
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    } catch {
+      return null;
+    }
+  });
+
   /** Representación en string del monto para el teclado personalizado. */
   readonly amountString = signal<string>('0');
 
@@ -238,7 +252,13 @@ export class TransactionFormComponent implements OnInit {
     const tx = this.transaction();
     const rn = this.rowNumber();
 
-    if (tx && rn) {
+    if (tx) {
+      if (!rn) {
+        // rowNumber aún no disponible (rowMap no sincronizado); cerrar sin duplicar.
+        // T5.1 en transactions.state.ts garantiza que load() se llama tras add() para sincronizar.
+        this.dismiss.emit();
+        return;
+      }
       const updated: ITransaction = {
         ...tx,
         ...draft,

@@ -12,8 +12,10 @@ export interface DashboardSummary {
 export interface CategoryBreakdown {
   categoryId: string;
   name: string;
+  icon: string;
   color: string;
   amount: number;
+  type: 'income' | 'expense';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -24,12 +26,13 @@ export class DashboardService {
    */
   calculateSummary(transactions: ITransaction[], period: string): DashboardSummary {
     const periodTxs = transactions.filter(t => t.date.startsWith(period));
+    const safe = (n: number) => (isNaN(n) || !isFinite(n) ? 0 : n);
     const totalIncome = periodTxs
       .filter(t => t.type === TRANSACTION_TYPES.INCOME)
-      .reduce((sum, t) => sum + t.amountBase, 0);
+      .reduce((sum, t) => sum + safe(t.amountBase), 0);
     const totalExpenses = periodTxs
       .filter(t => t.type === TRANSACTION_TYPES.EXPENSE)
-      .reduce((sum, t) => sum + t.amountBase, 0);
+      .reduce((sum, t) => sum + safe(t.amountBase), 0);
     return {
       totalIncome,
       totalExpenses,
@@ -38,53 +41,65 @@ export class DashboardService {
   }
 
   /**
-   * Calcula el desglose de gastos por categoría para el período.
-   * Devuelve top 6 categorías ordenadas DESC + "Otros" si hay más de 6.
-   * Devuelve [] si no hay gastos en el período.
+   * Calcula el desglose de movimientos por categoría para el período,
+   * separando ingresos y gastos. Devuelve top 6 por tipo + "Otros" si hay más.
+   * Los ingresos se listan primero, luego los gastos.
    */
   calculateBreakdown(
     transactions: ITransaction[],
     categories: ICategory[],
     period: string,
   ): CategoryBreakdown[] {
-    const periodTxs = transactions.filter(
-      t => t.date.startsWith(period),
-    );
-
+    const periodTxs = transactions.filter(t => t.date.startsWith(period));
     if (periodTxs.length === 0) return [];
 
-    const grouped = new Map<string, number>();
-    for (const tx of periodTxs) {
-      grouped.set(tx.categoryId, (grouped.get(tx.categoryId) ?? 0) + tx.amountBase);
-    }
+    const buildGroup = (
+      txs: ITransaction[],
+      type: 'income' | 'expense',
+      idSuffix: string,
+    ): CategoryBreakdown[] => {
+      if (!txs.length) return [];
+      const grouped = new Map<string, number>();
+      for (const tx of txs) {
+        const safe = isNaN(tx.amountBase) || !isFinite(tx.amountBase) ? 0 : tx.amountBase;
+        grouped.set(tx.categoryId, (grouped.get(tx.categoryId) ?? 0) + safe);
+      }
+      const sorted = Array.from(grouped.entries()).sort((a, b) => b[1] - a[1]);
+      const top6 = sorted.slice(0, 6);
+      const rest = sorted.slice(6);
 
-    const sorted = Array.from(grouped.entries())
-      .sort((a, b) => b[1] - a[1]);
-
-    const top6 = sorted.slice(0, 6);
-    const rest = sorted.slice(6);
-
-    const breakdown: CategoryBreakdown[] = top6.map(([categoryId, amount]) => {
-      const cat = categories.find(c => c.categoryId === categoryId);
-      return {
-        categoryId,
-        name: cat?.name ?? categoryId,
-        color: cat?.color ?? '#9E9E9E',
-        amount,
-      };
-    });
-
-    if (rest.length > 0) {
-      const othersAmount = rest.reduce((sum, [, amount]) => sum + amount, 0);
-      breakdown.push({
-        categoryId: 'others',
-        name: 'Otros',
-        color: '#9E9E9E',
-        amount: othersAmount,
+      const result: CategoryBreakdown[] = top6.map(([categoryId, amount]) => {
+        const cat = categories.find(c => c.categoryId === categoryId);
+        return {
+          categoryId,
+          name: cat?.name ?? categoryId,
+          icon: cat?.icon ?? '💰',
+          color: cat?.color ?? '#9E9E9E',
+          amount,
+          type,
+        };
       });
-    }
 
-    return breakdown;
+      if (rest.length > 0) {
+        result.push({
+          categoryId: `others-${idSuffix}`,
+          name: 'Otros',
+          icon: '💰',
+          color: '#9E9E9E',
+          amount: rest.reduce((sum, [, a]) => sum + a, 0),
+          type,
+        });
+      }
+      return result;
+    };
+
+    const incomeTxs  = periodTxs.filter(t => t.type === TRANSACTION_TYPES.INCOME);
+    const expenseTxs = periodTxs.filter(t => t.type === TRANSACTION_TYPES.EXPENSE);
+
+    return [
+      ...buildGroup(incomeTxs,  TRANSACTION_TYPES.INCOME,  'income'),
+      ...buildGroup(expenseTxs, TRANSACTION_TYPES.EXPENSE, 'expense'),
+    ];
   }
 
   /**

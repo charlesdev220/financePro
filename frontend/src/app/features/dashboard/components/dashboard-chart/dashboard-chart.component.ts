@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { ChartData } from 'chart.js';
 import { ChartPieComponent } from '@shared/components/chart-pie/chart-pie.component';
 import { CategoryBreakdown } from '@features/dashboard/services/dashboard.service';
-
+import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
+import { IBudget } from '@models/budget.model';
 
 @Component({
   selector: 'app-dashboard-chart',
@@ -14,9 +15,12 @@ import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
   imports: [ChartPieComponent, CurrencyFormatPipe],
 })
 export class DashboardChartComponent {
+  /** Lista de categorías con montos del período activo, separadas por tipo (income/expense). */
   breakdown = input.required<CategoryBreakdown[]>();
   balance = input.required<number>();
   currency = input.required<string>();
+  /** Presupuestos del período activo para mostrar indicadores micro en la leyenda de gastos. */
+  budgets = input<IBudget[]>([]);
   /** Proveniente de DashboardPage.ionViewDidEnter para forzar resize del chart al volver al tab. */
   refreshTick = input<number>(0);
 
@@ -25,16 +29,49 @@ export class DashboardChartComponent {
     const b = this.breakdown();
     if (!b?.length) return null;
     return {
-      labels:   b.map(item => item.name),
+      labels:   b.map(item => item.icon),
       datasets: [{ data: b.map(item => item.amount), backgroundColor: b.map(item => item.color) }],
     };
   });
 
-  /** Breakdown enriquecido con el porcentaje de cada categoría sobre el total. */
+  /** Breakdown enriquecido con el porcentaje de cada ítem sobre el total de SU grupo (ingresos o gastos). */
   readonly breakdownWithPct = computed(() => {
     const b = this.breakdown();
-    const total = b.reduce((sum, item) => sum + item.amount, 0);
-    if (total === 0) return b.map(item => ({ ...item, pct: 0 }));
-    return b.map(item => ({ ...item, pct: Math.round((item.amount / total) * 100) }));
+    const safeAmount = (n: number) => (isNaN(n) || !isFinite(n) ? 0 : n);
+    const totalIncome  = b.filter(i => i.type === TRANSACTION_TYPES.INCOME) .reduce((s, i) => s + safeAmount(i.amount), 0);
+    const totalExpense = b.filter(i => i.type === TRANSACTION_TYPES.EXPENSE).reduce((s, i) => s + safeAmount(i.amount), 0);
+    return b.map(item => {
+      const amount = safeAmount(item.amount);
+      const groupTotal = item.type === TRANSACTION_TYPES.INCOME ? totalIncome : totalExpense;
+      const pct = groupTotal > 0 ? Math.round((amount / groupTotal) * 100) : 0;
+      return { ...item, amount, pct };
+    });
+  });
+
+  /** Ítems de tipo income con porcentaje calculado. */
+  readonly incomeItems = computed(() =>
+    this.breakdownWithPct().filter(item => item.type === TRANSACTION_TYPES.INCOME)
+  );
+
+  /**
+   * Ítems de tipo expense con pila de progreso siempre visible.
+   * Si hay presupuesto → pct = spentAmount/budgetAmount, color por status.
+   * Si no hay presupuesto → pct = % de esa categoría sobre el total de gastos, color gris.
+   */
+  readonly expenseItems = computed(() => {
+    const budgetMap = new Map<string, IBudget>();
+    for (const b of this.budgets()) budgetMap.set(b.categoryId, b);
+
+    return this.breakdownWithPct()
+      .filter(item => item.type === TRANSACTION_TYPES.EXPENSE)
+      .map(item => {
+        const b = budgetMap.get(item.categoryId);
+        if (b && b.budgetAmount > 0) {
+          const pct = Math.min(100, Math.round((b.spentAmount / b.budgetAmount) * 100));
+          const color = pct >= 80 ? '#E57373' : item.color;
+          return { ...item, budgetMeta: { pct, color, hasBudget: true } };
+        }
+        return { ...item, budgetMeta: { pct: item.pct, color: item.color, hasBudget: false } };
+      });
   });
 }

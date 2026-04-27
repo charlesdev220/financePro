@@ -36,6 +36,7 @@ Leer `.sdd/changes/{change-name}/spec.md` y `.sdd/changes/{change-name}/design.m
 
 ## Phase 5: Cleanup
 - [ ] 5.1 Actualizar HISTORIAL_IMPLEMENTACION.md
+- [ ] 5.2 Actualizar HISTORIAL_APRENDIZAJE.md
 ```
 
 ## Reglas de tareas válidas

@@ -67,7 +67,8 @@
     <!-- Columna izquierda: gráfico -->
     <div>
       <app-dashboard-chart [breakdown]="breakdown()" [balance]="summary().balance"
-        [currency]="userBaseCurrency()" [refreshTick]="chartRefreshTick()"></app-dashboard-chart>
+        [currency]="userBaseCurrency()" [refreshTick]="chartRefreshTick()"
+        [budgets]="budgetsForPeriod()"></app-dashboard-chart>
     </div>
 
     <!-- Columna derecha: transacciones recientes -->
@@ -75,7 +76,7 @@
       @if (recentTransactions().length > 0) {
       <div class="flex items-center justify-between mt-6 mb-2 lg:mt-0">
         <h2 class="m-0 text-lg font-bold">Últimos movimientos</h2>
-        <ion-note color="primary" class="text-xs font-semibold">Ver todos</ion-note>
+        <ion-note color="primary" class="text-xs font-semibold cursor-pointer" (click)="goToTransactions()">Ver todos</ion-note>
       </div>
 
       <ion-list lines="inset" class="mx-0 bg-transparent pb-[calc(56px+80px)]">

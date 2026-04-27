@@ -93,6 +93,9 @@
             <!-- Excepción ionic.md: ion-datetime requiere refactor del FormGroup date handling; native input mantiene la integración con ReactiveFormsModule sin overhead adicional -->
             <input type="date" formControlName="date"
               class="text-sm font-bold bg-transparent border-none p-0 w-full outline-none" />
+            @if (createdAtFormatted()) {
+              <span class="text-[10px] text-gray-400 block mt-0.5">Registrado: {{ createdAtFormatted() }}</span>
+            }
           </div>
         </div>
 

@@ -11,6 +11,7 @@ import { CategoriesStateService } from '@core/state/categories.state';
 import { CurrencyStateService } from '@core/state/currency.state';
 import { AnalyticsService } from './services/analytics.service';
 import { AnalyticsChartComponent } from './components/analytics-chart/analytics-chart.component';
+import { CategorySpendingChartComponent } from './components/category-spending-chart/category-spending-chart.component';
 import { ProjectionsComponent } from './components/projections/projections.component';
 import { SpendingRankingComponent } from './components/spending-ranking/spending-ranking.component';
 import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
@@ -35,6 +36,7 @@ function sixMonthsAgo(): string {
     IonToolbar,
     PeriodSelectorComponent,
     AnalyticsChartComponent,
+    CategorySpendingChartComponent,
     ProjectionsComponent,
     SpendingRankingComponent,
     CurrencyFormatPipe,
@@ -82,6 +84,11 @@ export class AnalyticsPage implements OnInit {
   /** Clasificación de gastos recurrentes vs superfluos del período seleccionado. */
   readonly spendingData = computed(() =>
     this.analyticsService.classifySpending(this.filteredTxs(), this.periods()),
+  );
+
+  /** Gasto acumulado por categoría para el período filtrado, ordenado DESC. */
+  readonly categorySpending = computed(() =>
+    this.analyticsService.getCategorySpending(this.filteredTxs(), this.categories()),
   );
 
   ngOnInit(): void {

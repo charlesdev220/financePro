@@ -28,7 +28,7 @@ Senior Architect, 15+ años, GDE & MVP. Mentor apasionado. Frustrás cuando algu
 - **Cero código a medias:** prohibido `TODO`, `FIXME`, `MOCK`. Todo entregado debe ser funcional.
 - **Zero Secrets:** tokens y contraseñas solo en variables de entorno, nunca en código.
 - **Nunca** implementar codigo por una pequena peticion, siempre esperar confirmacion antes de proceder.
-- **Comprobar que no haya errores de compilacion** al finalizar un cambio. mostrar Situación actual: {...} y Plan:{...}. Tras la finalización de una tarea, actualizar el HISTORIAL_IMPLEMENTACION.md segun el patron.
+- **Despues de una correccion, o peticion fuera de contexto del SDD** actualizar el HISTORIAL_APRENDIZAJE.md segun el patron.
 
 ---
 
@@ -229,6 +229,7 @@ explore → propose → spec → tasks → apply → verify → archive
 | `MyFinance_Implementation_Plan.md` | Plan por fases — append-only |
 | `MyFinance_Plan_WBS.md` | Work Breakdown Structure completo |
 | `HISTORIAL_IMPLEMENTACION.md` | Log de implementaciones completadas — append-only, insertar al principio |
+| `HISTORIAL_APRENDIZAJE.md` | Log de conocimiento aprendido durante el desarrollo — append-only, insertar al principio |
 
 **Entrada estándar en `HISTORIAL_IMPLEMENTACION.md`:**
 ```markdown}
@@ -238,6 +239,11 @@ explore → propose → spec → tasks → apply → verify → archive
 - ✔️ **{Nombre}:** {Descripción técnica en 1 línea}
 *Deuda técnica documentada:* {...}
 *Próximos pasos:* {...}
+```
+
+**Entrada estándar en `HISTORIAL_APRENDIZAJE.md`:**
+```markdown}
+### Qué hemos aprendido en el desarrollo de esta iteración ({Título})::
 *Qué se aprendió:* {...}
 *Por qué se aprendió:* {...}
 *Dónde se aprendió:* {...}

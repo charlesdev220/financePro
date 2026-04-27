@@ -147,8 +147,8 @@ describe('DashboardService', () => {
       expect(breakdown.find((b: any) => b.categoryId === 'others')).toBeUndefined();
     });
 
-    // REQ-02 sc2: > 6 categorías → top 6 + "Otros" con monto agrupado
-    it('calculateBreakdown_shouldReturnTop6PlusOtros_whenMoreThanSixCategories', () => {
+    // REQ-02 sc2: > 6 categorías de gastos → top 6 + "Otros" (sufijo -expense)
+    it('calculateBreakdown_shouldReturnTop6PlusOtros_whenMoreThanSixExpenseCategories', () => {
       // Given: 7 categorías distintas con gastos
       const transactions: ITransaction[] = [
         tx('t1', 'expense', 200, '2026-04-01', 'cat-1'),
@@ -165,14 +165,15 @@ describe('DashboardService', () => {
 
       // Then
       expect(breakdown.length).toBe(7); // 6 top + Otros
-      const otros = breakdown.find((b: any) => b.categoryId === 'others');
+      const otros = breakdown.find((b: CategoryBreakdown) => b.categoryId === 'others-expense');
       expect(otros).toBeDefined();
       expect(otros!.name).toBe('Otros');
       expect(otros!.amount).toBe(50);
+      expect(otros!.type).toBe('expense');
     });
 
-    // REQ-02 sc3: sin gastos → []
-    it('calculateBreakdown_shouldReturnEmptyArray_whenNoExpenses', () => {
+    // REQ-02 sc3: solo ingresos → devuelve solo ítems de tipo income (no vacío)
+    it('calculateBreakdown_shouldReturnIncomeItems_whenOnlyIncomeTxs', () => {
       // Given: solo ingresos en el período
       const transactions: ITransaction[] = [
         tx('t1', 'income', 2500, '2026-04-01', 'cat-1'),
@@ -182,24 +183,43 @@ describe('DashboardService', () => {
       const breakdown = service.calculateBreakdown(transactions, categories, '2026-04');
 
       // Then
-      expect(breakdown).toEqual([]);
+      expect(breakdown.length).toBe(1);
+      expect(breakdown[0].type).toBe('income');
+      expect(breakdown[0].categoryId).toBe('cat-1');
     });
 
-    // REQ-02 sc4: ingresos no se incluyen en el breakdown
-    it('calculateBreakdown_shouldIgnoreIncomeTransactions', () => {
-      // Given: mix de ingresos y gastos
+    // REQ-02 sc4: mix income + expense → ambos tipos en el resultado, income primero
+    it('calculateBreakdown_shouldReturnBothTypes_whenMixedTransactions', () => {
+      // Given: 1 ingreso (cat-1) + 1 gasto (cat-2)
       const transactions: ITransaction[] = [
-        tx('t1', 'income', 2500, '2026-04-01', 'cat-1'),
-        tx('t2', 'expense', 100, '2026-04-05', 'cat-2'),
+        tx('t1', 'income',  2500, '2026-04-01', 'cat-1'),
+        tx('t2', 'expense',  100, '2026-04-05', 'cat-2'),
+      ];
+
+      // When
+      const breakdown = service.calculateBreakdown(transactions, categories, '2026-04');
+
+      // Then — 2 ítems: income primero, expense después
+      expect(breakdown.length).toBe(2);
+      expect(breakdown[0].type).toBe('income');
+      expect(breakdown[0].categoryId).toBe('cat-1');
+      expect(breakdown[1].type).toBe('expense');
+      expect(breakdown[1].categoryId).toBe('cat-2');
+    });
+
+    // REQ-01: cada ítem incluye icon y type
+    it('calculateBreakdown_shouldIncludeIconAndType_inEachItem', () => {
+      // Given
+      const transactions: ITransaction[] = [
+        tx('t1', 'expense', 100, '2026-04-01', 'cat-1'),
       ];
 
       // When
       const breakdown = service.calculateBreakdown(transactions, categories, '2026-04');
 
       // Then
-      expect(breakdown.length).toBe(1);
-      expect(breakdown[0].categoryId).toBe('cat-2');
-      expect(breakdown.find((b: any) => b.categoryId === 'cat-1')).toBeUndefined();
+      expect(breakdown[0].icon).toBe('📂'); // el helper cat() usa '📂'
+      expect(breakdown[0].type).toBe('expense');
     });
   });
 

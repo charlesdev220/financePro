@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ITransaction } from '@models/transaction.model';
+import { ICategory } from '@models/category.model';
 import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 
 export interface MonthlyTotal {
@@ -10,6 +11,14 @@ export interface MonthlyTotal {
 
 export interface CategoryTotal {
   categoryId: string;
+  total: number;
+}
+
+export interface CategorySpendingItem {
+  categoryId: string;
+  name: string;
+  icon: string;
+  color: string;
   total: number;
 }
 
@@ -68,6 +77,33 @@ export class AnalyticsService {
       categoryId: id,
       total,
     }));
+  }
+
+  /**
+   * Agrupa solo gastos por categoría, enriquece con metadatos de ICategory
+   * y devuelve la lista ordenada DESC por total.
+   */
+  getCategorySpending(txs: ITransaction[], categories: ICategory[]): CategorySpendingItem[] {
+    const expenses = txs.filter(tx => tx.type === TRANSACTION_TYPES.EXPENSE);
+    if (!expenses.length) return [];
+
+    const map = new Map<string, number>();
+    for (const tx of expenses) {
+      map.set(tx.categoryId, (map.get(tx.categoryId) ?? 0) + tx.amountBase);
+    }
+
+    return Array.from(map.entries())
+      .map(([categoryId, total]) => {
+        const cat = categories.find(c => c.categoryId === categoryId);
+        return {
+          categoryId,
+          name:  cat?.name  ?? 'Otros',
+          icon:  cat?.icon  ?? '💰',
+          color: cat?.color ?? '#9E9E9E',
+          total,
+        };
+      })
+      .sort((a, b) => b.total - a.total);
   }
 
   /**
