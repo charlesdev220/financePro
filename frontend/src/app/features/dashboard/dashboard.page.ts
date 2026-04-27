@@ -33,6 +33,7 @@ import { BudgetsStateService } from '@core/state/budgets.state';
 import { WalletsStateService } from '@core/state/wallets.state';
 import { CategoriesStateService } from '@core/state/categories.state';
 import { CurrencyStateService } from '@core/state/currency.state';
+import { UserSettingsStateService } from '@core/state/user-settings.state';
 import { TransactionFormComponent } from '@features/transactions/transaction-form/transaction-form.component';
 import { DashboardChartComponent } from './components/dashboard-chart/dashboard-chart.component';
 import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
@@ -82,6 +83,8 @@ export class DashboardPage implements OnInit {
   readonly walletsState = inject(WalletsStateService);
   /** Moneda base y divisas del usuario. */
   readonly currencyState = inject(CurrencyStateService);
+  /** Presupuesto mensual por defecto para categorías sin registro en BUDGETS. */
+  private readonly userSettingsState = inject(UserSettingsStateService);
 
   /** Período de tiempo seleccionado para filtrar los datos (formato YYYY-MM). */
   readonly period = signal(new Date().toISOString().slice(0, 7));
@@ -99,6 +102,9 @@ export class DashboardPage implements OnInit {
   /** Indica si la cuenta necesita inicialización (sin carteras). */
   readonly needsSeed = computed(() => this.walletsState.items().length === 0);
 
+  /** Presupuesto mensual por defecto desde UserSettings — pasado al chart para categorías sin registro. */
+  readonly defaultCategoryBudget = this.userSettingsState.defaultCategoryBudget;
+
   /** Moneda base del usuario. Fallback 'EUR' antes de cargar. */
   readonly userBaseCurrency = computed(() => this.currencyState.baseCurrency() ?? 'EUR');
 
@@ -112,17 +118,30 @@ export class DashboardPage implements OnInit {
     this.dashboardService.calculateBreakdown(this.txState.items(), this.categoriesState.items(), this.period())
   );
 
-  /** Presupuestos del período activo — pasados al dashboard-chart para los indicadores micro en la leyenda. */
-  readonly budgetsForPeriod = computed(() =>
-    this.budgetsState.items().filter(b => b.period === this.period())
-  );
+  /**
+   * Presupuestos del período activo con spentAmount recalculado desde las transacciones del store.
+   * Evita depender del valor almacenado en Sheets (que puede estar desactualizado).
+   */
+  readonly budgetsForPeriod = computed(() => {
+    const period = this.period();
+    const txs    = this.txState.items();
+    return this.budgetsState.items()
+      .filter(b => b.period === period)
+      .map(b => {
+        const safe = (n: number) => (isNaN(n) || !isFinite(n) ? 0 : n);
+        const spentAmount = txs
+          .filter(t => t.type === TRANSACTION_TYPES.EXPENSE && t.categoryId === b.categoryId && t.date.startsWith(period))
+          .reduce((sum, t) => sum + safe(t.amountBase), 0);
+        return { ...b, spentAmount };
+      });
+  });
 
   /** Últimos movimientos del período, enriquecidos con metadatos de categoría, ordenados DESC por fecha. */
   readonly recentTransactions = computed(() => {
     const txs = this.dashboardService.getRecentTransactions(this.txState.items(), this.period());
     const cats = this.categoriesState.items();
     return [...txs]
-      .sort((a, b) => b.date.localeCompare(a.date))
+      .sort((a, b) => (b.createdAt || b.date).localeCompare(a.createdAt || a.date))
       .map(tx => {
         const cat = cats.find(c => c.categoryId === tx.categoryId);
         const isIncome = tx.type === TRANSACTION_TYPES.INCOME;
@@ -148,6 +167,7 @@ export class DashboardPage implements OnInit {
     this.budgetsState.load();
     this.walletsState.load();
     this.categoriesState.load();
+    this.userSettingsState.load();
     this.currencyState.load();
   }
 

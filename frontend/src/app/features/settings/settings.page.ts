@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   IonContent,
@@ -12,29 +12,51 @@ import {
   IonLabel,
   IonIcon,
   IonNote,
+  IonInput,
   AlertController,
+  ToastController,
 } from '@ionic/angular/standalone';
 import { RouterLink } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { logOutOutline, personCircleOutline, cashOutline } from 'ionicons/icons';
+import { logOutOutline, personCircleOutline, cashOutline, walletOutline } from 'ionicons/icons';
 import { AuthService } from '@core/services/auth.service';
+import { UserSettingsStateService } from '@core/state/user-settings.state';
+import { CurrencyStateService } from '@core/state/currency.state';
 
 @Component({
   selector: 'app-settings',
   templateUrl: 'settings.page.html',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonList, IonItem, IonLabel, IonIcon, IonNote],
+  imports: [RouterLink, IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonList, IonItem, IonLabel, IonIcon, IonNote, IonInput],
 })
-export class SettingsPage {
-  private readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly alertCtrl = inject(AlertController);
+export class SettingsPage implements OnInit {
+  private readonly authService     = inject(AuthService);
+  private readonly router          = inject(Router);
+  private readonly alertCtrl       = inject(AlertController);
+  private readonly toastCtrl       = inject(ToastController);
+  private readonly userSettingsState = inject(UserSettingsStateService);
+  private readonly currencyState     = inject(CurrencyStateService);
 
-  readonly user = this.authService.getUser();
+  readonly user             = this.authService.getUser();
+  /** Presupuesto mensual por defecto para nuevas categorías de gasto. */
+  readonly defaultBudget    = this.userSettingsState.defaultCategoryBudget;
+  /** Moneda base del usuario para mostrar junto al campo de presupuesto. */
+  readonly baseCurrency     = this.currencyState.baseCurrency;
 
   constructor() {
-    addIcons({ logOutOutline, personCircleOutline, cashOutline });
+    addIcons({ logOutOutline, personCircleOutline, cashOutline, walletOutline });
+  }
+
+  ngOnInit(): void {
+    this.userSettingsState.load();
+    this.currencyState.load();
+  }
+
+  onDefaultBudgetChange(event: CustomEvent): void {
+    const val = Number(event.detail.value);
+    if (isNaN(val) || val <= 0) return;
+    this.userSettingsState.saveDefaultBudget(val);
   }
 
   async handleSignOut(): Promise<void> {

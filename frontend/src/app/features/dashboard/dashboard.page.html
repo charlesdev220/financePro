@@ -68,7 +68,7 @@
     <div>
       <app-dashboard-chart [breakdown]="breakdown()" [balance]="summary().balance"
         [currency]="userBaseCurrency()" [refreshTick]="chartRefreshTick()"
-        [budgets]="budgetsForPeriod()"></app-dashboard-chart>
+        [budgets]="budgetsForPeriod()" [defaultBudget]="defaultCategoryBudget()"></app-dashboard-chart>
     </div>
 
     <!-- Columna derecha: transacciones recientes -->

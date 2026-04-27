@@ -9,6 +9,9 @@ import {
 import { addIcons } from 'ionicons';
 import { chevronDownOutline, checkmarkOutline } from 'ionicons/icons';
 import { CategoriesStateService } from '@core/state/categories.state';
+import { UserSettingsStateService } from '@core/state/user-settings.state';
+import { BudgetsStateService } from '@core/state/budgets.state';
+import { TransactionsStateService } from '@core/state/transactions.state';
 import { ICategory } from '@models/category.model';
 
 const ICON_OPTIONS = ['🏠', '🍔', '🚗', '✈️', '💊', '👕', '📱', '🎬', '📚', '💰', '🏋️', '🎵', '🐶', '💼', '🎮', '🏦', '💳', '🛒', '⚡', '🔧'];
@@ -57,10 +60,13 @@ export class CategoryFormComponent implements OnInit {
   /** @see category — misma excepción. */
   @Input() rowNumber?: number;
 
-  private readonly fb               = inject(FormBuilder);
-  private readonly categoriesState  = inject(CategoriesStateService);
-  private readonly modalCtrl        = inject(ModalController);
-  private readonly alertCtrl        = inject(AlertController);
+  private readonly fb                  = inject(FormBuilder);
+  private readonly categoriesState     = inject(CategoriesStateService);
+  private readonly userSettingsState   = inject(UserSettingsStateService);
+  private readonly budgetsState        = inject(BudgetsStateService);
+  private readonly txState             = inject(TransactionsStateService);
+  private readonly modalCtrl           = inject(ModalController);
+  private readonly alertCtrl           = inject(AlertController);
 
   form!: FormGroup;
   readonly icons = signal<string[]>([...ICON_OPTIONS]);
@@ -96,12 +102,16 @@ export class CategoryFormComponent implements OnInit {
 
   ngOnInit(): void {
     const cat = this.category;
+    this.userSettingsState.load();
+    const defaultBudget = this.userSettingsState.defaultCategoryBudget();
+    const isExpense = (cat?.type ?? 'expense') === 'expense';
+    const budgetDefault = isExpense ? (cat?.budgetAmount ?? defaultBudget) : (cat?.budgetAmount ?? null);
     this.form = this.fb.group({
       name: [cat?.name ?? '', [Validators.required, Validators.minLength(1)]],
       icon: [cat?.icon ?? '📂', Validators.required],
       color: [cat?.color ?? '#9E9E9E', Validators.required],
       type: [cat?.type ?? 'expense', Validators.required],
-      budgetAmount: [cat?.budgetAmount ?? null],
+      budgetAmount: [budgetDefault],
       budgetPeriod: [cat?.budgetPeriod ?? 'monthly'],
     });
     this.selectedType.set((this.form.get('type')?.value ?? 'expense') as 'expense' | 'income');
@@ -110,6 +120,14 @@ export class CategoryFormComponent implements OnInit {
   onTypeSelect(type: 'expense' | 'income'): void {
     this.form.get('type')?.setValue(type);
     this.selectedType.set(type);
+    const budgetCtrl = this.form.get('budgetAmount');
+    if (type === 'expense') {
+      if (!budgetCtrl?.value) {
+        budgetCtrl?.setValue(this.userSettingsState.defaultCategoryBudget());
+      }
+    } else {
+      budgetCtrl?.setValue(null);
+    }
   }
 
   onIconSelect(icon: string): void {
@@ -156,28 +174,44 @@ export class CategoryFormComponent implements OnInit {
     if (this.form.invalid) return;
     const value = this.form.getRawValue();
     const now = new Date().toISOString();
+    const budgetAmount = value.budgetAmount ? Number(value.budgetAmount) : null;
+    const isExpense = value.type === 'expense';
+    const period = now.slice(0, 7);
 
     if (this.category && this.rowNumber) {
       const updated: ICategory = {
         ...this.category,
         ...value,
-        budgetAmount: value.budgetAmount ? Number(value.budgetAmount) : null,
+        budgetAmount,
       };
       this.categoriesState.update(updated, this.rowNumber);
+      if (isExpense && budgetAmount && budgetAmount > 0) {
+        this.budgetsState.createOrRecalculate(
+          this.category.categoryId, period, budgetAmount,
+          this.category.userId, this.txState.items(),
+        );
+      }
     } else {
+      const categoryId = crypto.randomUUID();
       const newCategory: ICategory = {
-        categoryId: crypto.randomUUID(),
+        categoryId,
         userId: this.userId!,
         name: value.name.trim(),
         icon: value.icon,
         color: value.color,
         type: value.type,
-        budgetAmount: value.budgetAmount ? Number(value.budgetAmount) : null,
+        budgetAmount,
         budgetPeriod: value.budgetPeriod,
         isActive: true,
         createdAt: now,
       };
       this.categoriesState.add(newCategory);
+      if (isExpense && budgetAmount && budgetAmount > 0) {
+        this.budgetsState.createOrRecalculate(
+          categoryId, period, budgetAmount,
+          this.userId!, this.txState.items(),
+        );
+      }
     }
     await this.modalCtrl.dismiss();
   }

@@ -71,14 +71,7 @@ export class BudgetsStateService {
     const rowNumber = this._rowMap()[budget.budgetId];
     if (!rowNumber) return;
 
-    const spentAmount = transactions
-      .filter(t =>
-        t.type === TRANSACTION_TYPES.EXPENSE &&
-        t.categoryId === categoryId &&
-        t.date.startsWith(period),
-      )
-      .reduce((sum, t) => sum + t.amountBase, 0);
-
+    const spentAmount = this._calcSpent(categoryId, period, transactions);
     const status = calculateStatus(spentAmount, budget.budgetAmount);
     const updated: IBudget = {
       ...budget,
@@ -90,5 +83,57 @@ export class BudgetsStateService {
     this._items.update(items => items.map(b => b.budgetId === updated.budgetId ? updated : b));
     firstValueFrom(this.budgetService.updateBudget(updated, rowNumber))
       .catch(err => this._error.set(String(err)));
+  }
+
+  /**
+   * Crea el registro BUDGET para la categoría+período si no existe todavía.
+   * Si ya existe un registro (configurado manualmente desde el tab Presupuestos),
+   * lo respeta sin modificar su budgetAmount — solo recalcula spentAmount.
+   */
+  createOrRecalculate(
+    categoryId: string,
+    period: string,
+    defaultBudgetAmount: number,
+    userId: string,
+    transactions: ITransaction[],
+  ): void {
+    const existing = this._items().find(b => b.categoryId === categoryId && b.period === period);
+    const spentAmount = this._calcSpent(categoryId, period, transactions);
+
+    if (existing) {
+      // Respeta el budgetAmount ya configurado; solo actualiza spentAmount si está desactualizado
+      if (existing.spentAmount === spentAmount) return;
+      const rowNumber = this._rowMap()[existing.budgetId];
+      if (!rowNumber) return;
+      const status = calculateStatus(spentAmount, existing.budgetAmount);
+      const updated: IBudget = { ...existing, spentAmount, status, lastUpdated: new Date().toISOString() };
+      this._items.update(items => items.map(b => b.budgetId === existing.budgetId ? updated : b));
+      firstValueFrom(this.budgetService.updateBudget(updated, rowNumber))
+        .catch(err => this._error.set(String(err)));
+    } else {
+      // No existe → crear con el amount por defecto de la categoría
+      const status = calculateStatus(spentAmount, defaultBudgetAmount);
+      const newBudget: IBudget = {
+        budgetId:    `bgt_${crypto.randomUUID()}`,
+        userId,
+        categoryId,
+        period,
+        budgetAmount: defaultBudgetAmount,
+        spentAmount,
+        status,
+        lastUpdated: new Date().toISOString(),
+      };
+      this.save(newBudget);
+    }
+  }
+
+  private _calcSpent(categoryId: string, period: string, transactions: ITransaction[]): number {
+    return transactions
+      .filter(t =>
+        t.type === TRANSACTION_TYPES.EXPENSE &&
+        t.categoryId === categoryId &&
+        t.date.startsWith(period),
+      )
+      .reduce((sum, t) => sum + t.amountBase, 0);
   }
 }

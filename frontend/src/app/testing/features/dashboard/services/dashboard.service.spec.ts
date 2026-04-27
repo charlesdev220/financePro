@@ -280,5 +280,47 @@ describe('DashboardService', () => {
       expect(result[1].date).toBe('2026-04-08');
       expect(result[2].date).toBe('2026-04-01');
     });
+
+    // REQ-01 sc1: mismo día con createdAt distintos → ordena por timestamp DESC
+    it('getRecentTransactions_shouldOrderByCreatedAtDesc_whenSameDayTransactions', () => {
+      // Given: dos transacciones con la misma date pero createdAt diferente
+      const base: ITransaction = {
+        txId: '', userId: 'u1', walletId: 'w1', categoryId: 'cat-1',
+        amount: 10, currency: 'EUR', amountBase: 10, concept: '',
+        date: '2026-04-27', type: 'expense', isRecurring: false,
+        recurrenceRule: null, notes: null, updatedAt: '',
+      } as unknown as ITransaction;
+
+      const tMorning:   ITransaction = { ...base, txId: 'morning',   createdAt: '2026-04-27T09:00:00Z' };
+      const tAfternoon: ITransaction = { ...base, txId: 'afternoon', createdAt: '2026-04-27T15:30:00Z' };
+
+      // When
+      const result = service.getRecentTransactions([tMorning, tAfternoon], '2026-04');
+
+      // Then: la de las 15:30 debe ir primero (más reciente)
+      expect(result[0].txId).toBe('afternoon');
+      expect(result[1].txId).toBe('morning');
+    });
+
+    // REQ-01 sc2: sin createdAt → fallback a date
+    it('getRecentTransactions_shouldFallbackToDate_whenCreatedAtIsEmpty', () => {
+      // Given: transacciones sin createdAt (string vacío)
+      const base: ITransaction = {
+        txId: '', userId: 'u1', walletId: 'w1', categoryId: 'cat-1',
+        amount: 10, currency: 'EUR', amountBase: 10, concept: '',
+        type: 'expense', isRecurring: false, recurrenceRule: null,
+        notes: null, updatedAt: '', createdAt: '',
+      } as unknown as ITransaction;
+
+      const tOld:   ITransaction = { ...base, txId: 'old',   date: '2026-04-10', createdAt: '' };
+      const tRecent: ITransaction = { ...base, txId: 'recent', date: '2026-04-20', createdAt: '' };
+
+      // When
+      const result = service.getRecentTransactions([tOld, tRecent], '2026-04');
+
+      // Then: la más reciente por date va primero
+      expect(result[0].txId).toBe('recent');
+      expect(result[1].txId).toBe('old');
+    });
   });
 });

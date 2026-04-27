@@ -11,4 +11,5 @@ export type UserSettingKey =
   | 'alert_threshold_pct'
   | 'default_view_period'
   | 'custom_period_days'
-  | 'base_currency';
+  | 'base_currency'
+  | 'default_category_budget';

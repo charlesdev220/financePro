@@ -4,6 +4,20 @@ Registro de lecciones técnicas extraídas de cada iteración del proyecto. Appe
 
 ---
 
+### Qué hemos aprendido en el desarrollo de esta iteración (Dashboard — Pila de Presupuesto y spentAmount stale):
+*Qué se aprendió:* El `spentAmount` almacenado en Sheets siempre arranca en `0` cuando un presupuesto se crea desde el form (hardcodeado). No se puede confiar en ese valor para calcular porcentajes de consumo — la fuente de verdad correcta son las transacciones del store. El patrón correcto es recalcular `spentAmount` de forma reactiva en el `computed()` de la página, usando las transacciones ya cargadas en memoria, sin ninguna escritura adicional a Sheets. Para categorías sin registro BUDGET, pasar el `defaultBudget` como input al componente de chart permite mostrar una pila coherente usando el presupuesto por defecto como denominador, sin necesitar crear registros en Sheets on-the-fly.
+*Por qué se aprendió:* Las pilas mostraban `0% bgt` (y `NaN% bgt`) porque `BudgetFormComponent` hardcodeaba `spentAmount: 0` y `recalculate()` solo actualizaba si ya existía un registro, nunca al crear. Intentar solucionar esto con `createOrRecalculate` desde el `CategoryFormComponent` no solucionaba el problema para registros ya existentes. La solución definitiva fue derivar `spentAmount` desde las transacciones del store en `DashboardPage.budgetsForPeriod`.
+*Dónde se aprendió:* `features/dashboard/dashboard.page.ts` → `budgetsForPeriod` computed; `features/dashboard/components/dashboard-chart/dashboard-chart.component.ts` → `expenseItems` computed + input `defaultBudget`.
+
+---
+
+### Qué hemos aprendido en el desarrollo de esta iteración (Dashboard Fixes — Ordenamiento, Porcentajes y Presupuesto por Defecto):
+*Qué se aprendió:* Cuando un state service nuevo (como `UserSettingsStateService`) necesita leer de `USER_SETTINGS`, el patrón correcto ya establecido en el proyecto es inyectar `SheetsApiService` directamente en el state service — no crear un service intermedio. La capa de state services actúa como la capa de efectos del proyecto (sin NgRx). Además, al llamar `load()` desde el constructor/ngOnInit de un modal que se abre frecuentemente, se generan llamadas redundantes a Sheets; la optimización es cargar una sola vez desde el host page o APP_INITIALIZER.
+*Por qué se aprendió:* Al implementar `UserSettingsStateService` se detectó que `CurrencyStateService` ya usaba exactamente este patrón, lo que confirmó la arquitectura correcta. El S-01 del verify-report alertó sobre la apertura repetida del modal.
+*Dónde se aprendió:* `core/state/user-settings.state.ts`, `features/categories/category-form/category-form.component.ts`.
+
+---
+
 ### Qué hemos aprendido en el desarrollo de esta iteración (Dashboard & Analytics Improvements):
 *Qué se aprendió:* Llamar métodos del componente desde el template (`getBudgetMeta(id)`) en componentes `OnPush` no es reactivo — el método se evalúa en el momento de la renderización inicial pero no se re-evalúa cuando cambian los signals internos que usa. La solución correcta es mover toda la lógica al `computed()` y devolver los datos ya enriquecidos en el array, para que el template solo haga binding de propiedades del objeto.
 *Por qué se aprendió:* Las pilas de presupuesto no aparecían en el dashboard aunque `budgets` input cambiaba correctamente. El método `getBudgetMeta()` leía `this.budgetMap()` internamente, pero OnPush no re-renderizaba el template cuando el signal cambiaba dentro de una llamada a método (no es un signal binding directo).

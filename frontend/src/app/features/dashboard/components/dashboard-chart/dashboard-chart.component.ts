@@ -21,6 +21,8 @@ export class DashboardChartComponent {
   currency = input.required<string>();
   /** Presupuestos del período activo para mostrar indicadores micro en la leyenda de gastos. */
   budgets = input<IBudget[]>([]);
+  /** Presupuesto mensual por defecto (de UserSettings) para categorías sin registro en BUDGETS. */
+  defaultBudget = input<number>(200);
   /** Proveniente de DashboardPage.ionViewDidEnter para forzar resize del chart al volver al tab. */
   refreshTick = input<number>(0);
 
@@ -66,12 +68,13 @@ export class DashboardChartComponent {
       .filter(item => item.type === TRANSACTION_TYPES.EXPENSE)
       .map(item => {
         const b = budgetMap.get(item.categoryId);
-        if (b && b.budgetAmount > 0) {
-          const pct = Math.min(100, Math.round((b.spentAmount / b.budgetAmount) * 100));
-          const color = pct >= 80 ? '#E57373' : item.color;
-          return { ...item, budgetMeta: { pct, color, hasBudget: true } };
-        }
-        return { ...item, budgetMeta: { pct: item.pct, color: item.color, hasBudget: false } };
+        const budgetAmount = (b && b.budgetAmount > 0) ? b.budgetAmount : this.defaultBudget();
+        const spentAmount  = (b && b.budgetAmount > 0) ? b.spentAmount  : item.amount;
+        const raw = (spentAmount / budgetAmount) * 100;
+        const pct = isNaN(raw) || !isFinite(raw) ? 0 : Math.min(100, Math.round(raw));
+        const color = pct >= 80 ? '#E57373' : item.color;
+        // showBudgetLabel: true siempre — todas las categorías de gasto muestran consumo vs presupuesto
+        return { ...item, budgetMeta: { pct, color, hasBudget: !!(b && b.budgetAmount > 0), showBudgetLabel: true } };
       });
   });
 }

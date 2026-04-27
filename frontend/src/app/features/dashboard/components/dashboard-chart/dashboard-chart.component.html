@@ -43,9 +43,16 @@
         <!-- Mini pila: barra + % antes del ícono. Con presupuesto → color de status; sin presupuesto → gris (% del total de gastos) -->
         <div class="flex flex-col items-center gap-[2px] flex-shrink-0 w-8">
           <div class="w-full h-1 bg-gray-100 rounded-full overflow-hidden">
-            <div class="h-full rounded-full" [style.width.%]="item.budgetMeta.pct" [style.backgroundColor]="item.budgetMeta.color"></div>
+            <div class="h-full rounded-full" [style.width.%]="item.budgetMeta.pct"
+              [style.backgroundColor]="item.budgetMeta.color"></div>
           </div>
-          <span class="text-[9px] font-black leading-none" [style.color]="item.budgetMeta.color">{{ item.budgetMeta.pct }}%</span>
+          @if (item.budgetMeta.showBudgetLabel) {
+          <span class="text-[9px] font-black leading-none" [style.color]="item.budgetMeta.color">{{ item.budgetMeta.pct
+            }}%<span class="font-normal opacity-60"> </span></span>
+          } @else {
+          <span class="text-[9px] font-black leading-none" [style.color]="item.budgetMeta.color">{{ item.budgetMeta.pct
+            }}%</span>
+          }
         </div>
         <span class="text-lg leading-none flex-shrink-0">{{ item.icon }}</span>
         <span class="text-sm font-semibold text-monefy-text-primary flex-1 truncate">{{ item.name }}</span>

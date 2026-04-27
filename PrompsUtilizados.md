@@ -13,7 +13,6 @@ en un nuevo sdd implementa estas tareas:
 
 - comprobar el listado ordenado por fecha en la pantalla de transacciones en modo lista
 
-
 - añadir una pila que se va recargando a medida que vas llegando al limite de gasto en cada categoria como el tabs de presupuesto pero en el dashboard
 
 - añadir la fecha de la transaccion con el hora en la pantalla de detalles de transaccion
@@ -21,3 +20,9 @@ en un nuevo sdd implementa estas tareas:
 - el ver todos del dashboard debe llevar al tab de transacciones
 
 - el Gasto por categoría de Analitics es de tipo columna no de tipo tarta como la grafica de ingresos vs Gastos
+
+en un nuevo sdd implementa estas tareas: 
+
+- la lista de movimientos del dashboard no esta ordenada de la misma forma que el tab de movimientos 
+
+- la pila de porcentaje por categoria delante del icono no es la misma que el porcentaje total de todas las categorias, una cosa es el porcentaje que llevamos gastado en una categoria y otra es el porcentaje que representa esa categoria sobre el total de gastos de todas las categorias que es el que esta al lado del monto total que lleva esa categoria

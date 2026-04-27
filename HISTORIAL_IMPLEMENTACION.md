@@ -4,6 +4,36 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Dashboard Fixes — Correcciones post-archive de Pila de Presupuesto):
+*Fase actual:* Corrección post-archive (fuera de ciclo SDD)
+*Estado actual:* Completado ✅ | 2026-04-27
+- ✔️ **Semántica correcta de la pila:** `expenseItems` muestra `spentAmount/budgetAmount` (consumo de presupuesto) para todas las categorías de gasto. Para categorías sin registro en BUDGETS se usa `defaultBudget` input (desde `UserSettingsStateService`) como presupuesto virtual — sin escrituras a Sheets.
+- ✔️ **`defaultBudget` input en `DashboardChartComponent`:** nuevo input con fallback `200`; `DashboardPage` lo lee de `UserSettingsStateService` y lo pasa al chart.
+- ✔️ **`budgetsForPeriod` recalcula `spentAmount` reactivamente:** elimina dependencia del valor stale almacenado en Sheets; sanitiza `amountBase` NaN/Infinity antes del reduce.
+- ✔️ **Sanitización NaN en `expenseItems`:** `pct` se clampa a 0 si el resultado de la división es NaN o Infinity.
+- ✔️ **`BudgetsStateService.createOrRecalculate`:** respeta `budgetAmount` ya configurado manualmente en el tab Presupuestos — nunca lo sobreescribe; solo actualiza `spentAmount` si cambió.
+- ✔️ **`BudgetFormComponent`:** al crear un presupuesto desde el tab, `spentAmount` se calcula desde las transacciones existentes en vez de hardcodear `0`.
+- ✔️ **`CategoryFormComponent.save()`:** llama `createOrRecalculate` al guardar una categoría de gasto con `budgetAmount > 0`, creando el registro BUDGET con `spentAmount` real si no existía.
+*Deuda técnica documentada:* Categorías de gasto existentes (creadas antes de esta feature) no tienen registro BUDGET automáticamente — el usuario debe abrirlas y guardarlas una vez para que se cree, o crearlas desde el tab Presupuestos.
+*Próximos pasos:* ninguno.
+
+---
+
+### Qué hemos completado hasta ahora (Dashboard Fixes — Ordenamiento, Porcentajes y Presupuesto por Defecto):
+*Fase actual:* Fase Archive: ciclo SDD completo
+*Estado actual:* Completado ✅ | Archivado: 2026-04-27
+- ✔️ **Fix ordenamiento dashboard:** `getRecentTransactions()` y computed `recentTransactions` ahora ordenan por `(createdAt || date)` DESC, idéntico al tab de Movimientos.
+- ✔️ **Etiqueta `bgt` en pila de presupuesto:** `expenseItems` agrega `showBudgetLabel`; el template muestra `XX% bgt` cuando hay presupuesto para distinguirlo del `%` del total de gastos junto al monto.
+- ✔️ **`UserSettingsStateService`:** nuevo state service en `core/state/` que persiste `default_category_budget` en `USER_SETTINGS`; signal `defaultCategoryBudget` con fallback `200`.
+- ✔️ **Settings page:** campo `ion-input` para modificar el presupuesto mensual por defecto; muestra moneda base del usuario.
+- ✔️ **Pre-llenado en CategoryForm:** al crear/editar categoría de tipo `expense`, `budgetAmount` se inicializa con el default del setting; cambio de tipo income↔expense aplica/limpia el campo reactivamente.
+- ✔️ **`UserSettingKey` extendida:** agregado `'default_category_budget'` al tipo en `user-settings.model.ts`.
+- ✔️ **14 tests:** 2 en `dashboard.service.spec.ts`, 3 en `dashboard-chart.component.spec.ts`, 4 en `user-settings.state.spec.ts`, 5 en `category-form.component.spec.ts`.
+*Deuda técnica documentada:* `userSettingsState.load()` se llama en cada apertura del CategoryForm modal (S-01 del verify-report). Optimizar con carga única en `AppComponent` o lazy en primera apertura.
+*Próximos pasos:* ninguno — ciclo cerrado.
+
+---
+
 ### Qué hemos completado hasta ahora (Dashboard & Analytics Improvements):
 *Fase actual:* Fase Archive: ciclo SDD completo
 *Estado actual:* Completado ✅ | Archivado: 2026-04-27

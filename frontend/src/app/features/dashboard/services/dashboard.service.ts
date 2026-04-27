@@ -112,7 +112,7 @@ export class DashboardService {
   ): ITransaction[] {
     return transactions
       .filter(t => t.date.startsWith(period))
-      .sort((a, b) => b.date.localeCompare(a.date))
+      .sort((a, b) => (b.createdAt || b.date).localeCompare(a.createdAt || a.date))
       .slice(0, limit);
   }
 }

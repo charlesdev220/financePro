@@ -19,9 +19,11 @@ import { addIcons } from 'ionicons';
 import { chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
 import { BudgetsStateService } from '@core/state/budgets.state';
 import { CategoriesStateService } from '@core/state/categories.state';
+import { TransactionsStateService } from '@core/state/transactions.state';
 import { AuthService } from '@core/services/auth.service';
 import { IBudget } from '@models/budget.model';
 import { BUDGET_STATUS } from '@core/constants/budget.constants';
+import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 
 @Component({
   selector: 'app-budget-form',
@@ -61,6 +63,7 @@ export class BudgetFormComponent implements OnInit {
   private readonly fb               = inject(FormBuilder);
   private readonly budgetsState     = inject(BudgetsStateService);
   private readonly categoriesState  = inject(CategoriesStateService);
+  private readonly txState          = inject(TransactionsStateService);
   private readonly modalCtrl        = inject(ModalController);
   private readonly authService      = inject(AuthService);
 
@@ -129,14 +132,23 @@ export class BudgetFormComponent implements OnInit {
       const user = this.authService.getUser();
       if (!user) return;
 
+      const budgetAmount = Number(value.budgetAmount);
+      const spentAmount  = this.txState.items()
+        .filter(t =>
+          t.type === TRANSACTION_TYPES.EXPENSE &&
+          t.categoryId === value.categoryId &&
+          t.date.startsWith(value.period),
+        )
+        .reduce((sum, t) => sum + t.amountBase, 0);
+
       const newBudget: IBudget = {
         budgetId:     crypto.randomUUID(),
         userId:       user.sub,
         categoryId:   value.categoryId,
         period:       value.period,
-        budgetAmount: Number(value.budgetAmount),
-        spentAmount:  0,
-        status:       BUDGET_STATUS.OK,
+        budgetAmount,
+        spentAmount,
+        status:       spentAmount >= budgetAmount ? 'exceeded' : spentAmount >= budgetAmount * 0.8 ? 'warning' : BUDGET_STATUS.OK,
         lastUpdated:  now,
       };
       this.budgetsState.save(newBudget);
