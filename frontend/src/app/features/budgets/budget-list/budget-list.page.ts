@@ -11,8 +11,6 @@ import {
   IonItemOptions,
   IonItemOption,
   IonLabel,
-  IonFab,
-  IonFabButton,
   ModalController,
   ToastController,
 } from '@ionic/angular/standalone';
@@ -21,7 +19,9 @@ import { addOutline, trashOutline, barChartOutline } from 'ionicons/icons';
 import { BudgetsStateService } from '@core/state/budgets.state';
 import { CategoriesStateService } from '@core/state/categories.state';
 import { CurrencyStateService } from '@core/state/currency.state';
+import { TransactionsStateService } from '@core/state/transactions.state';
 import { IBudget } from '@models/budget.model';
+import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
 import { BudgetIndicatorComponent } from '@shared/components/budget-indicator/budget-indicator.component';
 import { BudgetFormComponent } from '@features/budgets/budget-form/budget-form.component';
@@ -43,37 +43,56 @@ import { BudgetFormComponent } from '@features/budgets/budget-form/budget-form.c
     IonItemOptions,
     IonItemOption,
     IonLabel,
-    IonFab,
-    IonFabButton,
-    IonFab,
-    IonFabButton,
     PeriodSelectorComponent,
     BudgetIndicatorComponent,
   ],
 })
 export class BudgetListPage implements OnInit {
-  private readonly budgetsState = inject(BudgetsStateService);
-  private readonly categoriesState = inject(CategoriesStateService);
-  private readonly currencyState = inject(CurrencyStateService);
-  private readonly modalCtrl = inject(ModalController);
-  private readonly toastCtrl = inject(ToastController);
+  private readonly budgetsState      = inject(BudgetsStateService);
+  private readonly categoriesState   = inject(CategoriesStateService);
+  private readonly currencyState     = inject(CurrencyStateService);
+  private readonly txState           = inject(TransactionsStateService);
+  private readonly modalCtrl         = inject(ModalController);
+  private readonly toastCtrl         = inject(ToastController);
 
   readonly currentPeriod = signal(new Date().toISOString().slice(0, 7));
 
-  /** Todos los presupuestos del usuario desde el state service. */
   private readonly _allBudgets = this.budgetsState.items;
-  /** Mapa budgetId → rowNumber en Sheets, necesario para edición y borrado. */
-  private readonly rowMap = this.budgetsState.rowMap;
+  private readonly rowMap      = this.budgetsState.rowMap;
+  private readonly categories  = this.categoriesState.items;
 
-  /** Categorías del usuario para resolver nombre en la lista de presupuestos. */
-  private readonly categories = this.categoriesState.items;
   /** Moneda base del usuario. Fallback 'EUR' antes de cargar. */
   readonly userBaseCurrency = computed(() => this.currencyState.baseCurrency() ?? 'EUR');
 
-  /** Presupuestos filtrados por el período seleccionado actualmente. */
+  /**
+   * Presupuestos del período enriquecidos con spentAmount recalculado desde las
+   * transacciones en vivo (igual que DashboardPage.budgetsForPeriod) y el color
+   * de la categoría para la barra del indicador.
+   */
   readonly budgets = computed(() => {
     const period = this.currentPeriod();
-    return this._allBudgets().filter(b => b.period === period);
+    const txs    = this.txState.items();
+    const cats   = this.categories();
+
+    return this._allBudgets()
+      .filter(b => b.period === period)
+      .map(b => {
+        const cat         = cats.find(c => c.categoryId === b.categoryId);
+        const spentAmount = txs
+          .filter(t =>
+            t.type === TRANSACTION_TYPES.EXPENSE &&
+            t.categoryId === b.categoryId &&
+            t.date.startsWith(period),
+          )
+          .reduce((sum, t) => sum + (isNaN(t.amountBase) ? 0 : t.amountBase), 0);
+
+        return {
+          ...b,
+          spentAmount,
+          categoryName:  cat?.name  ?? 'Sin categoría',
+          categoryColor: cat?.color ?? '#5BAD8F',
+        };
+      });
   });
 
   constructor() {
@@ -84,6 +103,7 @@ export class BudgetListPage implements OnInit {
     this.budgetsState.load();
     this.categoriesState.load();
     this.currencyState.load();
+    this.txState.load();
   }
 
   onPeriodChange(p: string): void {
@@ -106,10 +126,6 @@ export class BudgetListPage implements OnInit {
       backdropDismiss: true,
     });
     await modal.present();
-  }
-
-  getCategoryName(categoryId: string): string {
-    return this.categories().find(c => c.categoryId === categoryId)?.name ?? 'Sin categoría';
   }
 
   async deleteBudget(budget: IBudget): Promise<void> {

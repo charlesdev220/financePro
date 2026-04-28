@@ -1,6 +1,18 @@
-<div class="flex flex-col gap-1 w-full py-1">
-  <ion-progress-bar [value]="percentage() / 100" [color]="color()"></ion-progress-bar>
-  <ion-note class="text-[0.75rem]">
-    {{ budget().spentAmount | currencyFormat:userCurrency() }} / {{ budget().budgetAmount | currencyFormat:userCurrency() }}
-  </ion-note>
+<div class="flex flex-col gap-1.5 w-full py-1">
+  <!-- Barra custom igual que dashboard-chart — color de categoría / rojo al 80% -->
+  <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+    <div class="h-full rounded-full transition-all duration-300"
+      [style.width.%]="pct()"
+      [style.backgroundColor]="barColor()">
+    </div>
+  </div>
+  <!-- Montos: gastado / límite -->
+  <div class="flex items-center justify-between">
+    <span class="text-xs font-bold" [style.color]="barColor()">{{ pct() }}%</span>
+    <span class="text-xs text-monefy-text-secondary">
+      {{ budget().spentAmount | currencyFormat:userCurrency() }}
+      <span class="opacity-50">/</span>
+      {{ budget().budgetAmount | currencyFormat:userCurrency() }}
+    </span>
+  </div>
 </div>
