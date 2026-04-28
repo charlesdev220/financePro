@@ -1,0 +1,23 @@
+<div class="flex items-center gap-2 overflow-x-auto pb-1 px-4 pt-2 scrollbar-hide">
+  @for (ws of workspaces(); track ws.workspaceId) {
+    <button
+      class="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap transition-all"
+      [class.font-bold]="ws.workspaceId === activeId()"
+      [class.border-b-2]="ws.workspaceId === activeId()"
+      [class.border-white]="ws.workspaceId === activeId()"
+      [class.text-white]="ws.workspaceId === activeId()"
+      [class.opacity-60]="ws.workspaceId !== activeId()"
+      (click)="onSwitch(ws.workspaceId)"
+    >
+      <span>{{ ws.icon }}</span>
+      <span>{{ ws.name }}</span>
+    </button>
+  }
+  <button
+    class="flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium text-white opacity-60 whitespace-nowrap"
+    (click)="onNew()"
+  >
+    <span>+</span>
+    <span>Nuevo</span>
+  </button>
+</div>

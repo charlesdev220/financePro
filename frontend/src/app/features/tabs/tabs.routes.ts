@@ -17,6 +17,11 @@ export const tabsRoutes: Routes = [
         loadComponent: () =>
           import('../dashboard/dashboard.page').then(m => m.DashboardPage),
       },
+      {
+        path: 'transactions',
+        loadComponent: () =>
+          import('../transactions/transaction-list/transaction-list.page').then(m => m.TransactionListPage),
+      },
     ],
   },
   {

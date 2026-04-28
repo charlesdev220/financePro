@@ -21,14 +21,16 @@ function makeBreakdown(overrides: Partial<CategoryBreakdown> = {}): CategoryBrea
 
 function makeBudget(overrides: Partial<IBudget> = {}): IBudget {
   return {
-    budgetId:    'bgt-1',
-    userId:      'usr_001',
-    categoryId:  'cat-1',
-    period:      '2026-04',
-    spentAmount: 120,
+    budgetId:     'bgt-1',
+    userId:       'usr_001',
+    categoryId:   'cat-1',
+    period:       '2026-04',
+    spentAmount:  120,
     budgetAmount: 200,
-    status:      'ok',
-    lastUpdated: '2026-04-27T00:00:00Z',
+    status:       'ok',
+    lastUpdated:  '2026-04-27T00:00:00Z',
+    workspaceId:  'ws_test',
+    mode:         'indefinite',
     ...overrides,
   };
 }

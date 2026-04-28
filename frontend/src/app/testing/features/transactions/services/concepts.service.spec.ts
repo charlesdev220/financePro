@@ -6,31 +6,33 @@ import { IConcept } from '../../../../models/concept.model';
 import { ITransaction } from '../../../../models/transaction.model';
 
 const mockConcept = (overrides: Partial<IConcept> = {}): IConcept => ({
-  conceptId: 'con-001',
-  userId: 'user-001',
-  categoryId: 'cat-001',
-  text: 'Mercadona',
-  usageCount: 5,
-  lastUsed: '2026-04-01T00:00:00.000Z',
+  conceptId:   'con-001',
+  userId:      'user-001',
+  categoryId:  'cat-001',
+  text:        'Mercadona',
+  usageCount:  5,
+  lastUsed:    '2026-04-01T00:00:00.000Z',
+  workspaceId: 'ws_test',
   ...overrides,
 });
 
 const mockTransaction = (): ITransaction => ({
-  txId: 'tx-001',
-  userId: 'user-001',
-  walletId: 'wal-001',
-  categoryId: 'cat-001',
-  amount: 100,
-  currency: 'EUR',
-  amountBase: 100,
-  concept: 'Mercadona',
-  date: '2026-04-01',
-  type: 'expense',
-  isRecurring: false,
+  txId:           'tx-001',
+  userId:         'user-001',
+  walletId:       'wal-001',
+  categoryId:     'cat-001',
+  amount:         100,
+  currency:       'EUR',
+  amountBase:     100,
+  concept:        'Mercadona',
+  date:           '2026-04-01',
+  type:           'expense',
+  isRecurring:    false,
   recurrenceRule: null,
-  notes: null,
-  createdAt: '2026-04-01T10:00:00.000Z',
-  updatedAt: '2026-04-01T10:00:00.000Z',
+  notes:          null,
+  workspaceId:    'ws_test',
+  createdAt:      '2026-04-01T10:00:00.000Z',
+  updatedAt:      '2026-04-01T10:00:00.000Z',
 });
 
 describe('ConceptsService.getSuggestions', () => {

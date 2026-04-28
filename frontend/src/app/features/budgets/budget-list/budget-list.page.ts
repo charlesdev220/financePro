@@ -45,16 +45,18 @@ import { BudgetFormComponent } from '@features/budgets/budget-form/budget-form.c
     IonLabel,
     IonFab,
     IonFabButton,
+    IonFab,
+    IonFabButton,
     PeriodSelectorComponent,
     BudgetIndicatorComponent,
   ],
 })
 export class BudgetListPage implements OnInit {
-  private readonly budgetsState     = inject(BudgetsStateService);
-  private readonly categoriesState  = inject(CategoriesStateService);
-  private readonly currencyState    = inject(CurrencyStateService);
-  private readonly modalCtrl        = inject(ModalController);
-  private readonly toastCtrl        = inject(ToastController);
+  private readonly budgetsState = inject(BudgetsStateService);
+  private readonly categoriesState = inject(CategoriesStateService);
+  private readonly currencyState = inject(CurrencyStateService);
+  private readonly modalCtrl = inject(ModalController);
+  private readonly toastCtrl = inject(ToastController);
 
   readonly currentPeriod = signal(new Date().toISOString().slice(0, 7));
 

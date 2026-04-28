@@ -1,5 +1,5 @@
-/** Campos que ingresa el usuario; txId/amountBase/createdAt/updatedAt los genera el State Service. */
-export type TransactionDraft = Omit<ITransaction, 'txId' | 'amountBase' | 'createdAt' | 'updatedAt'>;
+/** Campos que ingresa el usuario; txId/amountBase/workspaceId/createdAt/updatedAt los genera el State Service. */
+export type TransactionDraft = Omit<ITransaction, 'txId' | 'amountBase' | 'workspaceId' | 'createdAt' | 'updatedAt'>;
 
 export interface ITransaction {
   txId: string;
@@ -15,6 +15,7 @@ export interface ITransaction {
   isRecurring: boolean;
   recurrenceRule: string | null;
   notes: string | null;
+  workspaceId: string;
   createdAt: string; // ISO 8601 timestamp
   updatedAt: string; // ISO 8601 timestamp
   

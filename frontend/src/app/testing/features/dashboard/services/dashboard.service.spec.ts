@@ -13,36 +13,38 @@ function tx(
   catId = 'cat-1',
 ): ITransaction {
   return {
-    txId: id,
-    userId: 'u1',
-    walletId: 'w1',
-    categoryId: catId,
+    txId:           id,
+    userId:         'u1',
+    walletId:       'w1',
+    categoryId:     catId,
     amount,
-    currency: 'EUR',
-    amountBase: amount,
-    concept: '',
+    currency:       'EUR',
+    amountBase:     amount,
+    concept:        '',
     date,
     type,
-    isRecurring: false,
+    isRecurring:    false,
     recurrenceRule: null,
-    notes: null,
-    createdAt: date + 'T00:00:00Z',
-    updatedAt: date + 'T00:00:00Z',
+    notes:          null,
+    workspaceId:    'ws_test',
+    createdAt:      date + 'T00:00:00Z',
+    updatedAt:      date + 'T00:00:00Z',
   };
 }
 
 function cat(id: string, name: string, color: string): ICategory {
   return {
-    categoryId: id,
-    userId: 'u1',
+    categoryId:  id,
+    userId:      'u1',
     name,
-    icon: '📂',
+    icon:        '📂',
     color,
-    type: 'expense',
+    type:        'expense',
     budgetAmount: null,
     budgetPeriod: 'monthly',
-    isActive: true,
-    createdAt: '2026-01-01T00:00:00Z',
+    isActive:    true,
+    workspaceId: 'ws_test',
+    createdAt:   '2026-01-01T00:00:00Z',
   };
 }
 

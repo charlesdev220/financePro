@@ -6,6 +6,10 @@ import { ITransaction } from '../models/transaction.model';
 import { ICategory } from '../models/category.model';
 import { IWallet } from '../models/wallet.model';
 import { IBudget } from '../models/budget.model';
+import { IWorkspace } from '../models/workspace.model';
+
+export const MOCK_WORKSPACE_ID_A = 'ws_aaaaaaaa-0000-0000-0000-000000000001';
+export const MOCK_WORKSPACE_ID_B = 'ws_bbbbbbbb-0000-0000-0000-000000000002';
 
 export const MOCK_CATEGORIES: ICategory[] = [
   {
@@ -18,6 +22,7 @@ export const MOCK_CATEGORIES: ICategory[] = [
     budgetAmount: null,
     budgetPeriod: 'monthly',
     isActive: true,
+    workspaceId: MOCK_WORKSPACE_ID_A,
     createdAt: '2026-04-11T19:42:51.027Z',
   },
   {
@@ -30,6 +35,7 @@ export const MOCK_CATEGORIES: ICategory[] = [
     budgetAmount: null,
     budgetPeriod: 'monthly',
     isActive: true,
+    workspaceId: MOCK_WORKSPACE_ID_A,
     createdAt: '2026-04-11T19:42:51.027Z',
   },
 ];
@@ -44,6 +50,7 @@ export const MOCK_WALLETS: IWallet[] = [
     color: '#1976D2',
     icon: '💵',
     isDefault: true,
+    workspaceId: MOCK_WORKSPACE_ID_A,
     createdAt: '2026-04-11T19:42:51.027Z',
   },
   {
@@ -55,6 +62,7 @@ export const MOCK_WALLETS: IWallet[] = [
     color: '#D32F2F',
     icon: '🏦',
     isDefault: false,
+    workspaceId: MOCK_WORKSPACE_ID_A,
     createdAt: '2026-04-11T19:42:51.027Z',
   },
 ];
@@ -74,6 +82,7 @@ export const MOCK_TRANSACTIONS: ITransaction[] = [
     isRecurring: false,
     recurrenceRule: null,
     notes: null,
+    workspaceId: MOCK_WORKSPACE_ID_A,
     createdAt: '2026-04-11T19:42:51.027Z',
     updatedAt: '2026-04-11T19:42:51.027Z',
   },
@@ -91,6 +100,7 @@ export const MOCK_TRANSACTIONS: ITransaction[] = [
     isRecurring: true,
     recurrenceRule: 'FREQ=MONTHLY;BYMONTHDAY=1',
     notes: null,
+    workspaceId: MOCK_WORKSPACE_ID_A,
     createdAt: '2026-04-01T08:00:00.000Z',
     updatedAt: '2026-04-01T08:00:00.000Z',
   },
@@ -106,6 +116,8 @@ export const MOCK_BUDGETS: IBudget[] = [
     budgetAmount: 500.0,
     status: 'ok',
     lastUpdated: '2026-04-11T19:42:51.027Z',
+    workspaceId: MOCK_WORKSPACE_ID_A,
+    mode: 'indefinite',
   },
   {
     budgetId: 'budget-002',
@@ -116,5 +128,28 @@ export const MOCK_BUDGETS: IBudget[] = [
     budgetAmount: 500.0,
     status: 'warning',
     lastUpdated: '2026-04-11T19:42:51.027Z',
+    workspaceId: MOCK_WORKSPACE_ID_A,
+    mode: 'indefinite',
+  },
+];
+
+export const MOCK_WORKSPACES: IWorkspace[] = [
+  {
+    workspaceId: MOCK_WORKSPACE_ID_A,
+    userId: 'usr_001',
+    name: 'Personal',
+    icon: '🏠',
+    color: '--color-green-500',
+    createdAt: '2026-04-01T00:00:00.000Z',
+    isDefault: true,
+  },
+  {
+    workspaceId: MOCK_WORKSPACE_ID_B,
+    userId: 'usr_001',
+    name: 'Trabajo',
+    icon: '💼',
+    color: '--color-green-700',
+    createdAt: '2026-04-01T00:00:00.000Z',
+    isDefault: false,
   },
 ];

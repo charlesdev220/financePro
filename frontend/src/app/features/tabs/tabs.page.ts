@@ -5,8 +5,6 @@ import { AuthService } from '@core/services/auth.service';
 import { addIcons } from 'ionicons';
 import {
   homeOutline,
-  swapHorizontalOutline,
-  pieChartOutline,
   barChartOutline,
   ellipsisHorizontalOutline,
 } from 'ionicons/icons';
@@ -25,8 +23,6 @@ export class TabsPage implements OnInit {
   constructor() {
     addIcons({
       homeOutline,
-      swapHorizontalOutline,
-      pieChartOutline,
       barChartOutline,
       ellipsisHorizontalOutline,
     });

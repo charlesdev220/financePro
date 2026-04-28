@@ -7,6 +7,16 @@
 <ion-content style="--background: var(--color-green-50);">
   <div class="max-w-screen-xl mx-auto">
     <ion-list>
+      <ion-item [routerLink]="['/tabs/budgets']" detail>
+        <ion-icon name="pie-chart-outline" slot="start"></ion-icon>
+        <ion-label>Presupuestos</ion-label>
+      </ion-item>
+
+      <ion-item [routerLink]="['/tabs/transactions']" detail>
+        <ion-icon name="swap-horizontal-outline" slot="start"></ion-icon>
+        <ion-label>Movimientos</ion-label>
+      </ion-item>
+
       <ion-item [routerLink]="['/tabs/categories']" detail>
         <ion-icon name="layers-outline" slot="start"></ion-icon>
         <ion-label>Categorías</ion-label>

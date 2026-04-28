@@ -5,7 +5,7 @@ import {
   IonList, IonItem, IonLabel, IonIcon,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { layersOutline, walletOutline, settingsOutline } from 'ionicons/icons';
+import { layersOutline, walletOutline, settingsOutline, pieChartOutline, swapHorizontalOutline } from 'ionicons/icons';
 
 @Component({
   selector: 'app-more',
@@ -20,6 +20,6 @@ import { layersOutline, walletOutline, settingsOutline } from 'ionicons/icons';
 })
 export class MorePage {
   constructor() {
-    addIcons({ layersOutline, walletOutline, settingsOutline });
+    addIcons({ layersOutline, walletOutline, settingsOutline, pieChartOutline, swapHorizontalOutline });
   }
 }

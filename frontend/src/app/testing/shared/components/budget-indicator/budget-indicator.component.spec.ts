@@ -15,14 +15,16 @@ describe('BudgetIndicatorComponent', () => {
     status: IBudget['status'],
   ): IBudget {
     return {
-      budgetId: 'b-test',
-      userId: 'u1',
-      categoryId: 'cat-1',
-      period: '2026-04',
+      budgetId:    'b-test',
+      userId:      'u1',
+      categoryId:  'cat-1',
+      period:      '2026-04',
       spentAmount,
       budgetAmount,
       status,
-      lastUpdated: '2026-04-12T00:00:00Z',
+      lastUpdated:  '2026-04-12T00:00:00Z',
+      workspaceId:  'ws_test',
+      mode:         'indefinite' as const,
     };
   }
 

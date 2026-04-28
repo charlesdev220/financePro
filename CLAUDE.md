@@ -137,6 +137,7 @@ Antes de ejecutar algo, preguntate: **¿esto infla mi contexto sin necesidad?**
 
 ## ✅ Checklist del Orquestador
 
+- **Leer `PROJECT_FUNCTIONAL_DOC.md`** para identificar features y state services afectados antes de cualquier implementación multi-archivo.
 - **Planificación SDD obligatoria** para features nuevas o cambios multi-archivo. Prohibido escribir código complejo sin `tasks.md` previo. (Excepción: tareas atómicas de 1 archivo).
 - **Pausar siempre** después de `propose` y después de `tasks` — esperar aprobación del usuario.
 - **Si la implementación se desvía del `design.md`**: documentar el motivo en `apply-progress.md`.

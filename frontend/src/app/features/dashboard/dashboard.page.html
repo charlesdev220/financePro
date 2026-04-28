@@ -33,6 +33,12 @@
   <!-- Header verde — full width, contenido centrado en desktop -->
   <div class="bg-[var(--ion-color-primary)] pb-8 rounded-b-[40px] shadow-sm">
     <div class="max-w-screen-xl mx-auto">
+      <app-workspace-selector
+        [workspaces]="workspacesState.items()"
+        [activeId]="workspacesState.activeWorkspaceId()"
+        (switched)="onWorkspaceSwitched($event)"
+        (newRequested)="onNewWorkspace()">
+      </app-workspace-selector>
       <app-period-selector [period]="period()" (periodChange)="onPeriodChange($event)"></app-period-selector>
 
       <div class="flex flex-col items-center mt-4">
@@ -58,6 +64,16 @@
     </div>
   </div>
 
+  @if (isEmptyWorkspace()) {
+  <!-- Workspace activo vacío: el usuario tiene datos pero este espacio no tiene carteras -->
+  <div class="flex flex-col items-center justify-center py-20 px-8 text-center gap-4">
+    <ion-icon name="folder-open-outline" class="text-6xl text-gray-300"></ion-icon>
+    <h2 class="text-lg font-bold text-monefy-text-primary m-0">Este espacio está vacío</h2>
+    <p class="text-sm text-monefy-text-secondary max-w-xs">
+      Creá una cartera en este espacio para empezar a registrar movimientos.
+    </p>
+  </div>
+  } @else {
   <!-- Cuerpo principal — 1 col en móvil, 2 cols en desktop solo con datos -->
   <div class="max-w-screen-xl mx-auto px-4 md:px-8 mt-4 pb-[calc(env(safe-area-inset-bottom)+136px)]"
     [class.lg:grid]="recentTransactions().length > 0"
@@ -112,7 +128,7 @@
     </div>
   </div>
 
-  <!-- Barra de acciones fija — todas las pantallas -->
+  <!-- Barra de acciones fija — solo cuando hay carteras en el workspace activo -->
   <div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md flex gap-3 px-4 pb-3 pt-3 bg-monefy-mint z-1">
     <ion-button (click)="openAddExpense()" expand="block" class="flex-1 font-semibold"
       style="--background: var(--color-red-400); --background-activated: --color-red-500; --border-radius: 12px; text-transform: none;">
@@ -125,7 +141,8 @@
       <ion-icon name="add-outline" slot="start"></ion-icon>
       Registrar ingreso
     </ion-button>
-  </div> }
+  </div>
+  } }
 
 </ion-content>
 

@@ -1,14 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map, switchMap } from 'rxjs';
 import { SheetsApiService } from '@core/services/sheets-api.service';
-import { AuthService } from '@core/services/auth.service';
 import { ICategory } from '@models/category.model';
 
-// CATEGORIES schema (A:I — 9 columnas)
+// CATEGORIES schema (A:K — 11 columnas)
 // A: category_id | B: user_id | C: name | D: icon | E: color | F: type
-// G: budget_amount | H: budget_period | I: is_active
+// G: budget_amount | H: budget_period | I: is_active | J: created_at | K: workspace_id
 
-export function rowToCategory(row: unknown[]): ICategory {
+export function rowToCategory(row: unknown[], defaultWsId = ''): ICategory {
   const budgetRaw = row[6];
   return {
     categoryId:   String(row[0] ?? ''),
@@ -21,6 +20,7 @@ export function rowToCategory(row: unknown[]): ICategory {
     budgetPeriod: (String(row[7] ?? 'monthly') as 'monthly' | 'weekly' | 'custom'),
     isActive:     row[8] === true || String(row[8] ?? 'true').toLowerCase() === 'true',
     createdAt:    String(row[9] ?? new Date().toISOString()),
+    workspaceId:  String(row[10] ?? defaultWsId),
   };
 }
 
@@ -36,31 +36,29 @@ export function categoryToRow(cat: ICategory): unknown[] {
     cat.budgetPeriod,
     cat.isActive,
     cat.createdAt,
+    cat.workspaceId,
   ];
 }
 
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
   private readonly sheetsApi = inject(SheetsApiService);
-  private readonly authService = inject(AuthService);
 
-  loadCategories(): Observable<{ categories: ICategory[]; rowMap: Record<string, number> }> {
-    return this.sheetsApi.getRange('CATEGORIES!A:J').pipe(
+  loadCategories(defaultWsId = ''): Observable<{ categories: ICategory[]; rowMap: Record<string, number> }> {
+    return this.sheetsApi.getRange('CATEGORIES!A:K').pipe(
       map(response => {
         if (!response?.values || response.values.length < 2) {
           return { categories: [], rowMap: {} };
         }
         const allRows = response.values.slice(1);
-        const userId = this.authService.getUser()?.sub ?? '';
         const rowMap: Record<string, number> = {};
         allRows.forEach((row, i) => {
           const id = String(row[0] ?? '');
-          const uid = String(row[1] ?? '');
-          if (id && uid === userId) rowMap[id] = i + 2;
+          if (id) rowMap[id] = i + 2;
         });
         const categories = allRows
-          .filter(row => row[0] && String(row[1] ?? '') === userId)
-          .map(rowToCategory);
+          .filter(row => row[0])
+          .map(row => rowToCategory(row, defaultWsId));
         return { categories, rowMap };
       }),
     );
@@ -72,20 +70,20 @@ export class CategoryService {
 
   updateCategory(category: ICategory, rowNumber: number): Observable<unknown> {
     return this.sheetsApi.updateRow(
-      `CATEGORIES!A${rowNumber}:J${rowNumber}`,
+      `CATEGORIES!A${rowNumber}:K${rowNumber}`,
       [categoryToRow(category)],
     );
   }
 
   /** Soft delete: marca is_active = false. Nunca borra la fila (protege FKs). */
   softDeleteCategory(categoryId: string, rowNumber: number): Observable<unknown> {
-    return this.sheetsApi.getRange(`CATEGORIES!A${rowNumber}:J${rowNumber}`).pipe(
+    return this.sheetsApi.getRange(`CATEGORIES!A${rowNumber}:K${rowNumber}`).pipe(
       switchMap(response => {
         const row = response?.values?.[0];
         if (!row) throw new Error(`Row ${rowNumber} not found in CATEGORIES`);
         const updated = [...row];
         updated[8] = false; // col I: is_active
-        return this.sheetsApi.updateRow(`CATEGORIES!A${rowNumber}:J${rowNumber}`, [updated]);
+        return this.sheetsApi.updateRow(`CATEGORIES!A${rowNumber}:K${rowNumber}`, [updated]);
       }),
     );
   }

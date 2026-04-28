@@ -9,21 +9,22 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { ITransaction } from '../../../../models/transaction.model';
 
 const mockTx = (overrides: Partial<ITransaction> = {}): ITransaction => ({
-  txId: 'tx-001',
-  userId: 'user-001',
-  walletId: 'wal-001',
-  categoryId: 'cat-001',
-  amount: 100,
-  currency: 'EUR',
-  amountBase: 100,
-  concept: 'Test',
-  date: '2026-03-01',
-  type: 'expense',
-  isRecurring: false,
+  txId:           'tx-001',
+  userId:         'user-001',
+  walletId:       'wal-001',
+  categoryId:     'cat-001',
+  amount:         100,
+  currency:       'EUR',
+  amountBase:     100,
+  concept:        'Test',
+  date:           '2026-03-01',
+  type:           'expense',
+  isRecurring:    false,
   recurrenceRule: null,
-  notes: null,
-  createdAt: '2026-03-01T10:00:00.000Z',
-  updatedAt: '2026-03-01T10:00:00.000Z',
+  notes:          null,
+  workspaceId:    'ws_test',
+  createdAt:      '2026-03-01T10:00:00.000Z',
+  updatedAt:      '2026-03-01T10:00:00.000Z',
   ...overrides,
 });
 
@@ -63,7 +64,7 @@ describe('TransactionService', () => {
       amount: 100, currency: 'USD', concept: 'Test', date: '2026-04-01',
       type: 'expense' as const, isRecurring: false, recurrenceRule: null, notes: null,
     };
-    const tx = await service.createTransaction(draft, 'tx-001', 'EUR');
+    const tx = await service.createTransaction(draft, 'tx-001', 'ws_test', 'EUR');
     expect(tx.amountBase).toBeCloseTo(92, 1);
     expect(tx.txId).toBe('tx-001');
     expect(currencySpy.getRate).toHaveBeenCalledWith('USD', 'EUR');
@@ -77,7 +78,7 @@ describe('TransactionService', () => {
       amount: 50, currency: 'EUR', concept: '', date: '2026-04-01',
       type: 'expense' as const, isRecurring: false, recurrenceRule: null, notes: null,
     };
-    const tx = await service.createTransaction(draft, 'tx-002', 'EUR');
+    const tx = await service.createTransaction(draft, 'tx-002', 'ws_test', 'EUR');
     expect(tx.amountBase).toBe(50);
   });
 

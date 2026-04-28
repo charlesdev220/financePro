@@ -33,7 +33,7 @@ describe('UserSettingsStateService', () => {
   // REQ-03 sc1: valor por defecto = 200 cuando no hay fila en USER_SETTINGS
   it('defaultCategoryBudget_shouldBe200_whenSettingNotFoundInSheets', fakeAsync(() => {
     // Given: USER_SETTINGS vacío (solo headers)
-    sheetsApiSpy.getRange.and.returnValue(of({ values: [['settingId', 'userId', 'key', 'value']] }));
+    sheetsApiSpy.getRange.and.returnValue(of({ range: 'USER_SETTINGS!A:D', majorDimension: 'ROWS', values: [['settingId', 'userId', 'key', 'value']] }));
 
     // When
     service.load();
@@ -47,6 +47,7 @@ describe('UserSettingsStateService', () => {
   it('defaultCategoryBudget_shouldReadCustomValue_whenSettingExistsInSheets', fakeAsync(() => {
     // Given: fila con default_category_budget = 350
     sheetsApiSpy.getRange.and.returnValue(of({
+      range: 'USER_SETTINGS!A:D', majorDimension: 'ROWS',
       values: [
         ['settingId', 'userId', 'key', 'value'],
         ['set_abc', 'usr_001', 'default_category_budget', '350'],
@@ -64,7 +65,7 @@ describe('UserSettingsStateService', () => {
   // REQ-03 sc3: guardar nuevo valor actualiza el signal
   it('saveDefaultBudget_shouldUpdateSignal_whenAmountIsValid', fakeAsync(() => {
     // Given: sin fila previa → appendRow
-    sheetsApiSpy.getRange.and.returnValue(of({ values: [['settingId', 'userId', 'key', 'value']] }));
+    sheetsApiSpy.getRange.and.returnValue(of({ range: 'USER_SETTINGS!A:D', majorDimension: 'ROWS', values: [['settingId', 'userId', 'key', 'value']] }));
     sheetsApiSpy.appendRow.and.returnValue(of({ updates: { updatedRange: 'USER_SETTINGS!A3:D3' } }));
     service.load();
     flushMicrotasks();
@@ -81,7 +82,7 @@ describe('UserSettingsStateService', () => {
   // Edge case: amount <= 0 no persiste ni actualiza
   it('saveDefaultBudget_shouldIgnore_whenAmountIsZeroOrNegative', fakeAsync(() => {
     // Given
-    sheetsApiSpy.getRange.and.returnValue(of({ values: [['settingId', 'userId', 'key', 'value']] }));
+    sheetsApiSpy.getRange.and.returnValue(of({ range: 'USER_SETTINGS!A:D', majorDimension: 'ROWS', values: [['settingId', 'userId', 'key', 'value']] }));
     service.load();
     flushMicrotasks();
     const before = service.defaultCategoryBudget();

@@ -14,17 +14,18 @@ import { SheetsApiService } from '@core/services/sheets-api.service';
 import { IConcept } from '@models/concept.model';
 import { ITransaction } from '@models/transaction.model';
 
-// CONCEPTS schema (A:F — 6 columnas)
-// A: concept_id | B: user_id | C: category_id | D: text | E: usage_count | F: last_used
+// CONCEPTS schema (A:G — 7 columnas)
+// A: concept_id | B: user_id | C: category_id | D: text | E: usage_count | F: last_used | G: workspace_id
 
-export function rowToConcept(row: unknown[]): IConcept {
+export function rowToConcept(row: unknown[], defaultWsId = ''): IConcept {
   return {
-    conceptId:  String(row[0] ?? ''),
-    userId:     String(row[1] ?? ''),
-    categoryId: String(row[2] ?? ''),
-    text:       String(row[3] ?? ''),
-    usageCount: Number(row[4] ?? 0),
-    lastUsed:   String(row[5] ?? new Date().toISOString()),
+    conceptId:   String(row[0] ?? ''),
+    userId:      String(row[1] ?? ''),
+    categoryId:  String(row[2] ?? ''),
+    text:        String(row[3] ?? ''),
+    usageCount:  Number(row[4] ?? 0),
+    lastUsed:    String(row[5] ?? new Date().toISOString()),
+    workspaceId: String(row[6] ?? defaultWsId),
   };
 }
 
@@ -36,6 +37,7 @@ function conceptToRow(concept: IConcept): unknown[] {
     concept.text,
     concept.usageCount,
     concept.lastUsed,
+    concept.workspaceId,
   ];
 }
 
@@ -43,11 +45,11 @@ function conceptToRow(concept: IConcept): unknown[] {
 export class ConceptsService {
   private readonly sheetsApi = inject(SheetsApiService);
 
-  loadConcepts(): Observable<IConcept[]> {
-    return this.sheetsApi.getRange('CONCEPTS!A:F').pipe(
+  loadConcepts(defaultWsId = ''): Observable<IConcept[]> {
+    return this.sheetsApi.getRange('CONCEPTS!A:G').pipe(
       map(response => {
         if (!response?.values || response.values.length < 2) return [];
-        return response.values.slice(1).filter(row => row[0]).map(rowToConcept);
+        return response.values.slice(1).filter(row => row[0]).map(row => rowToConcept(row, defaultWsId));
       }),
     );
   }
@@ -59,14 +61,14 @@ export class ConceptsService {
    * Si ya existe: updateRow con usage_count + 1 y last_used = now.
    * Si no existe: appendRow con nuevo concept_id.
    */
-  async upsertConcept(tx: ITransaction): Promise<void> {
+  async upsertConcept(tx: ITransaction, defaultWsId = ''): Promise<void> {
     if (!tx.concept.trim()) return; // concepto vacío → no-op (REQ-08 sc3)
 
     const normalizedText = tx.concept.toLowerCase().trim();
-    const allConcepts = await firstValueFrom(this.loadConcepts());
+    const allConcepts = await firstValueFrom(this.loadConcepts(defaultWsId));
 
     // Cargar el range completo para encontrar el row number (índice en Sheets)
-    const response = await firstValueFrom(this.sheetsApi.getRange('CONCEPTS!A:F'));
+    const response = await firstValueFrom(this.sheetsApi.getRange('CONCEPTS!A:G'));
     const allRows = response?.values?.slice(1) ?? [];
 
     const existingIndex = allConcepts.findIndex(
@@ -95,16 +97,17 @@ export class ConceptsService {
         lastUsed: now,
       };
       await firstValueFrom(
-        this.sheetsApi.updateRow(`CONCEPTS!A${sheetRow}:F${sheetRow}`, [conceptToRow(updated)]),
+        this.sheetsApi.updateRow(`CONCEPTS!A${sheetRow}:G${sheetRow}`, [conceptToRow(updated)]),
       );
     } else {
       const newConcept: IConcept = {
-        conceptId: crypto.randomUUID(),
-        userId: tx.userId,
-        categoryId: tx.categoryId,
-        text: tx.concept.trim(),
-        usageCount: 1,
-        lastUsed: now,
+        conceptId:   crypto.randomUUID(),
+        userId:      tx.userId,
+        categoryId:  tx.categoryId,
+        text:        tx.concept.trim(),
+        usageCount:  1,
+        lastUsed:    now,
+        workspaceId: tx.workspaceId || defaultWsId,
       };
       await firstValueFrom(
         this.sheetsApi.appendRow('CONCEPTS!A1', [conceptToRow(newConcept)]),

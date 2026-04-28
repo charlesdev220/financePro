@@ -1,19 +1,25 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { IWallet } from '@models/wallet.model';
 import { WalletService } from '@features/wallets/services/wallet.service';
+import { WorkspacesStateService } from '@core/state/workspaces.state';
 
 @Injectable({ providedIn: 'root' })
 export class WalletsStateService {
-  private readonly walletService = inject(WalletService);
+  private readonly walletService   = inject(WalletService);
+  private readonly workspacesState = inject(WorkspacesStateService);
 
-  private readonly _items   = signal<IWallet[]>([]);
-  private readonly _loading = signal<boolean>(false);
-  private readonly _error   = signal<string | null>(null);
-  private readonly _rowMap  = signal<Record<string, number>>({});
+  private readonly _allItems = signal<IWallet[]>([]);
+  private readonly _loading  = signal<boolean>(false);
+  private readonly _error    = signal<string | null>(null);
+  private readonly _rowMap   = signal<Record<string, number>>({});
 
-  /** Carteras del usuario. */
-  readonly items   = this._items.asReadonly();
+  /** Todas las carteras del usuario, sin filtrar por workspace. */
+  readonly allItems = this._allItems.asReadonly();
+  /** Carteras del workspace activo. */
+  readonly items   = computed(() =>
+    this._allItems().filter(w => w.workspaceId === this.workspacesState.activeWorkspaceId()),
+  );
   readonly loading = this._loading.asReadonly();
   readonly error   = this._error.asReadonly();
   /** Mapa walletId → número de fila en Sheets. */
@@ -22,9 +28,9 @@ export class WalletsStateService {
   load(): void {
     this._loading.set(true);
     this._error.set(null);
-    firstValueFrom(this.walletService.loadWallets())
+    firstValueFrom(this.walletService.loadWallets(this.workspacesState.defaultWorkspaceId()))
       .then(({ wallets, rowMap }) => {
-        this._items.set(wallets);
+        this._allItems.set(wallets);
         this._rowMap.set(rowMap);
       })
       .catch(err => this._error.set(String(err)))
@@ -32,31 +38,31 @@ export class WalletsStateService {
   }
 
   add(wallet: IWallet): void {
-    const prevItems = this._items();
-    this._items.update(items => [...items, wallet]);
+    const prevItems = this._allItems();
+    this._allItems.update(items => [...items, wallet]);
     firstValueFrom(this.walletService.saveWallet(wallet))
       .catch(err => {
-        this._items.set(prevItems);
+        this._allItems.set(prevItems);
         this._error.set(String(err));
       });
   }
 
   update(wallet: IWallet, rowNumber: number): void {
-    const prevItems = this._items();
-    this._items.update(items => items.map(w => w.walletId === wallet.walletId ? wallet : w));
+    const prevItems = this._allItems();
+    this._allItems.update(items => items.map(w => w.walletId === wallet.walletId ? wallet : w));
     firstValueFrom(this.walletService.updateWallet(wallet, rowNumber))
       .catch(err => {
-        this._items.set(prevItems);
+        this._allItems.set(prevItems);
         this._error.set(String(err));
       });
   }
 
   delete(walletId: string, rowNumber: number): void {
-    const prevItems = this._items();
-    this._items.update(items => items.filter(w => w.walletId !== walletId));
+    const prevItems = this._allItems();
+    this._allItems.update(items => items.filter(w => w.walletId !== walletId));
     firstValueFrom(this.walletService.deleteWallet(rowNumber))
       .catch(err => {
-        this._items.set(prevItems);
+        this._allItems.set(prevItems);
         this._error.set(String(err));
       });
   }

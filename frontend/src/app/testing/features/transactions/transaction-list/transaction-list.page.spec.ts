@@ -37,8 +37,9 @@ function makeTx(
     isRecurring: false,
     recurrenceRule: null,
     notes: null,
-    createdAt: `${date}T00:00:00Z`,
-    updatedAt: `${date}T00:00:00Z`,
+    workspaceId: 'ws_test',
+    createdAt:   `${date}T00:00:00Z`,
+    updatedAt:   `${date}T00:00:00Z`,
   };
 }
 

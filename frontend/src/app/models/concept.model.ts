@@ -4,5 +4,6 @@ export interface IConcept {
   categoryId: string;
   text: string;
   usageCount: number;
+  workspaceId: string;
   lastUsed: string; // ISO 8601 timestamp
 }

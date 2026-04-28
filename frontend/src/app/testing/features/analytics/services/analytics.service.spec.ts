@@ -28,6 +28,7 @@ function tx(
     isRecurring,
     recurrenceRule: null,
     notes: null,
+    workspaceId: 'ws_test',
     createdAt: date + 'T00:00:00Z',
     updatedAt: date + 'T00:00:00Z',
   };
@@ -299,6 +300,7 @@ describe('AnalyticsService', () => {
         budgetAmount: null,
         budgetPeriod: 'monthly',
         isActive: true,
+        workspaceId: 'ws_test',
         createdAt: '2026-01-01T00:00:00Z',
       };
     }

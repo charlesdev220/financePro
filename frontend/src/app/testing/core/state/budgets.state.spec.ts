@@ -25,6 +25,8 @@ describe('BudgetsStateService', () => {
     budgetAmount: 300,
     status:       'ok',
     lastUpdated:  '2026-04-26T00:00:00.000Z',
+    workspaceId:  'ws_test',
+    mode:         'indefinite',
   };
 
   beforeEach(() => {

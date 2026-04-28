@@ -12,6 +12,7 @@ import { CategoriesStateService } from '@core/state/categories.state';
 import { UserSettingsStateService } from '@core/state/user-settings.state';
 import { BudgetsStateService } from '@core/state/budgets.state';
 import { TransactionsStateService } from '@core/state/transactions.state';
+import { WorkspacesStateService } from '@core/state/workspaces.state';
 import { ICategory } from '@models/category.model';
 
 const ICON_OPTIONS = ['🏠', '🍔', '🚗', '✈️', '💊', '👕', '📱', '🎬', '📚', '💰', '🏋️', '🎵', '🐶', '💼', '🎮', '🏦', '💳', '🛒', '⚡', '🔧'];
@@ -65,6 +66,7 @@ export class CategoryFormComponent implements OnInit {
   private readonly userSettingsState   = inject(UserSettingsStateService);
   private readonly budgetsState        = inject(BudgetsStateService);
   private readonly txState             = inject(TransactionsStateService);
+  private readonly workspacesState     = inject(WorkspacesStateService);
   private readonly modalCtrl           = inject(ModalController);
   private readonly alertCtrl           = inject(AlertController);
 
@@ -195,15 +197,16 @@ export class CategoryFormComponent implements OnInit {
       const categoryId = crypto.randomUUID();
       const newCategory: ICategory = {
         categoryId,
-        userId: this.userId!,
-        name: value.name.trim(),
-        icon: value.icon,
-        color: value.color,
-        type: value.type,
+        userId:      this.userId!,
+        name:        value.name.trim(),
+        icon:        value.icon,
+        color:       value.color,
+        type:        value.type,
         budgetAmount,
         budgetPeriod: value.budgetPeriod,
-        isActive: true,
-        createdAt: now,
+        isActive:    true,
+        workspaceId: this.workspacesState.activeWorkspaceId(),
+        createdAt:   now,
       };
       this.categoriesState.add(newCategory);
       if (isExpense && budgetAmount && budgetAmount > 0) {

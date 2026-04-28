@@ -9,6 +9,7 @@ import {
 import { addIcons } from 'ionicons';
 import { chevronDownOutline } from 'ionicons/icons';
 import { WalletsStateService } from '@core/state/wallets.state';
+import { WorkspacesStateService } from '@core/state/workspaces.state';
 import { IWallet } from '@models/wallet.model';
 
 const SUPPORTED_CURRENCIES = ['EUR', 'USD', 'GBP', 'ARS', 'BRL', 'MXN', 'CLP', 'COP'];
@@ -40,9 +41,10 @@ export class WalletFormComponent implements OnInit {
   /** @see wallet — misma excepción. */
   @Input() rowNumber?: number;
 
-  private readonly fb            = inject(FormBuilder);
-  private readonly walletsState  = inject(WalletsStateService);
-  private readonly modalCtrl     = inject(ModalController);
+  private readonly fb               = inject(FormBuilder);
+  private readonly walletsState     = inject(WalletsStateService);
+  private readonly workspacesState  = inject(WorkspacesStateService);
+  private readonly modalCtrl        = inject(ModalController);
 
   form!: FormGroup;
   readonly currencies = SUPPORTED_CURRENCIES;
@@ -121,15 +123,16 @@ export class WalletFormComponent implements OnInit {
       this.walletsState.update({ ...this.wallet, ...value }, this.rowNumber);
     } else {
       const newWallet: IWallet = {
-        walletId:  crypto.randomUUID(),
-        userId:    this.userId!,
-        name:      value.name.trim(),
-        currency:  value.currency,
-        balance:   0,
-        color:     value.color,
-        icon:      value.icon,
-        isDefault: value.isDefault,
-        createdAt: now,
+        walletId:    crypto.randomUUID(),
+        userId:      this.userId!,
+        name:        value.name.trim(),
+        currency:    value.currency,
+        balance:     0,
+        color:       value.color,
+        icon:        value.icon,
+        isDefault:   value.isDefault,
+        workspaceId: this.workspacesState.activeWorkspaceId(),
+        createdAt:   now,
       };
       this.walletsState.add(newWallet);
     }

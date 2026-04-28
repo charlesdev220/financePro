@@ -133,6 +133,51 @@ describe('rowToBudget', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// rowToBudget — casos de mode y workspaceId (REQ-11, Fase 3 + Fase 1)
+// ─────────────────────────────────────────────────────────────────────────────
+describe('rowToBudget — mode y workspaceId', () => {
+  // REQ-11 sc1 — row[9] vacío → mode === 'indefinite'
+  it('defaults_mode_to_indefinite_when_row9_is_empty', () => {
+    const row = ['b-001', 'u-001', 'cat-1', '2026-04', '500', '0', 'ok', '2026-04-01T00:00:00Z', 'ws_aaa', ''];
+
+    const budget = rowToBudget(row);
+
+    expect(budget.mode).toBe('indefinite');
+  });
+
+  // REQ-11 sc2 — row[9] = 'period', row[10] = '2026-01-01', row[11] = '2026-03-31' → parsea fechas
+  it('parses_mode_period_with_startDate_and_endDate', () => {
+    const row = ['b-002', 'u-001', 'cat-1', '2026-04', '500', '0', 'ok', '2026-04-01T00:00:00Z', 'ws_aaa', 'period', '2026-01-01', '2026-03-31'];
+
+    const budget = rowToBudget(row);
+
+    expect(budget.mode).toBe('period');
+    expect(budget.startDate).toBe('2026-01-01');
+    expect(budget.endDate).toBe('2026-03-31');
+  });
+
+  // REQ-11 sc3 — row[9] = 'disabled' → mode === 'disabled'
+  it('parses_mode_disabled', () => {
+    const row = ['b-003', 'u-001', 'cat-1', '2026-04', '500', '0', 'ok', '2026-04-01T00:00:00Z', 'ws_aaa', 'disabled'];
+
+    const budget = rowToBudget(row);
+
+    expect(budget.mode).toBe('disabled');
+    expect(budget.startDate).toBeUndefined();
+    expect(budget.endDate).toBeUndefined();
+  });
+
+  // REQ-01 sc1 — row[8] vacío → fallback a defaultWsId
+  it('defaults_workspaceId_to_defaultWsId_when_row8_is_empty', () => {
+    const row = ['b-004', 'u-001', 'cat-1', '2026-04', '500', '0', 'ok', '2026-04-01T00:00:00Z', ''];
+
+    const budget = rowToBudget(row, 'ws_default');
+
+    expect(budget.workspaceId).toBe('ws_default');
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // BudgetService.loadBudgets — REQ-11 sc2: hoja vacía → []
 // ─────────────────────────────────────────────────────────────────────────────
 describe('BudgetService.loadBudgets', () => {

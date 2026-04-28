@@ -13,6 +13,8 @@ import {
   IonInput,
   IonIcon,
   IonNote,
+  IonSegment,
+  IonSegmentButton,
   ModalController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
@@ -20,10 +22,12 @@ import { chevronDownOutline, chevronUpOutline } from 'ionicons/icons';
 import { BudgetsStateService } from '@core/state/budgets.state';
 import { CategoriesStateService } from '@core/state/categories.state';
 import { TransactionsStateService } from '@core/state/transactions.state';
+import { WorkspacesStateService } from '@core/state/workspaces.state';
 import { AuthService } from '@core/services/auth.service';
 import { IBudget } from '@models/budget.model';
 import { BUDGET_STATUS } from '@core/constants/budget.constants';
 import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
+import { BUDGET_MODES, BudgetMode } from '@core/constants/workspace.constants';
 
 @Component({
   selector: 'app-budget-form',
@@ -44,6 +48,8 @@ import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
     IonInput,
     IonIcon,
     IonNote,
+    IonSegment,
+    IonSegmentButton,
   ],
 })
 export class BudgetFormComponent implements OnInit {
@@ -64,8 +70,13 @@ export class BudgetFormComponent implements OnInit {
   private readonly budgetsState     = inject(BudgetsStateService);
   private readonly categoriesState  = inject(CategoriesStateService);
   private readonly txState          = inject(TransactionsStateService);
+  private readonly workspacesState  = inject(WorkspacesStateService);
   private readonly modalCtrl        = inject(ModalController);
   private readonly authService      = inject(AuthService);
+
+  /** Controla el modo de vigencia del presupuesto seleccionado por el usuario. */
+  readonly modeControl = signal<BudgetMode>(BUDGET_MODES.INDEFINITE);
+  readonly BUDGET_MODES = BUDGET_MODES;
 
   form!: FormGroup;
 
@@ -107,8 +118,15 @@ export class BudgetFormComponent implements OnInit {
       categoryId:   [b?.categoryId ?? '', Validators.required],
       period:       [defaultPeriod, Validators.required],
       budgetAmount: [b?.budgetAmount ?? null, [Validators.required, Validators.min(1)]],
+      startDate:    [b?.startDate ?? null],
+      endDate:      [b?.endDate ?? null],
     });
     this.selectedCategoryId.set(this.form.get('categoryId')?.value ?? '');
+    this.modeControl.set(b?.mode ?? BUDGET_MODES.INDEFINITE);
+  }
+
+  onModeChange(event: CustomEvent): void {
+    this.modeControl.set(event.detail.value as BudgetMode);
   }
 
   async save(): Promise<void> {
@@ -126,6 +144,9 @@ export class BudgetFormComponent implements OnInit {
         period:       value.period,
         budgetAmount: Number(value.budgetAmount),
         lastUpdated:  now,
+        mode:         this.modeControl(),
+        startDate:    value.startDate || undefined,
+        endDate:      value.endDate || undefined,
       };
       this.budgetsState.update(updatedBudget, rn);
     } else {
@@ -150,6 +171,10 @@ export class BudgetFormComponent implements OnInit {
         spentAmount,
         status:       spentAmount >= budgetAmount ? 'exceeded' : spentAmount >= budgetAmount * 0.8 ? 'warning' : BUDGET_STATUS.OK,
         lastUpdated:  now,
+        workspaceId:  this.workspacesState.activeWorkspaceId(),
+        mode:         this.modeControl(),
+        startDate:    value.startDate || undefined,
+        endDate:      value.endDate || undefined,
       };
       this.budgetsState.save(newBudget);
     }

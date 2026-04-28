@@ -1,13 +1,16 @@
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { SheetsApiService } from '@core/services/sheets-api.service';
+import { AuthService } from '@core/services/auth.service';
 import { IBudget } from '@models/budget.model';
+import { BUDGET_MODES, BudgetMode } from '@core/constants/workspace.constants';
 
-// BUDGETS schema (A:H — 8 columnas)
+// BUDGETS schema (A:L — 12 columnas)
 // A: budget_id | B: user_id | C: category_id | D: period (YYYY-MM)
 // E: budget_amount | F: spent_amount | G: status | H: last_updated
+// I: workspace_id | J: mode | K: start_date | L: end_date
 
-export function rowToBudget(row: unknown[]): IBudget {
+export function rowToBudget(row: unknown[], defaultWsId = ''): IBudget {
   return {
     budgetId:     String(row[0] ?? ''),
     userId:       String(row[1] ?? ''),
@@ -17,6 +20,10 @@ export function rowToBudget(row: unknown[]): IBudget {
     spentAmount:  Number(row[5] ?? 0),
     status:       (String(row[6] ?? 'ok') as 'ok' | 'warning' | 'exceeded'),
     lastUpdated:  String(row[7] ?? new Date().toISOString()),
+    workspaceId:  String(row[8] ?? defaultWsId),
+    mode:         ((String(row[9] ?? '') as BudgetMode) || BUDGET_MODES.INDEFINITE),
+    startDate:    row[10] ? String(row[10]) : undefined,
+    endDate:      row[11] ? String(row[11]) : undefined,
   };
 }
 
@@ -30,6 +37,10 @@ export function budgetToRow(b: IBudget): unknown[] {
     b.spentAmount,
     b.status,
     b.lastUpdated,
+    b.workspaceId,
+    b.mode,
+    b.startDate ?? '',
+    b.endDate ?? '',
   ];
 }
 
@@ -52,23 +63,26 @@ export function calculateStatus(
 
 @Injectable({ providedIn: 'root' })
 export class BudgetService {
-  private readonly sheetsApi = inject(SheetsApiService);
+  private readonly sheetsApi   = inject(SheetsApiService);
+  private readonly authService = inject(AuthService);
 
-  loadBudgets(): Observable<{ budgets: IBudget[]; rowMap: Record<string, number> }> {
-    return this.sheetsApi.getRange('BUDGETS!A:H').pipe(
+  loadBudgets(defaultWsId = ''): Observable<{ budgets: IBudget[]; rowMap: Record<string, number> }> {
+    return this.sheetsApi.getRange('BUDGETS!A:L').pipe(
       map(response => {
         if (!response?.values || response.values.length < 2) {
           return { budgets: [], rowMap: {} };
         }
-        const allRows = response.values.slice(1);
+        const allRows  = response.values.slice(1);
+        const userId   = this.authService.getUser()?.sub ?? '';
         const rowMap: Record<string, number> = {};
         allRows.forEach((row, i) => {
-          const id = String(row[0] ?? '');
-          if (id) rowMap[id] = i + 2;
+          const id  = String(row[0] ?? '');
+          const uid = String(row[1] ?? '');
+          if (id && uid === userId) rowMap[id] = i + 2;
         });
         const budgets = allRows
-          .filter(row => row[0])
-          .map(rowToBudget);
+          .filter(row => row[0] && String(row[1] ?? '') === userId)
+          .map(row => rowToBudget(row, defaultWsId));
         return { budgets, rowMap };
       }),
     );
@@ -80,12 +94,12 @@ export class BudgetService {
 
   updateBudget(b: IBudget, rowNumber: number): Observable<unknown> {
     return this.sheetsApi.updateRow(
-      `BUDGETS!A${rowNumber}:H${rowNumber}`,
+      `BUDGETS!A${rowNumber}:L${rowNumber}`,
       [budgetToRow(b)],
     );
   }
 
   deleteBudget(rowNumber: number): Observable<unknown> {
-    return this.sheetsApi.deleteRow(`BUDGETS!A${rowNumber}:H${rowNumber}`);
+    return this.sheetsApi.deleteRow(`BUDGETS!A${rowNumber}:L${rowNumber}`);
   }
 }

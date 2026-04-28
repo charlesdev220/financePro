@@ -4,6 +4,21 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Workspace & Product Roadmap):
+*Fase actual:* Fase SDD completa: explore → propose → spec → design → tasks → apply → verify
+*Estado actual:* Completado ✅ | 2026-04-28
+- ✔️ **Multi-Workspace (Phase 1-5):** Modelo `IWorkspace` + constantes + `WorkspaceService` + `WorkspacesStateService`; migración de los 4 state services a patrón `_allItems + computed(filtra por wsId)`; todos los parsers con `workspaceId` como última columna (ADR-03).
+- ✔️ **Parsers actualizados (Phase 3):** `transaction.service.ts` (A:P), `wallet.service.ts` (A:J), `category.service.ts` (A:K), `budget.service.ts` (A:L), `concepts.service.ts` (A:G) — retrocompatibilidad via fallback `row[N] || defaultWsId` (ADR-05).
+- ✔️ **UI Workspace (Phase 6-8):** `WorkspaceSelectorComponent` (dumb, scroll horizontal); `WorkspaceFormComponent` (modal); integración en `DashboardPage` y `SettingsPage`.
+- ✔️ **Navegación (Phase 9):** Tab bar reducido a 3 tabs; `TransactionListPage` como ruta hija de dashboard; Presupuestos y Movimientos en `MorePage`.
+- ✔️ **Budget UX Mode (Phase 10-11):** `IonSegment` con 3 modos (indefinite/period/disabled); fechas opcionales para modo period; `budgetsForPeriod` filtra por mode y rango de fechas.
+- ✔️ **Tests unitarios (Phase 12):** `workspaces.state.spec.ts`; casos de workspace filter en `transactions.state.spec.ts`; casos de mode/workspaceId en `budget.service.spec.ts`; `workspace-selector.component.spec.ts`; `dashboard.budgets.spec.ts`.
+- ✔️ **Documentación (Phase 14):** `PROJECT_FUNCTIONAL_DOC.md`; `prompt-enricher` skill; actualización de `CLAUDE.md` con lectura obligatoria del doc.
+*Deuda técnica documentada:* Tests E2E (Phase 13) requieren app corriendo — diferidos; lazy-load de entidades por workspace no implementado (carga todo en memoria en el primer load).
+*Próximos pasos:* Phase 13 E2E cuando el entorno de testing esté disponible.
+
+---
+
 ### Qué hemos completado hasta ahora (Dashboard Fixes — Correcciones post-archive de Pila de Presupuesto):
 *Fase actual:* Corrección post-archive (fuera de ciclo SDD)
 *Estado actual:* Completado ✅ | 2026-04-27

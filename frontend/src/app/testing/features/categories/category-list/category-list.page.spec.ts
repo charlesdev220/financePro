@@ -12,15 +12,16 @@ import { ICategory } from '../../../../models/category.model';
 function makeCategory(categoryId: string, type: 'income' | 'expense' = 'expense'): ICategory {
   return {
     categoryId,
-    userId: 'usr_001',
-    name: `Cat ${categoryId}`,
+    userId:       'usr_001',
+    name:         `Cat ${categoryId}`,
     type,
-    icon: '📦',
-    color: '#5BAD8F',
+    icon:         '📦',
+    color:        '#5BAD8F',
     budgetAmount: null,
     budgetPeriod: 'monthly',
-    isActive: true,
-    createdAt: '2026-01-01T00:00:00Z',
+    isActive:     true,
+    workspaceId:  'ws_test',
+    createdAt:    '2026-01-01T00:00:00Z',
   };
 }
 

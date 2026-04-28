@@ -8,5 +8,6 @@ export interface ICategory {
   budgetAmount: number | null;
   budgetPeriod: 'monthly' | 'weekly' | 'custom';
   isActive: boolean;
+  workspaceId: string;
   createdAt: string; // ISO 8601 timestamp
 }

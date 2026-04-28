@@ -4,21 +4,22 @@ import { SheetsApiService } from '@core/services/sheets-api.service';
 import { AuthService } from '@core/services/auth.service';
 import { IWallet } from '@models/wallet.model';
 
-// WALLETS schema (A:I — 9 columnas)
+// WALLETS schema (A:J — 10 columnas)
 // A: wallet_id | B: user_id | C: name | D: currency | E: balance(deprecated)
-// F: color | G: icon | H: is_default | I: created_at
+// F: color | G: icon | H: is_default | I: created_at | J: workspace_id
 
-export function rowToWallet(row: unknown[]): IWallet {
+export function rowToWallet(row: unknown[], defaultWsId = ''): IWallet {
   return {
-    walletId:  String(row[0] ?? ''),
-    userId:    String(row[1] ?? ''),
-    name:      String(row[2] ?? ''),
-    currency:  String(row[3] ?? 'EUR'),
-    balance:   0, // calculado en store NgRx, no se lee de Sheets (ADR-04)
-    color:     String(row[5] ?? '#4CAF50'),
-    icon:      String(row[6] ?? '💳'),
-    isDefault: row[7] === true || String(row[7] ?? 'false').toLowerCase() === 'true',
-    createdAt: String(row[8] ?? new Date().toISOString()),
+    walletId:    String(row[0] ?? ''),
+    userId:      String(row[1] ?? ''),
+    name:        String(row[2] ?? ''),
+    currency:    String(row[3] ?? 'EUR'),
+    balance:     0, // calculado en store NgRx, no se lee de Sheets (ADR-04)
+    color:       String(row[5] ?? '#4CAF50'),
+    icon:        String(row[6] ?? '💳'),
+    isDefault:   row[7] === true || String(row[7] ?? 'false').toLowerCase() === 'true',
+    createdAt:   String(row[8] ?? new Date().toISOString()),
+    workspaceId: String(row[9] ?? defaultWsId),
   };
 }
 
@@ -33,6 +34,7 @@ export function walletToRow(wallet: IWallet): unknown[] {
     wallet.icon,
     wallet.isDefault,
     wallet.createdAt,
+    wallet.workspaceId,
   ];
 }
 
@@ -41,8 +43,8 @@ export class WalletService {
   private readonly sheetsApi = inject(SheetsApiService);
   private readonly authService = inject(AuthService);
 
-  loadWallets(): Observable<{ wallets: IWallet[]; rowMap: Record<string, number> }> {
-    return this.sheetsApi.getRange('WALLETS!A:I').pipe(
+  loadWallets(defaultWsId = ''): Observable<{ wallets: IWallet[]; rowMap: Record<string, number> }> {
+    return this.sheetsApi.getRange('WALLETS!A:J').pipe(
       map(response => {
         if (!response?.values || response.values.length < 2) {
           return { wallets: [], rowMap: {} };
@@ -57,7 +59,7 @@ export class WalletService {
         });
         const wallets = allRows
           .filter(row => row[0] && String(row[1] ?? '') === userId)
-          .map(rowToWallet);
+          .map(row => rowToWallet(row, defaultWsId));
         return { wallets, rowMap };
       }),
     );
@@ -68,10 +70,10 @@ export class WalletService {
   }
 
   updateWallet(wallet: IWallet, rowNumber: number): Observable<unknown> {
-    return this.sheetsApi.updateRow(`WALLETS!A${rowNumber}:I${rowNumber}`, [walletToRow(wallet)]);
+    return this.sheetsApi.updateRow(`WALLETS!A${rowNumber}:J${rowNumber}`, [walletToRow(wallet)]);
   }
 
   deleteWallet(rowNumber: number): Observable<unknown> {
-    return this.sheetsApi.deleteRow(`WALLETS!A${rowNumber}:I${rowNumber}`);
+    return this.sheetsApi.deleteRow(`WALLETS!A${rowNumber}:J${rowNumber}`);
   }
 }

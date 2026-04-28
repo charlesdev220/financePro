@@ -22,34 +22,37 @@ function makeBudget(
   status: IBudget['status'],
 ): IBudget {
   return {
-    budgetId: `b-${categoryId}`,
-    userId: 'usr_001',
+    budgetId:    `b-${categoryId}`,
+    userId:      'usr_001',
     categoryId,
     period,
     budgetAmount,
     spentAmount,
     status,
-    lastUpdated: '2026-04-12T00:00:00Z',
+    lastUpdated:  '2026-04-12T00:00:00Z',
+    workspaceId:  'ws_test',
+    mode:         'indefinite' as const,
   };
 }
 
 function makeExpenseTx(amount: number, categoryId: string, date: string): ITransaction {
   return {
-    txId: 'tx-edit',
-    userId: 'usr_001',
-    walletId: 'w1',
+    txId:           'tx-edit',
+    userId:         'usr_001',
+    walletId:       'w1',
     categoryId,
     amount,
-    currency: 'EUR',
-    amountBase: amount,
-    concept: 'edición',
+    currency:       'EUR',
+    amountBase:     amount,
+    concept:        'edición',
     date,
-    type: 'expense',
-    isRecurring: false,
+    type:           'expense',
+    isRecurring:    false,
     recurrenceRule: null,
-    notes: null,
-    createdAt: `${date}T00:00:00Z`,
-    updatedAt: `${date}T00:00:00Z`,
+    notes:          null,
+    workspaceId:    'ws_test',
+    createdAt:      `${date}T00:00:00Z`,
+    updatedAt:      `${date}T00:00:00Z`,
   };
 }
 

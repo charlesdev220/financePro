@@ -17,6 +17,8 @@ import {
   AlertController,
   IonModal,
   IonSpinner,
+  ModalController,
+  ToastController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -24,6 +26,7 @@ import {
   removeOutline,
   rocketOutline,
   sparklesOutline,
+  folderOpenOutline,
 } from 'ionicons/icons';
 
 import { Router } from '@angular/router';
@@ -34,9 +37,12 @@ import { WalletsStateService } from '@core/state/wallets.state';
 import { CategoriesStateService } from '@core/state/categories.state';
 import { CurrencyStateService } from '@core/state/currency.state';
 import { UserSettingsStateService } from '@core/state/user-settings.state';
+import { WorkspacesStateService } from '@core/state/workspaces.state';
 import { TransactionFormComponent } from '@features/transactions/transaction-form/transaction-form.component';
+import { WorkspaceFormComponent } from '@features/workspaces/workspace-form/workspace-form.component';
 import { DashboardChartComponent } from './components/dashboard-chart/dashboard-chart.component';
 import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
+import { WorkspaceSelectorComponent } from '@shared/components/workspace-selector/workspace-selector.component';
 import { DashboardService } from './services/dashboard.service';
 import { DataSeedService } from '@core/services/data-seed.service';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
@@ -60,6 +66,7 @@ import { TRANSACTION_TYPES, TransactionType } from '@core/constants/transaction.
     IonModal,
     DashboardChartComponent,
     PeriodSelectorComponent,
+    WorkspaceSelectorComponent,
     CurrencyFormatPipe,
     RelativeDatePipe,
     TransactionFormComponent,
@@ -67,7 +74,9 @@ import { TRANSACTION_TYPES, TransactionType } from '@core/constants/transaction.
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardPage implements OnInit {
-  private readonly alertCtrl = inject(AlertController);
+  private readonly alertCtrl  = inject(AlertController);
+  private readonly modalCtrl  = inject(ModalController);
+  private readonly toastCtrl  = inject(ToastController);
   private readonly authService = inject(AuthService);
   private readonly dashboardService = inject(DashboardService);
   private readonly seedService = inject(DataSeedService);
@@ -99,11 +108,19 @@ export class DashboardPage implements OnInit {
   /** Tick que se incrementa en ionViewDidEnter para forzar chart.resize() al volver al tab. */
   readonly chartRefreshTick = signal(0);
 
-  /** Indica si la cuenta necesita inicialización (sin carteras). */
-  readonly needsSeed = computed(() => this.walletsState.items().length === 0);
+  /** Verdadero solo si el usuario no tiene ninguna cartera en ningún workspace (cuenta nueva). */
+  readonly needsSeed = computed(() => this.walletsState.allItems().length === 0);
+
+  /** Verdadero cuando el workspace activo está vacío pero el usuario ya tiene datos en otros. */
+  readonly isEmptyWorkspace = computed(
+    () => !this.needsSeed() && this.walletsState.items().length === 0,
+  );
 
   /** Presupuesto mensual por defecto desde UserSettings — pasado al chart para categorías sin registro. */
   readonly defaultCategoryBudget = this.userSettingsState.defaultCategoryBudget;
+
+  /** Workspaces del usuario para el selector de espacios en el header. */
+  readonly workspacesState = inject(WorkspacesStateService);
 
   /** Moneda base del usuario. Fallback 'EUR' antes de cargar. */
   readonly userBaseCurrency = computed(() => this.currencyState.baseCurrency() ?? 'EUR');
@@ -120,13 +137,20 @@ export class DashboardPage implements OnInit {
 
   /**
    * Presupuestos del período activo con spentAmount recalculado desde las transacciones del store.
-   * Evita depender del valor almacenado en Sheets (que puede estar desactualizado).
+   * Soporta los tres modos de vigencia: indefinite (por período YYYY-MM), period (por rango de fechas) y disabled.
    */
   readonly budgetsForPeriod = computed(() => {
     const period = this.period();
-    const txs    = this.txState.items();
+    const txs = this.txState.items();
+    const today = new Date().toISOString().slice(0, 10);
     return this.budgetsState.items()
-      .filter(b => b.period === period)
+      .filter(b => {
+        if (b.mode === 'disabled') return false;
+        if (b.mode === 'period') {
+          return !!b.startDate && !!b.endDate && today >= b.startDate && today <= b.endDate;
+        }
+        return b.period === period;
+      })
       .map(b => {
         const safe = (n: number) => (isNaN(n) || !isFinite(n) ? 0 : n);
         const spentAmount = txs
@@ -159,10 +183,11 @@ export class DashboardPage implements OnInit {
   });
 
   constructor() {
-    addIcons({ addOutline, removeOutline, rocketOutline, sparklesOutline });
+    addIcons({ addOutline, removeOutline, rocketOutline, sparklesOutline, folderOpenOutline });
   }
 
   ngOnInit(): void {
+    this.workspacesState.load();
     this.txState.load();
     this.budgetsState.load();
     this.walletsState.load();
@@ -180,7 +205,29 @@ export class DashboardPage implements OnInit {
   }
 
   goToTransactions(): void {
-    this.router.navigate(['/tabs/transactions']);
+    this.router.navigate(['/tabs/dashboard/transactions']);
+  }
+
+  async onWorkspaceSwitched(id: string): Promise<void> {
+    this.workspacesState.setActive(id);
+    const ws = this.workspacesState.items().find(w => w.workspaceId === id);
+    if (!ws) return;
+    const toast = await this.toastCtrl.create({
+      message: `${ws.icon}  ${ws.name}`,
+      duration: 1800,
+      position: 'top',
+      color: 'dark',
+    });
+    await toast.present();
+  }
+
+  async onNewWorkspace(): Promise<void> {
+    const modal = await this.modalCtrl.create({
+      component: WorkspaceFormComponent,
+      breakpoints: [0, 0.75],
+      initialBreakpoint: 0.75,
+    });
+    await modal.present();
   }
 
   openAddExpense(): void { this.openAddModal(TRANSACTION_TYPES.EXPENSE); }

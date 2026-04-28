@@ -70,6 +70,33 @@
           </ion-note>
         }
 
+        <!-- Modo de vigencia -->
+        <ion-item class="mt-4">
+          <ion-label position="stacked">Modo de vigencia</ion-label>
+          <ion-segment [value]="modeControl()" (ionChange)="onModeChange($event)" class="mt-2">
+            <ion-segment-button [value]="BUDGET_MODES.INDEFINITE">
+              <ion-label>Sin límite</ion-label>
+            </ion-segment-button>
+            <ion-segment-button [value]="BUDGET_MODES.PERIOD">
+              <ion-label>Por período</ion-label>
+            </ion-segment-button>
+            <ion-segment-button [value]="BUDGET_MODES.DISABLED">
+              <ion-label>Desactivar</ion-label>
+            </ion-segment-button>
+          </ion-segment>
+        </ion-item>
+
+        @if (modeControl() === BUDGET_MODES.PERIOD) {
+          <ion-item>
+            <ion-label position="stacked">Fecha inicio</ion-label>
+            <ion-input type="date" formControlName="startDate"></ion-input>
+          </ion-item>
+          <ion-item>
+            <ion-label position="stacked">Fecha fin</ion-label>
+            <ion-input type="date" formControlName="endDate"></ion-input>
+          </ion-item>
+        }
+
         <!-- Monto de presupuesto -->
         <ion-item>
           <ion-label position="stacked">Monto del presupuesto *</ion-label>

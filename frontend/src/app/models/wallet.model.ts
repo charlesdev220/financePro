@@ -7,5 +7,6 @@ export interface IWallet {
   color: string; // hex color
   icon: string;
   isDefault: boolean;
+  workspaceId: string;
   createdAt: string; // ISO 8601 timestamp
 }
