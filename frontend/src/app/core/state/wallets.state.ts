@@ -16,10 +16,12 @@ export class WalletsStateService {
 
   /** Todas las carteras del usuario, sin filtrar por workspace. */
   readonly allItems = this._allItems.asReadonly();
-  /** Carteras del workspace activo. */
-  readonly items   = computed(() =>
-    this._allItems().filter(w => w.workspaceId === this.workspacesState.activeWorkspaceId()),
-  );
+  /** Carteras del workspace activo. Las carteras sin workspaceId heredan el workspace default (retrocompatibilidad). */
+  readonly items   = computed(() => {
+    const activeId  = this.workspacesState.activeWorkspaceId();
+    const defaultId = this.workspacesState.defaultWorkspaceId();
+    return this._allItems().filter(w => (w.workspaceId || defaultId) === activeId);
+  });
   readonly loading = this._loading.asReadonly();
   readonly error   = this._error.asReadonly();
   /** Mapa walletId → número de fila en Sheets. */

@@ -14,10 +14,12 @@ export class CategoriesStateService {
   private readonly _error    = signal<string | null>(null);
   private readonly _rowMap   = signal<Record<string, number>>({});
 
-  /** Categorías del workspace activo. */
-  readonly items   = computed(() =>
-    this._allItems().filter(c => c.workspaceId === this.workspacesState.activeWorkspaceId()),
-  );
+  /** Categorías del workspace activo. Las categorías sin workspaceId heredan el workspace default (retrocompatibilidad). */
+  readonly items   = computed(() => {
+    const activeId  = this.workspacesState.activeWorkspaceId();
+    const defaultId = this.workspacesState.defaultWorkspaceId();
+    return this._allItems().filter(c => (c.workspaceId || defaultId) === activeId);
+  });
   readonly loading = this._loading.asReadonly();
   readonly error   = this._error.asReadonly();
   /** Mapa categoryId → número de fila en Sheets. */

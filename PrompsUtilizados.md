@@ -5,6 +5,8 @@
 tenemos ahora una nueva logica de implementacion que empieza en @CLAUDE.md, quiero que analices en su totalidad y de manere minuiciosa el proyecto y encuentre discrepancias con el nuevo flujo de trabajo puesto en @CLAUDE.md y sus flujos internos, quiero que 
   inicialices un nuevo flujo sdd para corregir las desviaciones de implementacion
 
+dale, añade que si es necesario se creen varios ficheros de task si la migracion a jest es muy cosatosa, estos ficheros task se van implementando uno a uno preguntandome antes de pasar al siguiente   
+
 en un nuevo sdd implementa estas tareas: 
 ------
 - enlazarla con wasap, añadirle un bor que inserte y responda, 
@@ -35,3 +37,21 @@ en un nuevo sdd implementa estas tareas:
   presupuesto indefinido, presupuesto desde una fecha hasta otra fecha, y desabilitar presupuesto lo que incluye que no se muestre su barra de         
   progreso en el dashboard como las demas categorias de gasto. todas estas propuestas deben ser añadidas a                                             
   '/Users/charles/Documents/apps/FinancePro/WORKSPACES_PLAN.md' 
+
+
+
+
+
+- analiza detenidamente todos los state y generame un fichero md con toda la logica, el flujo de datos para un programador junior angular 
+
+
+en un nuevo sdd implementa estas tareas: 
+- se debe permitir elegir cuando empieza un nuevo mes, por defecto es del dia 1 al ultimo dia del mes, pero se puede cambiar por ejemplo para que empiece el dia 5 y termine el dia 4 del siguiente mes. 
+
+- en settings debo poder cambiar de espacios, asi como el listado de espacios ya guardados. si se cambia el espacio actual se debe mostrar las transacciones del espacio elegido 
+
+- no funciona el filtro de periodos en dashboard, no muestra las transacciones del dia actual, o semana actual, solo muestra del mes. 
+
+- se debe añadir la opcion de cambiar de mes en dashboard, ver el mes siguiente y anterior
+
+- los test ya no utilizaremos karma con jasmin, ahora usamos jest con angular testing library y se tendra que hacer la migracion de los test actuales, la migracion la haremos poco a poco 

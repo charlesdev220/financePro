@@ -12,4 +12,5 @@ export type UserSettingKey =
   | 'default_view_period'
   | 'custom_period_days'
   | 'base_currency'
-  | 'default_category_budget';
+  | 'default_category_budget'
+  | 'month_start_day';

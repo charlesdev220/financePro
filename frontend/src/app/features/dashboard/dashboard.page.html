@@ -31,15 +31,23 @@
   <!-- Contenido normal del Dashboard -->
 
   <!-- Header verde — full width, contenido centrado en desktop -->
-  <div class="bg-[var(--ion-color-primary)] pb-8 rounded-b-[40px] shadow-sm">
+  <div class="bg-[var(--ion-color-primary)] pb-8 pt-10 rounded-b-[40px] shadow-sm">
     <div class="max-w-screen-xl mx-auto">
-      <app-workspace-selector
-        [workspaces]="workspacesState.items()"
-        [activeId]="workspacesState.activeWorkspaceId()"
-        (switched)="onWorkspaceSwitched($event)"
-        (newRequested)="onNewWorkspace()">
+      <app-workspace-selector [workspaces]="workspacesState.items()" [activeId]="workspacesState.activeWorkspaceId()"
+        (switched)="onWorkspaceSwitched($event)" (newRequested)="onNewWorkspace()">
       </app-workspace-selector>
-      <app-period-selector [period]="period()" (periodChange)="onPeriodChange($event)"></app-period-selector>
+      <div class="flex items-center gap-2 px-2">
+        <button class="p-2 text-white/80 hover:text-white transition-colors" (click)="onNavigatePrev()" aria-label="Período anterior">
+          <ion-icon name="chevron-back-outline" class="text-xl"></ion-icon>
+        </button>
+        <div class="flex-1">
+          <app-period-selector [activeTab]="activePeriodTab()" (tabChange)="onTabChange($event)"></app-period-selector>
+          <p class="text-center text-white/80 text-xs mt-1 font-medium">{{ periodLabel() }}</p>
+        </div>
+        <button class="p-2 text-white/80 hover:text-white transition-colors disabled:opacity-30" (click)="onNavigateNext()" [disabled]="!canNavigateForward()" aria-label="Período siguiente">
+          <ion-icon name="chevron-forward-outline" class="text-xl"></ion-icon>
+        </button>
+      </div>
 
       <div class="flex flex-col items-center mt-4">
         <div class="bg-white/20 backdrop-blur-md px-6 py-3 rounded-full border border-white/30 shadow-lg mb-2">
@@ -72,6 +80,7 @@
     <p class="text-sm text-monefy-text-secondary max-w-xs">
       Creá una cartera en este espacio para empezar a registrar movimientos.
     </p>
+    <ion-button (click)="goToWallets()" shape="round">Agregar cartera</ion-button>
   </div>
   } @else {
   <!-- Cuerpo principal — 1 col en móvil, 2 cols en desktop solo con datos -->
@@ -82,9 +91,9 @@
 
     <!-- Columna izquierda: gráfico -->
     <div>
-      <app-dashboard-chart [breakdown]="breakdown()" [balance]="summary().balance"
-        [currency]="userBaseCurrency()" [refreshTick]="chartRefreshTick()"
-        [budgets]="budgetsForPeriod()" [defaultBudget]="defaultCategoryBudget()"></app-dashboard-chart>
+      <app-dashboard-chart [breakdown]="breakdown()" [balance]="summary().balance" [currency]="userBaseCurrency()"
+        [refreshTick]="chartRefreshTick()" [budgets]="budgetsForPeriod()"
+        [defaultBudget]="defaultCategoryBudget()"></app-dashboard-chart>
     </div>
 
     <!-- Columna derecha: transacciones recientes -->
@@ -92,7 +101,8 @@
       @if (recentTransactions().length > 0) {
       <div class="flex items-center justify-between mt-6 mb-2 lg:mt-0">
         <h2 class="m-0 text-lg font-bold">Últimos movimientos</h2>
-        <ion-note color="primary" class="text-xs font-semibold cursor-pointer" (click)="goToTransactions()">Ver todos</ion-note>
+        <ion-note color="primary" class="text-xs font-semibold cursor-pointer" (click)="goToTransactions()">Ver
+          todos</ion-note>
       </div>
 
       <ion-list lines="inset" class="mx-0 bg-transparent pb-[calc(56px+80px)]">
@@ -112,7 +122,8 @@
               tx.categoryName }} • {{ tx.date | relativeDate }}</p>
           </ion-label>
           <div slot="end" class="text-right">
-            <span class="text-base font-extrabold" [class]="tx.isEffectiveIncome ? 'text-[var(--color-income)]' : 'text-[var(--color-expense)]'">
+            <span class="text-base font-extrabold"
+              [class]="tx.isEffectiveIncome ? 'text-[var(--color-income)]' : 'text-[var(--color-expense)]'">
               {{ tx.isEffectiveIncome ? '+' : '-' }}{{ tx.displayAmount | currencyFormat:tx.currency }}
             </span>
           </div>

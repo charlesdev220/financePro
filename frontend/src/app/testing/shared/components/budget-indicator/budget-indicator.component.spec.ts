@@ -3,11 +3,13 @@ import { BudgetIndicatorComponent } from '../../../../shared/components/budget-i
 import { IBudget } from '../../../../models/budget.model';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// BudgetIndicatorComponent — computed percentage y color
+// BudgetIndicatorComponent — computed pct y barColor
 // ─────────────────────────────────────────────────────────────────────────────
 describe('BudgetIndicatorComponent', () => {
   let component: BudgetIndicatorComponent;
   let fixture: ComponentFixture<BudgetIndicatorComponent>;
+
+  const CAT_COLOR = '#4CAF50';
 
   function buildBudget(
     spentAmount: number,
@@ -35,60 +37,59 @@ describe('BudgetIndicatorComponent', () => {
 
     fixture = TestBed.createComponent(BudgetIndicatorComponent);
     component = fixture.componentInstance;
+    fixture.componentRef.setInput('catColor', CAT_COLOR);
   });
 
-  // REQ-12 sc1: status 'ok' → porcentaje correcto y color 'success'
-  it('percentage_shouldBe40AndColorSuccess_whenStatusIsOk', () => {
-    // Given: 200/500 = 40%
+  // sc1: gasto bajo (< 80%) → pct correcto, barColor = catColor
+  it('pct_shouldBe40AndBarColorIsCatColor_whenUnder80Percent', () => {
     fixture.componentRef.setInput('budget', buildBudget(200, 500, 'ok'));
     fixture.detectChanges();
 
-    // When / Then
-    expect(component.percentage()).toBe(40);
-    expect(component.color()).toBe('success');
+    expect(component.pct()).toBe(40);
+    expect(component.barColor()).toBe(CAT_COLOR);
   });
 
-  // REQ-12 sc2: status 'warning' → color 'warning'
-  it('color_shouldBeWarning_whenStatusIsWarning', () => {
-    // Given: 430/500 = 86%
+  // sc2: gasto al 86% (>= 80%) → barColor = rojo monefy
+  it('barColor_shouldBeRed_whenPctIsOver80', () => {
     fixture.componentRef.setInput('budget', buildBudget(430, 500, 'warning'));
     fixture.detectChanges();
 
-    // When / Then
-    expect(component.color()).toBe('warning');
-    expect(component.percentage()).toBe(86);
+    expect(component.pct()).toBe(86);
+    expect(component.barColor()).toBe('#E57373');
   });
 
-  // REQ-12 sc3: status 'exceeded' → percentage clamped a 100, color 'danger'
-  it('percentage_shouldBeClampedTo100AndColorDanger_whenStatusIsExceeded', () => {
-    // Given: 600/500 = 120% → clamp a 100
+  // sc3: gasto que supera el 100% → pct clamped a 100, barColor rojo
+  it('pct_shouldBeClampedTo100AndBarColorRed_whenExceeded', () => {
     fixture.componentRef.setInput('budget', buildBudget(600, 500, 'exceeded'));
     fixture.detectChanges();
 
-    // When / Then
-    expect(component.percentage()).toBe(100);
-    expect(component.color()).toBe('danger');
+    expect(component.pct()).toBe(100);
+    expect(component.barColor()).toBe('#E57373');
   });
 
-  // Edge: presupuesto gastado exactamente al 100% → percentage = 100, color 'danger'
-  it('percentage_shouldBe100AndColorDanger_whenSpentEqualsbudget', () => {
-    // Given: 500/500 = 100%
+  // sc4: gasto exactamente al 100% → pct 100, rojo
+  it('pct_shouldBe100AndBarColorRed_whenSpentEqualsbudget', () => {
     fixture.componentRef.setInput('budget', buildBudget(500, 500, 'exceeded'));
     fixture.detectChanges();
 
-    // When / Then
-    expect(component.percentage()).toBe(100);
-    expect(component.color()).toBe('danger');
+    expect(component.pct()).toBe(100);
+    expect(component.barColor()).toBe('#E57373');
   });
 
-  // Edge: presupuesto exactamente al 80% (límite inferior de warning)
-  it('percentage_shouldBe80AndColorWarning_whenSpentIsExactly80Percent', () => {
-    // Given: 400/500 = 80%
+  // sc5: límite inferior de rojo exactamente al 80% → rojo
+  it('barColor_shouldBeRed_whenPctIsExactly80', () => {
     fixture.componentRef.setInput('budget', buildBudget(400, 500, 'warning'));
     fixture.detectChanges();
 
-    // When / Then
-    expect(component.percentage()).toBe(80);
-    expect(component.color()).toBe('warning');
+    expect(component.pct()).toBe(80);
+    expect(component.barColor()).toBe('#E57373');
+  });
+
+  // sc6: budgetAmount = 0 → pct = 0, sin división por cero
+  it('pct_shouldBe0_whenBudgetAmountIsZero', () => {
+    fixture.componentRef.setInput('budget', buildBudget(0, 0, 'ok'));
+    fixture.detectChanges();
+
+    expect(component.pct()).toBe(0);
   });
 });

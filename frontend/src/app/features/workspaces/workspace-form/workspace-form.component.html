@@ -8,27 +8,34 @@
 </ion-header>
 
 <ion-content class="ion-padding" style="--background: var(--color-green-50);">
-  <form [formGroup]="form">
-    <ion-list>
-      <ion-list-header>
-        <ion-label class="font-semibold text-base">Datos del espacio</ion-label>
-      </ion-list-header>
+  <ion-list>
+    <ion-list-header>
+      <ion-label class="font-semibold text-base">Datos del espacio</ion-label>
+    </ion-list-header>
 
-      <ion-item>
-        <ion-label position="stacked">Nombre del espacio</ion-label>
-        <ion-input formControlName="name" placeholder="Ej: Trabajo, Familia..." clearInput></ion-input>
-      </ion-item>
+    <ion-item>
+      <ion-label position="stacked">Nombre del espacio</ion-label>
+      <ion-input
+        [value]="name()"
+        (ionInput)="onNameInput($event)"
+        placeholder="Ej: Trabajo, Familia..."
+        clearInput>
+      </ion-input>
+    </ion-item>
 
-      <ion-item>
-        <ion-label position="stacked">Ícono</ion-label>
-        <ion-input formControlName="icon" placeholder="🏠"></ion-input>
-      </ion-item>
-    </ion-list>
+    <ion-item>
+      <ion-label position="stacked">Ícono</ion-label>
+      <ion-input
+        [value]="icon()"
+        (ionInput)="onIconInput($event)"
+        placeholder="🏠">
+      </ion-input>
+    </ion-item>
+  </ion-list>
 
-    <div class="px-4 mt-6">
-      <ion-button expand="block" (click)="save()" [disabled]="form.invalid">
-        {{ isEditMode ? 'Guardar cambios' : 'Crear espacio' }}
-      </ion-button>
-    </div>
-  </form>
+  <div class="px-4 mt-6">
+    <ion-button expand="block" (click)="save()" [disabled]="isFormInvalid()">
+      {{ isEditMode ? 'Guardar cambios' : 'Crear espacio' }}
+    </ion-button>
+  </div>
 </ion-content>

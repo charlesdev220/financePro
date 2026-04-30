@@ -27,6 +27,8 @@ import {
   rocketOutline,
   sparklesOutline,
   folderOpenOutline,
+  chevronBackOutline,
+  chevronForwardOutline,
 } from 'ionicons/icons';
 
 import { Router } from '@angular/router';
@@ -38,12 +40,14 @@ import { CategoriesStateService } from '@core/state/categories.state';
 import { CurrencyStateService } from '@core/state/currency.state';
 import { UserSettingsStateService } from '@core/state/user-settings.state';
 import { WorkspacesStateService } from '@core/state/workspaces.state';
+import { PeriodService } from '@core/services/period.service';
+import { PeriodTab } from '@core/constants/period.constants';
 import { TransactionFormComponent } from '@features/transactions/transaction-form/transaction-form.component';
 import { WorkspaceFormComponent } from '@features/workspaces/workspace-form/workspace-form.component';
 import { DashboardChartComponent } from './components/dashboard-chart/dashboard-chart.component';
 import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
 import { WorkspaceSelectorComponent } from '@shared/components/workspace-selector/workspace-selector.component';
-import { DashboardService } from './services/dashboard.service';
+import { DashboardService, DateRange } from './services/dashboard.service';
 import { DataSeedService } from '@core/services/data-seed.service';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 import { RelativeDatePipe } from '@shared/pipes/relative-date.pipe';
@@ -74,13 +78,14 @@ import { TRANSACTION_TYPES, TransactionType } from '@core/constants/transaction.
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardPage implements OnInit {
-  private readonly alertCtrl  = inject(AlertController);
-  private readonly modalCtrl  = inject(ModalController);
-  private readonly toastCtrl  = inject(ToastController);
-  private readonly authService = inject(AuthService);
-  private readonly dashboardService = inject(DashboardService);
-  private readonly seedService = inject(DataSeedService);
-  private readonly router = inject(Router);
+  private readonly alertCtrl         = inject(AlertController);
+  private readonly modalCtrl         = inject(ModalController);
+  private readonly toastCtrl         = inject(ToastController);
+  private readonly authService       = inject(AuthService);
+  private readonly dashboardService  = inject(DashboardService);
+  private readonly seedService       = inject(DataSeedService);
+  private readonly router            = inject(Router);
+  private readonly periodService     = inject(PeriodService);
 
   /** Transacciones del usuario sincronizadas desde el state service. */
   readonly txState = inject(TransactionsStateService);
@@ -92,11 +97,16 @@ export class DashboardPage implements OnInit {
   readonly walletsState = inject(WalletsStateService);
   /** Moneda base y divisas del usuario. */
   readonly currencyState = inject(CurrencyStateService);
-  /** Presupuesto mensual por defecto para categorías sin registro en BUDGETS. */
-  private readonly userSettingsState = inject(UserSettingsStateService);
+  /** Configuración del usuario: presupuesto por defecto y día de inicio de mes. */
+  readonly userSettingsState = inject(UserSettingsStateService);
+  /** Workspaces del usuario para el selector de espacios en el header. */
+  readonly workspacesState = inject(WorkspacesStateService);
 
-  /** Período de tiempo seleccionado para filtrar los datos (formato YYYY-MM). */
-  readonly period = signal(new Date().toISOString().slice(0, 7));
+  /** Tab de período activo en el selector (día / semana / mes / año). */
+  readonly activePeriodTab = signal<PeriodTab>('month');
+  /** Offset de navegación temporal: 0 = período actual, -1 = anterior, -2 = hace 2, etc. */
+  readonly navigationOffset = signal<number>(0);
+
   /** Estado de visibilidad del modal de nueva transacción. */
   readonly isModalOpen = signal(false);
   /** Tipo de transacción (ingreso/gasto) para el modal abierto. */
@@ -119,29 +129,49 @@ export class DashboardPage implements OnInit {
   /** Presupuesto mensual por defecto desde UserSettings — pasado al chart para categorías sin registro. */
   readonly defaultCategoryBudget = this.userSettingsState.defaultCategoryBudget;
 
-  /** Workspaces del usuario para el selector de espacios en el header. */
-  readonly workspacesState = inject(WorkspacesStateService);
-
   /** Moneda base del usuario. Fallback 'EUR' antes de cargar. */
   readonly userBaseCurrency = computed(() => this.currencyState.baseCurrency() ?? 'EUR');
 
+  /** Rango de fechas { from, to } calculado según tab activo, monthStartDay y offset de navegación. */
+  readonly dateRange = computed((): DateRange =>
+    this.periodService.getDateRange(
+      this.activePeriodTab(),
+      new Date(),
+      this.userSettingsState.monthStartDay(),
+      this.navigationOffset(),
+    )
+  );
+
+  /** Etiqueta legible del período activo para el header del dashboard. */
+  readonly periodLabel = computed(() =>
+    this.periodService.getPeriodLabel(
+      this.activePeriodTab(),
+      new Date(),
+      this.userSettingsState.monthStartDay(),
+      this.navigationOffset(),
+    )
+  );
+
+  /** Deshabilita el chevron > cuando ya estamos en el período actual (offset = 0). */
+  readonly canNavigateForward = computed(() => this.navigationOffset() < 0);
+
   /** Resumen consolidado: Ingresos, Gastos y Balance del período actual. */
   readonly summary = computed(() =>
-    this.dashboardService.calculateSummary(this.txState.items(), this.period())
+    this.dashboardService.calculateSummary(this.txState.items(), this.dateRange())
   );
 
   /** Datos del gráfico (desglose por categoría) calculados reactivamente. */
   readonly breakdown = computed(() =>
-    this.dashboardService.calculateBreakdown(this.txState.items(), this.categoriesState.items(), this.period())
+    this.dashboardService.calculateBreakdown(this.txState.items(), this.categoriesState.items(), this.dateRange())
   );
 
   /**
    * Presupuestos del período activo con spentAmount recalculado desde las transacciones del store.
-   * Soporta los tres modos de vigencia: indefinite (por período YYYY-MM), period (por rango de fechas) y disabled.
+   * Soporta los tres modos de vigencia: indefinite (siempre visible), period (por rango de fechas) y disabled.
    */
   readonly budgetsForPeriod = computed(() => {
-    const period = this.period();
-    const txs = this.txState.items();
+    const range = this.dateRange();
+    const txs   = this.txState.items();
     const today = new Date().toISOString().slice(0, 10);
     return this.budgetsState.items()
       .filter(b => {
@@ -149,12 +179,18 @@ export class DashboardPage implements OnInit {
         if (b.mode === 'period') {
           return !!b.startDate && !!b.endDate && today >= b.startDate && today <= b.endDate;
         }
-        return b.period === period;
+        // indefinite: siempre visible
+        return true;
       })
       .map(b => {
         const safe = (n: number) => (isNaN(n) || !isFinite(n) ? 0 : n);
         const spentAmount = txs
-          .filter(t => t.type === TRANSACTION_TYPES.EXPENSE && t.categoryId === b.categoryId && t.date.startsWith(period))
+          .filter(t =>
+            t.type === TRANSACTION_TYPES.EXPENSE &&
+            t.categoryId === b.categoryId &&
+            t.date >= range.from &&
+            t.date <= range.to,
+          )
           .reduce((sum, t) => sum + safe(t.amountBase), 0);
         return { ...b, spentAmount };
       });
@@ -162,7 +198,7 @@ export class DashboardPage implements OnInit {
 
   /** Últimos movimientos del período, enriquecidos con metadatos de categoría, ordenados DESC por fecha. */
   readonly recentTransactions = computed(() => {
-    const txs = this.dashboardService.getRecentTransactions(this.txState.items(), this.period());
+    const txs = this.dashboardService.getRecentTransactions(this.txState.items(), this.dateRange());
     const cats = this.categoriesState.items();
     return [...txs]
       .sort((a, b) => (b.createdAt || b.date).localeCompare(a.createdAt || a.date))
@@ -183,7 +219,7 @@ export class DashboardPage implements OnInit {
   });
 
   constructor() {
-    addIcons({ addOutline, removeOutline, rocketOutline, sparklesOutline, folderOpenOutline });
+    addIcons({ addOutline, removeOutline, rocketOutline, sparklesOutline, folderOpenOutline, chevronBackOutline, chevronForwardOutline });
   }
 
   ngOnInit(): void {
@@ -200,12 +236,27 @@ export class DashboardPage implements OnInit {
     this.chartRefreshTick.update(v => v + 1);
   }
 
-  onPeriodChange(p: string): void {
-    this.period.set(p);
+  onTabChange(tab: PeriodTab): void {
+    this.activePeriodTab.set(tab);
+    this.navigationOffset.set(0);
+  }
+
+  onNavigatePrev(): void {
+    this.navigationOffset.update(v => v - 1);
+  }
+
+  onNavigateNext(): void {
+    if (this.canNavigateForward()) {
+      this.navigationOffset.update(v => v + 1);
+    }
   }
 
   goToTransactions(): void {
     this.router.navigate(['/tabs/dashboard/transactions']);
+  }
+
+  goToWallets(): void {
+    this.router.navigate(['/tabs/wallets']);
   }
 
   async onWorkspaceSwitched(id: string): Promise<void> {

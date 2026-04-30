@@ -16,11 +16,21 @@ import { ProjectionsComponent } from './components/projections/projections.compo
 import { SpendingRankingComponent } from './components/spending-ranking/spending-ranking.component';
 import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
+import { PeriodTab } from '@core/constants/period.constants';
 
 function sixMonthsAgo(): string {
   const date = new Date();
   date.setMonth(date.getMonth() - 5);
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function tabToYearMonth(tab: PeriodTab): string {
+  const now = new Date();
+  if (tab === 'year') {
+    const start = new Date(now.getFullYear(), 0, 1);
+    return `${start.getFullYear()}-01`;
+  }
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
 
 @Component({
@@ -59,6 +69,8 @@ export class AnalyticsPage implements OnInit {
 
   readonly startPeriod      = signal<string>(sixMonthsAgo());
   readonly selectedCategory = signal<string | null>(null);
+  /** Tab activo en el selector de período — controla la vista de analytics. */
+  readonly activePeriodTab  = signal<PeriodTab>('month');
 
   /** Transacciones a partir del período de inicio seleccionado, para el análisis. */
   readonly filteredTxs = computed(() =>
@@ -96,7 +108,8 @@ export class AnalyticsPage implements OnInit {
     this.categoriesState.load();
   }
 
-  onPeriodChange(period: string): void {
-    this.startPeriod.set(period);
+  onTabChange(tab: PeriodTab): void {
+    this.activePeriodTab.set(tab);
+    this.startPeriod.set(tabToYearMonth(tab));
   }
 }

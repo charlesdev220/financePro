@@ -26,7 +26,7 @@
 
   <div class="max-w-screen-xl mx-auto px-4 pt-4">
 
-    <app-period-selector [period]="startPeriod()" (periodChange)="onPeriodChange($event)" />
+    <app-period-selector [activeTab]="activePeriodTab()" (tabChange)="onTabChange($event)" />
 
     <section class="mb-6">
       <h2 class="text-base font-semibold text-[var(--ion-text-color)] mb-3">Ingresos vs Gastos</h2>

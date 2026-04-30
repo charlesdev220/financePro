@@ -23,6 +23,7 @@ import { TransactionsStateService } from '@core/state/transactions.state';
 import { IBudget } from '@models/budget.model';
 import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
+import { PeriodTab } from '@core/constants/period.constants';
 import { BudgetIndicatorComponent } from '@shared/components/budget-indicator/budget-indicator.component';
 import { BudgetFormComponent } from '@features/budgets/budget-form/budget-form.component';
 
@@ -55,7 +56,9 @@ export class BudgetListPage implements OnInit {
   private readonly modalCtrl         = inject(ModalController);
   private readonly toastCtrl         = inject(ToastController);
 
-  readonly currentPeriod = signal(new Date().toISOString().slice(0, 7));
+  readonly currentPeriod  = signal(new Date().toISOString().slice(0, 7));
+  /** Tab activo en el selector de período para la vista de presupuestos. */
+  readonly activePeriodTab = signal<PeriodTab>('month');
 
   private readonly _allBudgets = this.budgetsState.items;
   private readonly rowMap      = this.budgetsState.rowMap;
@@ -106,8 +109,10 @@ export class BudgetListPage implements OnInit {
     this.txState.load();
   }
 
-  onPeriodChange(p: string): void {
-    this.currentPeriod.set(p);
+  onTabChange(tab: PeriodTab): void {
+    this.activePeriodTab.set(tab);
+    const now = new Date();
+    this.currentPeriod.set(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
   }
 
   async openAddModal(): Promise<void> {

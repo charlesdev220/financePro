@@ -21,10 +21,12 @@ export class TransactionsStateService {
   private readonly _error    = signal<string | null>(null);
   private readonly _rowMap   = signal<Record<string, number>>({});
 
-  /** Transacciones del workspace activo. */
-  readonly items   = computed(() =>
-    this._allItems().filter(t => t.workspaceId === this.workspacesState.activeWorkspaceId()),
-  );
+  /** Transacciones del workspace activo. Las transacciones sin workspaceId heredan el workspace default (retrocompatibilidad). */
+  readonly items   = computed(() => {
+    const activeId  = this.workspacesState.activeWorkspaceId();
+    const defaultId = this.workspacesState.defaultWorkspaceId();
+    return this._allItems().filter(t => (t.workspaceId || defaultId) === activeId);
+  });
   readonly loading = this._loading.asReadonly();
   readonly error   = this._error.asReadonly();
   /** Mapa txId → número de fila en Sheets. */

@@ -15,13 +15,15 @@ import {
   IonNote,
   IonInput,
   IonButton,
+  IonSelect,
+  IonSelectOption,
   AlertController,
   ToastController,
   ModalController,
 } from '@ionic/angular/standalone';
 import { RouterLink } from '@angular/router';
 import { addIcons } from 'ionicons';
-import { logOutOutline, personCircleOutline, cashOutline, walletOutline } from 'ionicons/icons';
+import { logOutOutline, personCircleOutline, cashOutline, walletOutline, checkmarkCircleOutline, pencilOutline, trashOutline, checkmarkOutline } from 'ionicons/icons';
 import { AuthService } from '@core/services/auth.service';
 import { UserSettingsStateService } from '@core/state/user-settings.state';
 import { CurrencyStateService } from '@core/state/currency.state';
@@ -34,7 +36,7 @@ import { IWorkspace } from '@models/workspace.model';
   templateUrl: 'settings.page.html',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonList, IonListHeader, IonItem, IonLabel, IonIcon, IonNote, IonInput, IonButton],
+  imports: [RouterLink, IonContent, IonHeader, IonTitle, IonToolbar, IonButtons, IonBackButton, IonList, IonListHeader, IonItem, IonLabel, IonIcon, IonNote, IonInput, IonButton, IonSelect, IonSelectOption],
 })
 export class SettingsPage implements OnInit {
   private readonly authService     = inject(AuthService);
@@ -51,9 +53,11 @@ export class SettingsPage implements OnInit {
   readonly defaultBudget    = this.userSettingsState.defaultCategoryBudget;
   /** Moneda base del usuario para mostrar junto al campo de presupuesto. */
   readonly baseCurrency     = this.currencyState.baseCurrency;
+  /** Día del mes en que comienza el período mensual del usuario (1–28). */
+  readonly monthStartDay    = this.userSettingsState.monthStartDay;
 
   constructor() {
-    addIcons({ logOutOutline, personCircleOutline, cashOutline, walletOutline });
+    addIcons({ logOutOutline, personCircleOutline, cashOutline, walletOutline, checkmarkCircleOutline, pencilOutline, trashOutline, checkmarkOutline });
   }
 
   ngOnInit(): void {
@@ -92,6 +96,25 @@ export class SettingsPage implements OnInit {
     const val = Number(event.detail.value);
     if (isNaN(val) || val <= 0) return;
     this.userSettingsState.saveDefaultBudget(val);
+  }
+
+  onMonthStartDayChange(event: CustomEvent): void {
+    const val = Number(event.detail.value);
+    if (!isNaN(val) && val >= 1 && val <= 28) {
+      this.userSettingsState.saveMonthStartDay(val);
+    }
+  }
+
+  async onActivateWorkspace(ws: IWorkspace): Promise<void> {
+    if (ws.workspaceId === this.workspacesState.activeWorkspaceId()) return;
+    this.workspacesState.setActive(ws.workspaceId);
+    const toast = await this.toastCtrl.create({
+      message: `${ws.icon}  Espacio activo: ${ws.name}`,
+      duration: 1800,
+      position: 'top',
+      color: 'dark',
+    });
+    await toast.present();
   }
 
   async handleSignOut(): Promise<void> {

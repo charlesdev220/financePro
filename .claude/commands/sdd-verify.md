@@ -7,6 +7,7 @@ Recibís: **$ARGUMENTS** (nombre del cambio).
 
 **`qa-automation`** ejecuta esta fase. Lee `spec.md` y `tasks.md`, revisa el código implementado,
 corre los tests existentes, que la funcionalidad anterior se mantiene y emite el `verify-report.md`.
+**Verifica si lo especificado en `explore.md` se cumple**
 
 ## Pre-requisitos
 

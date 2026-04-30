@@ -19,15 +19,20 @@ import { ITransaction, TransactionDraft } from '@models/transaction.model';
 // F: currency | G: amount_base | H: concept | I: date | J: type
 // K: is_recurring | L: recurrence_rule | M: notes | N: created_at | O: updated_at | P: workspace_id
 
+function parseNum(v: unknown): number {
+  const n = Number(String(v ?? 0).replace(',', '.'));
+  return isNaN(n) || !isFinite(n) ? 0 : n;
+}
+
 export function rowToTransaction(row: unknown[], defaultWsId = ''): ITransaction {
   return {
     txId: String(row[0] ?? ''),
     userId: String(row[1] ?? ''),
     walletId: String(row[2] ?? ''),
     categoryId: String(row[3] ?? ''),
-    amount: Number(String(row[4] ?? 0).replace(',', '.')),
+    amount: parseNum(row[4]),
     currency: String(row[5] ?? 'EUR'),
-    amountBase: Number(String(row[6] ?? 0).replace(',', '.')),
+    amountBase: parseNum(row[6]),
     concept: String(row[7] ?? ''),
     date: String(row[8] ?? ''),
     type: (String(row[9] ?? 'expense') as 'income' | 'expense'),
@@ -81,7 +86,6 @@ export class TransactionService {
           const uid = String(row[1] ?? '');
           if (id && uid === userId) rowMap[id] = i + 2;
         });
-        console.log('allRows', allRows);
         const transactions = allRows
           .filter(row => row[0] && String(row[1] ?? '') === userId)
           .map(row => rowToTransaction(row, defaultWsId));

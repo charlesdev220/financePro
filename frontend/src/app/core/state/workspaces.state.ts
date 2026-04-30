@@ -63,9 +63,12 @@ export class WorkspacesStateService {
     };
     const prevItems = this._allItems();
     this._allItems.update(items => [...items, newWs]);
+    this.setActive(newWs.workspaceId);
     firstValueFrom(this.workspaceService.saveWorkspace(newWs))
       .then(() => this.load())
       .catch(err => {
+        // Rollback de _allItems. activeWorkspaceId queda en el ID fallido
+        // hasta la próxima load(), donde el guard !activeExists lo corrige.
         this._allItems.set(prevItems);
         this._error.set(String(err));
       });

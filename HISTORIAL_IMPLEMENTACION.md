@@ -4,6 +4,43 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (workspace-create-fix — Verify & Archive):
+*Fase actual:* Fase SDD completa: explore → propose → spec → design → tasks → apply → verify → archive
+*Estado actual:* Archivado ✅ | 2026-04-30
+- ✔️ **Auto-activación al crear workspace:** `WorkspacesStateService.create()` llama `setActive(newWs.workspaceId)` sincrónicamente tras el push optimista.
+- ✔️ **Modernización WorkspaceFormComponent:** `FormGroup`/`ReactiveFormsModule` reemplazado por signals `name`, `icon` + `computed isFormInvalid`.
+- ✔️ **Toast de confirmación:** `save()` presenta toast `'Espacio creado'` / `'Espacio actualizado'` antes del dismiss.
+- ✔️ **Campo color limpiado:** eliminado del form, persiste `WORKSPACE_DEFAULTS.COLOR`; modelo intacto.
+- ✔️ **Testing:** 21/21 tests pasando (13 componente + 8 state). Fix de mock en `workspaces.state.spec.ts` — segunda llamada a `loadWorkspaces` retorna workspace creado para evitar recursión de `_createDefault()`.
+*Deuda técnica documentada:* `@Input()` legacy en modal (excepción documentada, Ionic ModalController incompatible con signal inputs). Color picker futuro para `IWorkspace.color`.
+*Próximos pasos:* Ninguno — cambio cerrado.
+
+---
+
+### Qué hemos completado hasta ahora (workspace-create-fix):
+*Fase actual:* Fase SDD completa: explore → propose → spec → design → tasks → apply
+*Estado actual:* Completado ✅ | 2026-04-29
+- ✔️ **Auto-activación al crear workspace:** `WorkspacesStateService.create()` llama `setActive(newWs.workspaceId)` sincrónicamente tras el push optimista — el workspace nuevo queda activo de inmediato, visible en el selector sin latencia.
+- ✔️ **Modernización WorkspaceFormComponent:** reemplazado `FormGroup`/`ReactiveFormsModule` por signals `name`, `icon` + `computed isFormInvalid`; alineado con reglas Angular del proyecto.
+- ✔️ **Toast de confirmación:** `WorkspaceFormComponent.save()` presenta toast `'Espacio creado'` / `'Espacio actualizado'` antes del dismiss — feedback visual claro en ambas entradas (Settings y Dashboard).
+- ✔️ **Campo color limpiado:** eliminado del form (persiste `WORKSPACE_DEFAULTS.COLOR`); modelo `IWorkspace` intacto para futura compatibilidad con picker.
+- ✔️ **Tests:** 12 specs nuevos en `workspace-form.component.spec.ts` + 2 casos REQ-05 en `workspaces.state.spec.ts`.
+*Deuda técnica documentada:* Color picker para `IWorkspace.color` pendiente de backlog. Tests E2E diferidos (requieren entorno con app corriendo).
+*Próximos pasos:* sdd-verify para validar compliance matrix contra spec.md.
+
+---
+
+### Qué hemos completado hasta ahora (bugfix-nan-chart-budget-fab):
+*Fase actual:* archived — SDD completo (explore → apply → verify → archive)
+*Estado actual:* Completado ✅ | Archivado: 2026-04-29
+- ✔️ **Guard NaN en `rowToTransaction`:** helper `parseNum()` normaliza `amount` y `amountBase` a `0` si el resultado es `NaN` o `Infinity`. Elimina el `—` en movimientos del dashboard y el `NaN%` en el chart de analytics.
+- ✔️ **Fix altura chart-bar:** `h-[var(--app-chart-height)]` (variable CSS nunca definida) → `h-full`. El canvas toma el alto del contenedor padre (`style="height: 220px;"`) y la barra naranja de analytics ya no desborda.
+- ✔️ **FAB Presupuestos → barra fija:** el `ion-button` inline dentro de `ion-content` se reemplaza por una barra `fixed bottom` igual al patrón del Dashboard. Padding-bottom del content ajustado para que la lista no quede tapada.
+*Deuda técnica documentada:* ninguna.
+*Próximos pasos:* verificar visualmente en el navegador.
+
+---
+
 ### Qué hemos completado hasta ahora (Workspace & Product Roadmap):
 *Fase actual:* Fase SDD completa: explore → propose → spec → design → tasks → apply → verify
 *Estado actual:* Completado ✅ | 2026-04-28

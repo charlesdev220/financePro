@@ -5,8 +5,8 @@
 </ion-header>
 
 <ion-content class="ion-padding" style="--background: var(--color-green-50);">
-  <div class="max-w-screen-xl mx-auto">
-    <app-period-selector [period]="currentPeriod()" (periodChange)="onPeriodChange($event)">
+  <div class="max-w-screen-xl mx-auto pb-[calc(env(safe-area-inset-bottom)+80px)]">
+    <app-period-selector [activeTab]="activePeriodTab()" (tabChange)="onTabChange($event)">
     </app-period-selector>
 
     @if (budgets().length > 0) {
@@ -44,15 +44,17 @@
     <div class="flex flex-col items-center justify-center py-16 gap-4 text-center">
       <ion-icon name="bar-chart-outline" class="text-6xl text-gray-300"></ion-icon>
       <p class="text-gray-400 text-sm">No hay presupuestos para este período.<br>Creá uno para controlar tus gastos.</p>
-      <ion-button (click)="openAddModal()">Crear presupuesto</ion-button>
     </div>
     }
   </div>
-
-  <ion-button (click)="openAddModal()" expand="block" class="flex-1 font-semibold pt-16"
-    style="--background: var(--color-green-500); --background-activated: --color-green-700; --border-radius: 12px; text-transform: none;">
-    <ion-icon name="add-outline" slot="start"></ion-icon>
-    Crear Presupuesto
-  </ion-button>
-
 </ion-content>
+
+<!-- Barra de acción fija — mismo patrón que Dashboard -->
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pb-3 pt-3 bg-monefy-mint z-10"
+  style="bottom: calc(env(safe-area-inset-bottom) + 56px);">
+  <ion-button (click)="openAddModal()" expand="block" class="font-semibold"
+    style="--background: var(--color-green-500); --background-activated: var(--color-green-700); --border-radius: 12px; text-transform: none;">
+    <ion-icon name="add-outline" slot="start"></ion-icon>
+    Crear presupuesto
+  </ion-button>
+</div>

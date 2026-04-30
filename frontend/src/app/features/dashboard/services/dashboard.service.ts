@@ -18,14 +18,19 @@ export interface CategoryBreakdown {
   type: 'income' | 'expense';
 }
 
+export interface DateRange {
+  from: string;
+  to: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
   /**
-   * Calcula el resumen financiero del período dado.
-   * Filtra transacciones cuya fecha comience con el period (YYYY-MM).
+   * Calcula el resumen financiero del rango de fechas dado.
+   * Filtra transacciones cuya fecha esté dentro del rango [from, to] (ISO 8601).
    */
-  calculateSummary(transactions: ITransaction[], period: string): DashboardSummary {
-    const periodTxs = transactions.filter(t => t.date.startsWith(period));
+  calculateSummary(transactions: ITransaction[], range: DateRange): DashboardSummary {
+    const periodTxs = transactions.filter(t => t.date >= range.from && t.date <= range.to);
     const safe = (n: number) => (isNaN(n) || !isFinite(n) ? 0 : n);
     const totalIncome = periodTxs
       .filter(t => t.type === TRANSACTION_TYPES.INCOME)
@@ -41,16 +46,16 @@ export class DashboardService {
   }
 
   /**
-   * Calcula el desglose de movimientos por categoría para el período,
+   * Calcula el desglose de movimientos por categoría para el rango de fechas,
    * separando ingresos y gastos. Devuelve top 6 por tipo + "Otros" si hay más.
    * Los ingresos se listan primero, luego los gastos.
    */
   calculateBreakdown(
     transactions: ITransaction[],
     categories: ICategory[],
-    period: string,
+    range: DateRange,
   ): CategoryBreakdown[] {
-    const periodTxs = transactions.filter(t => t.date.startsWith(period));
+    const periodTxs = transactions.filter(t => t.date >= range.from && t.date <= range.to);
     if (periodTxs.length === 0) return [];
 
     const buildGroup = (
@@ -103,15 +108,15 @@ export class DashboardService {
   }
 
   /**
-   * Devuelve las últimas `limit` transacciones del período, ordenadas DESC por fecha.
+   * Devuelve las últimas `limit` transacciones del rango, ordenadas DESC por fecha.
    */
   getRecentTransactions(
     transactions: ITransaction[],
-    period: string,
+    range: DateRange,
     limit = 5,
   ): ITransaction[] {
     return transactions
-      .filter(t => t.date.startsWith(period))
+      .filter(t => t.date >= range.from && t.date <= range.to)
       .sort((a, b) => (b.createdAt || b.date).localeCompare(a.createdAt || a.date))
       .slice(0, limit);
   }

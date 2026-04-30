@@ -70,10 +70,12 @@ describe('WorkspacesStateService', () => {
 
   // REQ-02 sc3 — load() sin workspaces → crea workspace 'Personal' automáticamente
   it('load_shouldCreatePersonalWorkspace_whenNoWorkspacesExist', fakeAsync(() => {
-    // Primera llamada: vacía. Segunda (tras save): un workspace creado.
+    // Primera llamada: vacía → dispara _createDefault() → save → load().
+    // Segunda llamada (tras save): retorna el workspace creado para que no se vuelva a disparar _createDefault().
+    const createdWs = { workspaceId: 'ws_default', name: 'Personal', isDefault: true, userId: 'usr_001', icon: '🏠', color: '--color-green-500', createdAt: new Date().toISOString() };
     workspaceServiceSpy.loadWorkspaces.and.returnValues(
       of({ workspaces: [], rowMap: {} }),
-      of({ workspaces: [], rowMap: {} }),
+      of({ workspaces: [createdWs], rowMap: { 'ws_default': 2 } }),
     );
     workspaceServiceSpy.saveWorkspace.and.returnValue(of(undefined));
 
@@ -121,5 +123,47 @@ describe('WorkspacesStateService', () => {
     expect(service.error()).not.toBeNull();
     expect(service.items().length).toBe(0);
     expect(service.loading()).toBeFalse();
+  }));
+
+  // REQ-05 sc1 — create() activa sincrónicamente el nuevo workspace
+  it('create_shouldSetActiveWorkspaceId_synchronously', () => {
+    const prevActive = service.activeWorkspaceId();
+
+    service.create({
+      userId: 'usr_001',
+      name: 'Nuevo',
+      icon: '🆕',
+      color: '--color-green-500',
+      isDefault: false,
+    });
+
+    const newActive = service.activeWorkspaceId();
+    expect(newActive).not.toBe(prevActive);
+    expect(newActive).toMatch(/^ws_/);
+    expect(service.items().some(ws => ws.workspaceId === newActive)).toBeTrue();
+  });
+
+  // REQ-05 sc3 — create() revierte _allItems si saveWorkspace falla
+  it('create_shouldRollbackItems_whenSaveFails', fakeAsync(() => {
+    workspaceServiceSpy.loadWorkspaces.and.returnValue(
+      of({ workspaces: MOCK_WORKSPACES, rowMap: { [MOCK_WORKSPACE_ID_A]: 2, [MOCK_WORKSPACE_ID_B]: 3 } }),
+    );
+    service.load();
+    flushMicrotasks();
+
+    const prevCount = service.items().length;
+    workspaceServiceSpy.saveWorkspace.and.returnValue(throwError(() => new Error('net')));
+
+    service.create({
+      userId: 'usr_001',
+      name: 'Fallido',
+      icon: '❌',
+      color: '--color-green-500',
+      isDefault: false,
+    });
+    flushMicrotasks();
+
+    expect(service.items().length).toBe(prevCount);
+    expect(service.error()).not.toBeNull();
   }));
 });
