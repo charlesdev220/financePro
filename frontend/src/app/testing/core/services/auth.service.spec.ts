@@ -1,14 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { AuthService } from '../../../core/services/auth.service';
-import { CryptoService } from '../../../core/services/crypto.service';
-import { environment } from '../../../../environments/environment';
+import { AuthService } from '@core/services/auth.service';
+import { CryptoService } from '@core/services/crypto.service';
+import { environment } from '@env/environment';
 
 describe('AuthService', () => {
   let service: AuthService;
   let httpMock: HttpTestingController;
-  let cryptoSpy: jasmine.SpyObj<CryptoService>;
+  let cryptoSpy: jest.Mocked<CryptoService>;
 
   const TEST_EMAIL = 'user@test.com';
   const TEST_PASSWORD = 'secret123';
@@ -37,20 +37,21 @@ describe('AuthService', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (environment as any).googlePrivateKey = '';
 
-    cryptoSpy = jasmine.createSpyObj('CryptoService', [
-      'deriveKey',
-      'encrypt',
-      'decrypt',
-      'hashPassword',
-      'hashEmail',
-      'isReady',
-    ]);
-    cryptoSpy.deriveKey.and.returnValue(Promise.resolve());
-    cryptoSpy.encrypt.and.callFake(async (text: string) => `enc(${text})`);
-    cryptoSpy.decrypt.and.callFake(async (text: string) => text.replace('enc(', '').replace(')', ''));
-    cryptoSpy.hashPassword.and.returnValue(Promise.resolve(MOCK_PASSWORD_HASH));
-    cryptoSpy.hashEmail.and.returnValue(Promise.resolve(MOCK_EMAIL_HASH));
-    cryptoSpy.isReady.and.returnValue(false);
+    cryptoSpy = {
+      deriveKey: jest.fn(),
+      encrypt: jest.fn(),
+      decrypt: jest.fn(),
+      hashPassword: jest.fn(),
+      hashEmail: jest.fn(),
+      isReady: jest.fn(),
+    } as unknown as jest.Mocked<CryptoService>;
+
+    cryptoSpy.deriveKey.mockResolvedValue(undefined);
+    cryptoSpy.encrypt.mockImplementation(async (text: string) => `enc(${text})`);
+    cryptoSpy.decrypt.mockImplementation(async (text: string) => text.replace('enc(', '').replace(')', ''));
+    cryptoSpy.hashPassword.mockResolvedValue(MOCK_PASSWORD_HASH);
+    cryptoSpy.hashEmail.mockResolvedValue(MOCK_EMAIL_HASH);
+    cryptoSpy.isReady.mockReturnValue(false);
 
     TestBed.configureTestingModule({
       providers: [
@@ -67,6 +68,7 @@ describe('AuthService', () => {
   afterEach(() => {
     httpMock.verify();
     localStorage.removeItem('myfinance_user');
+    jest.restoreAllMocks();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (environment as any).googleServiceAccountEmail = '';
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -82,7 +84,7 @@ describe('AuthService', () => {
   // -----------------------------------------------------------------------
   describe('initial state', () => {
     it('isAuthenticated() returns false', () => {
-      expect(service.isAuthenticated()).toBeFalse();
+      expect(service.isAuthenticated()).toBe(false);
     });
 
     it('getAccessToken() returns null', () => {
@@ -100,13 +102,14 @@ describe('AuthService', () => {
   describe('login()', () => {
     it('returns true and sets user when credentials match USERS sheet', async () => {
       const loginPromise = service.login(TEST_EMAIL, TEST_PASSWORD);
+      await Promise.resolve(); // permite que signIn() termine antes del request HTTP
 
       const req = httpMock.expectOne(r => r.url.includes('USERS'));
       expect(req.request.method).toBe('GET');
       req.flush(mockUsersResponse);
 
-      expect(await loginPromise).toBeTrue();
-      expect(service.isAuthenticated()).toBeTrue();
+      expect(await loginPromise).toBe(true);
+      expect(service.isAuthenticated()).toBe(true);
 
       const user = service.getUser();
       expect(user?.sub).toBe(MOCK_USER_ID); // sub = UUID, no el email
@@ -115,6 +118,7 @@ describe('AuthService', () => {
 
     it('calls deriveKey with UUID and decrypt with encrypted name', async () => {
       const loginPromise = service.login(TEST_EMAIL, TEST_PASSWORD);
+      await Promise.resolve();
       httpMock.expectOne(r => r.url.includes('USERS')).flush(mockUsersResponse);
       await loginPromise;
 
@@ -125,6 +129,7 @@ describe('AuthService', () => {
 
     it('persists session to localStorage', async () => {
       const loginPromise = service.login(TEST_EMAIL, TEST_PASSWORD);
+      await Promise.resolve();
       httpMock.expectOne(r => r.url.includes('USERS')).flush(mockUsersResponse);
       await loginPromise;
 
@@ -133,40 +138,44 @@ describe('AuthService', () => {
     });
 
     it('returns false when password hash does not match', async () => {
-      cryptoSpy.hashPassword.and.returnValue(Promise.resolve('totally-wrong-hash'));
+      cryptoSpy.hashPassword.mockResolvedValue('totally-wrong-hash');
 
       const loginPromise = service.login(TEST_EMAIL, 'badPassword');
+      await Promise.resolve();
       httpMock.expectOne(r => r.url.includes('USERS')).flush(mockUsersResponse);
 
-      expect(await loginPromise).toBeFalse();
-      expect(service.isAuthenticated()).toBeFalse();
+      expect(await loginPromise).toBe(false);
+      expect(service.isAuthenticated()).toBe(false);
     });
 
     it('returns false when email hash does not match any row', async () => {
-      cryptoSpy.hashEmail.and.returnValue(Promise.resolve('unknown-email-hash'));
+      cryptoSpy.hashEmail.mockResolvedValue('unknown-email-hash');
 
       const loginPromise = service.login('notfound@test.com', TEST_PASSWORD);
+      await Promise.resolve();
       httpMock.expectOne(r => r.url.includes('USERS')).flush(mockUsersResponse);
 
-      expect(await loginPromise).toBeFalse();
+      expect(await loginPromise).toBe(false);
     });
 
     it('returns false when sheet has only headers (no users)', async () => {
       const loginPromise = service.login(TEST_EMAIL, TEST_PASSWORD);
+      await Promise.resolve();
       httpMock.expectOne(r => r.url.includes('USERS')).flush({
         range: 'USERS!A1:G1',
         majorDimension: 'ROWS',
         values: [['user_id', 'email', 'display_name', 'password_hash', 'default_currency', 'period_start_day', 'created_at']],
       });
 
-      expect(await loginPromise).toBeFalse();
+      expect(await loginPromise).toBe(false);
     });
 
     it('returns false when sheet response is null', async () => {
       const loginPromise = service.login(TEST_EMAIL, TEST_PASSWORD);
+      await Promise.resolve();
       httpMock.expectOne(r => r.url.includes('USERS')).flush(null);
 
-      expect(await loginPromise).toBeFalse();
+      expect(await loginPromise).toBe(false);
     });
   });
 
@@ -176,17 +185,19 @@ describe('AuthService', () => {
   describe('register()', () => {
     it('returns true and sets session on success', async () => {
       const registerPromise = service.register({ email: TEST_EMAIL, password: TEST_PASSWORD, name: TEST_NAME });
+      await Promise.resolve(); // signIn() microtask + Promise.all para cifrado
 
       const req = httpMock.expectOne(r => r.url.includes('USERS') && r.method === 'POST');
       req.flush({ updates: { updatedRange: 'USERS!A2' } });
 
-      expect(await registerPromise).toBeTrue();
-      expect(service.isAuthenticated()).toBeTrue();
+      expect(await registerPromise).toBe(true);
+      expect(service.isAuthenticated()).toBe(true);
       expect(service.getUser()?.email).toBe(TEST_EMAIL);
     });
 
     it('writes UUID as user_id (not email), and encrypts PII', async () => {
       const registerPromise = service.register({ email: TEST_EMAIL, password: TEST_PASSWORD, name: TEST_NAME });
+      await Promise.resolve();
 
       const req = httpMock.expectOne(r => r.url.includes('USERS') && r.method === 'POST');
       const body = req.request.body as { values: unknown[][] };
@@ -211,6 +222,7 @@ describe('AuthService', () => {
 
     it('sets sub to UUID (not email) after registration', async () => {
       const registerPromise = service.register({ email: TEST_EMAIL, password: TEST_PASSWORD, name: TEST_NAME });
+      await Promise.resolve();
       httpMock.expectOne(r => r.url.includes('USERS') && r.method === 'POST').flush({});
       await registerPromise;
 
@@ -220,11 +232,12 @@ describe('AuthService', () => {
 
     it('calls deriveKey with the UUID before encrypting', async () => {
       const registerPromise = service.register({ email: TEST_EMAIL, password: TEST_PASSWORD, name: TEST_NAME });
+      await Promise.resolve();
       httpMock.expectOne(r => r.url.includes('USERS') && r.method === 'POST').flush({});
       await registerPromise;
 
       // deriveKey debe recibir el UUID (no el email)
-      const deriveArg = cryptoSpy.deriveKey.calls.first().args[0];
+      const deriveArg = cryptoSpy.deriveKey.mock.calls[0][0];
       expect(deriveArg).not.toBe(TEST_EMAIL);
       expect(deriveArg).toMatch(/^[0-9a-f-]{36}$/);
       // deriveKey y encrypt ambos fueron llamados (orden garantizado por la implementación async)
@@ -234,9 +247,10 @@ describe('AuthService', () => {
 
     it('returns false when Sheets API throws', async () => {
       const registerPromise = service.register({ email: TEST_EMAIL, password: TEST_PASSWORD, name: TEST_NAME });
+      await Promise.resolve();
       httpMock.expectOne(r => r.url.includes('USERS') && r.method === 'POST').error(new ErrorEvent('network'));
 
-      expect(await registerPromise).toBeFalse();
+      expect(await registerPromise).toBe(false);
     });
   });
 
@@ -246,6 +260,7 @@ describe('AuthService', () => {
   describe('signOut()', () => {
     beforeEach(async () => {
       const loginPromise = service.login(TEST_EMAIL, TEST_PASSWORD);
+      await Promise.resolve();
       httpMock.expectOne(r => r.url.includes('USERS')).flush(mockUsersResponse);
       await loginPromise;
     });
@@ -257,7 +272,7 @@ describe('AuthService', () => {
 
     it('isAuthenticated() returns false after signOut', () => {
       service.signOut();
-      expect(service.isAuthenticated()).toBeFalse();
+      expect(service.isAuthenticated()).toBe(false);
     });
 
     it('removes session from localStorage', () => {
@@ -276,42 +291,41 @@ describe('AuthService', () => {
   // -----------------------------------------------------------------------
   describe('checkEmailExists()', () => {
     it('returns true when email hash matches a row in USERS sheet', async () => {
-      // Given: cryptoSpy.hashEmail devuelve MOCK_EMAIL_HASH que existe en mockUsersResponse
       const checkPromise = service.checkEmailExists(TEST_EMAIL);
-
+      await Promise.resolve();
       httpMock.expectOne(r => r.url.includes('USERS')).flush(mockUsersResponse);
 
-      expect(await checkPromise).toBeTrue();
+      expect(await checkPromise).toBe(true);
     });
 
     it('returns false when email hash does not match any row', async () => {
-      cryptoSpy.hashEmail.and.returnValue(Promise.resolve('unknown-hash-xyz'));
+      cryptoSpy.hashEmail.mockResolvedValue('unknown-hash-xyz');
 
       const checkPromise = service.checkEmailExists('notfound@test.com');
-
+      await Promise.resolve();
       httpMock.expectOne(r => r.url.includes('USERS')).flush(mockUsersResponse);
 
-      expect(await checkPromise).toBeFalse();
+      expect(await checkPromise).toBe(false);
     });
 
     it('returns false when USERS sheet is empty (only headers)', async () => {
       const checkPromise = service.checkEmailExists(TEST_EMAIL);
-
+      await Promise.resolve();
       httpMock.expectOne(r => r.url.includes('USERS')).flush({
         range: 'USERS!A1:H1',
         majorDimension: 'ROWS',
         values: [['user_id', 'email_hash', 'email_enc', 'display_name_enc', 'password_hash', 'currency', 'period_start', 'created_at']],
       });
 
-      expect(await checkPromise).toBeFalse();
+      expect(await checkPromise).toBe(false);
     });
 
     it('propagates network error when Sheets API throws', async () => {
       const checkPromise = service.checkEmailExists(TEST_EMAIL);
-
+      await Promise.resolve();
       httpMock.expectOne(r => r.url.includes('USERS')).error(new ErrorEvent('network'));
 
-      await expectAsync(checkPromise).toBeRejected();
+      await expect(checkPromise).rejects.toThrow();
     });
   });
 
@@ -319,15 +333,15 @@ describe('AuthService', () => {
   // Service Account token — access_token nunca en localStorage
   // -----------------------------------------------------------------------
   it('never writes access_token to localStorage', async () => {
-    const setSpy = spyOn(localStorage, 'setItem').and.callThrough();
+    const setSpy = jest.spyOn(localStorage, 'setItem');
 
     const loginPromise = service.login(TEST_EMAIL, TEST_PASSWORD);
     httpMock.expectOne(r => r.url.includes('USERS')).flush(mockUsersResponse);
     await loginPromise;
 
     // Solo debe persistir myfinance_user, nunca el access_token
-    for (const call of setSpy.calls.all()) {
-      expect(call.args[0]).toBe('myfinance_user');
+    for (const call of setSpy.mock.calls) {
+      expect(call[0]).toBe('myfinance_user');
     }
   });
 });

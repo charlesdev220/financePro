@@ -4,16 +4,15 @@
   "compilerOptions": {
     "outDir": "./out-tsc/spec",
     "types": [
-      "jasmine"
-    ]
+      "jest",
+      "node"
+    ],
+    "esModuleInterop": true,
+    "emitDecoratorMetadata": true
   },
-  "files": [
-    "src/test.ts",
-    "src/polyfills.ts",
-    "src/empty-e2e-stub.ts"
-  ],
   "include": [
     "src/**/*.spec.ts",
-    "src/**/*.d.ts"
+    "src/**/*.d.ts",
+    "setup-jest.ts"
   ]
 }

@@ -98,36 +98,13 @@
           }
         },
         "test": {
-          "builder": "@angular-builders/custom-webpack:karma",
+          "builder": "@angular-builders/jest:run",
           "options": {
-            "customWebpackConfig": { "path": "./webpack.test.config.js" },
-            "main": "src/test.ts",
-            "polyfills": "src/polyfills.ts",
-            "tsConfig": "tsconfig.spec.json",
-            "karmaConfig": "karma.conf.js",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "src/assets",
-                "output": "assets"
-              },
-              {
-                "glob": "**/*.svg",
-                "input": "node_modules/ionicons/dist/ionicons/svg",
-                "output": "./svg"
-              }
-            ],
-            "styles": [
-              "src/tailwind.scss",
-              "src/theme/variables.scss"
-            ],
-            "scripts": []
+            "tsConfig": "tsconfig.spec.json"
           },
           "configurations": {
             "ci": {
-              "progress": false,
-              "watch": false
+              "runInBand": true
             }
           }
         },

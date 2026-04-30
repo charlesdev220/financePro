@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { CryptoService } from '../../../core/services/crypto.service';
+import { CryptoService } from '@core/services/crypto.service';
 
 describe('CryptoService', () => {
   let service: CryptoService;
@@ -16,12 +16,12 @@ describe('CryptoService', () => {
   });
 
   it('isReady() returns false before deriveKey', () => {
-    expect(service.isReady()).toBeFalse();
+    expect(service.isReady()).toBe(false);
   });
 
   it('deriveKey() makes the service ready', async () => {
     await service.deriveKey(userId);
-    expect(service.isReady()).toBeTrue();
+    expect(service.isReady()).toBe(true);
   });
 
   it('encrypt/decrypt round-trip returns original text', async () => {
@@ -41,7 +41,7 @@ describe('CryptoService', () => {
   });
 
   it('encrypt() throws if key not initialized', async () => {
-    await expectAsync(service.encrypt('foo')).toBeRejectedWithError('CryptoKey no inicializada.');
+    await expect(service.encrypt('foo')).rejects.toThrow('CryptoKey no inicializada.');
   });
 
   describe('hashEmail()', () => {

@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { SheetsApiService } from '../../../core/services/sheets-api.service';
-
-import { environment } from '../../../../environments/environment';
+import { firstValueFrom } from 'rxjs';
+import { SheetsApiService } from '@core/services/sheets-api.service';
+import { environment } from '@env/environment';
 
 const BASE = `https://sheets.googleapis.com/v4/spreadsheets/${environment.spreadsheetId}/values`;
 
@@ -42,41 +42,39 @@ describe('SheetsApiService', () => {
       service.getRange('TRANSACTIONS!A:O').subscribe();
 
       const req = httpMock.expectOne(`${BASE}/${encodeURIComponent('TRANSACTIONS!A:O')}`);
-      expect(req.request.headers.has('If-None-Match')).toBeFalse();
+      expect(req.request.headers.has('If-None-Match')).toBe(false);
       req.flush({ range: 'TRANSACTIONS!A:O', majorDimension: 'ROWS', values: [] });
     });
 
-    it('returns the response body', (done) => {
+    it('returns the response body', async () => {
       const mockData = { range: 'TRANSACTIONS!A:O', majorDimension: 'ROWS', values: [['a', 'b']] };
 
-      service.getRange('TRANSACTIONS!A:O').subscribe(result => {
-        expect(result).toEqual(mockData);
-        done();
-      });
-
+      const resultPromise = firstValueFrom(service.getRange('TRANSACTIONS!A:O'));
       const req = httpMock.expectOne(`${BASE}/${encodeURIComponent('TRANSACTIONS!A:O')}`);
       req.flush(mockData);
+
+      expect(await resultPromise).toEqual(mockData);
     });
   });
 
   // REQ-11: ETag caching
   describe('getRange() — ETag caching', () => {
-    it('stores ETag from response header', (done) => {
-      service.getRange('USERS!A:F').subscribe(() => {
-        // Segunda llamada debe enviar el ETag
-        service.getRange('USERS!A:F').subscribe();
-
-        const req2 = httpMock.expectOne(`${BASE}/${encodeURIComponent('USERS!A:F')}`);
-        expect(req2.request.headers.get('If-None-Match')).toBe('"etag-abc"');
-        req2.flush({ range: 'USERS!A:F', majorDimension: 'ROWS', values: [] });
-        done();
-      });
-
+    it('stores ETag from response header', async () => {
+      // Primera llamada — poblar caché con ETag
+      const firstCall = firstValueFrom(service.getRange('USERS!A:F'));
       const req1 = httpMock.expectOne(`${BASE}/${encodeURIComponent('USERS!A:F')}`);
       req1.flush(
         { range: 'USERS!A:F', majorDimension: 'ROWS', values: [] },
         { headers: { ETag: '"etag-abc"' } },
       );
+      await firstCall;
+
+      // Segunda llamada — debe enviar el ETag almacenado
+      const secondCall = firstValueFrom(service.getRange('USERS!A:F'));
+      const req2 = httpMock.expectOne(`${BASE}/${encodeURIComponent('USERS!A:F')}`);
+      expect(req2.request.headers.get('If-None-Match')).toBe('"etag-abc"');
+      req2.flush({ range: 'USERS!A:F', majorDimension: 'ROWS', values: [] });
+      await secondCall;
     });
 
     it('sends If-None-Match on second call to same range', () => {
@@ -95,14 +93,12 @@ describe('SheetsApiService', () => {
       req2.flush({ range: 'CATEGORIES!A:I', majorDimension: 'ROWS', values: [] });
     });
 
-    it('returns null when response body is null (304 simulation)', (done) => {
-      service.getRange('WALLETS!A:I').subscribe(result => {
-        expect(result).toBeNull();
-        done();
-      });
-
+    it('returns null when response body is null (304 simulation)', async () => {
+      const resultPromise = firstValueFrom(service.getRange('WALLETS!A:I'));
       const req = httpMock.expectOne(`${BASE}/${encodeURIComponent('WALLETS!A:I')}`);
       req.flush(null);
+
+      expect(await resultPromise).toBeNull();
     });
   });
 
