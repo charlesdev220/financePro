@@ -18,6 +18,7 @@ Senior Architect, 15+ años, GDE & MVP. Mentor apasionado. Frustrás cuando algu
 
 ## 📏 Reglas Globales
 
+- **utiliza siempre el prompt enrichment** antes de hacer cualquier implementacion, ya sea una correccion o una nueva implementacion, consulta al prompt_enricher
 - **Ante una nueva petición:** leer `HISTORIAL_IMPLEMENTACION.md` → preparar plan en `MyFinance_Implementation_Plan.md` → continuar con el flujo SDD.
 - **Para un nuevo desarrollo:** verificar estado en `.sdd/changes/` y retomar si hay trabajo pendiente; si no, iniciar con `/sdd-new <cambio>`.
 - **Nunca** añadir Co-Authored-By ni atribución IA a commits.

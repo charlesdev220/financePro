@@ -55,7 +55,7 @@ export class WorkspacesStateService {
     this._activeWorkspaceId.set(id);
   }
 
-  create(draft: WorkspaceDraft): void {
+  create(draft: WorkspaceDraft): Promise<IWorkspace> {
     const newWs: IWorkspace = {
       ...draft,
       workspaceId: `ws_${crypto.randomUUID()}`,
@@ -64,13 +64,12 @@ export class WorkspacesStateService {
     const prevItems = this._allItems();
     this._allItems.update(items => [...items, newWs]);
     this.setActive(newWs.workspaceId);
-    firstValueFrom(this.workspaceService.saveWorkspace(newWs))
-      .then(() => this.load())
+    return firstValueFrom(this.workspaceService.saveWorkspace(newWs))
+      .then(() => { this.load(); return newWs; })
       .catch(err => {
-        // Rollback de _allItems. activeWorkspaceId queda en el ID fallido
-        // hasta la próxima load(), donde el guard !activeExists lo corrige.
         this._allItems.set(prevItems);
         this._error.set(String(err));
+        throw err;
       });
   }
 

@@ -177,6 +177,16 @@
           <ion-textarea formControlName="concept" placeholder="¿En qué lo usaste?" label="Descripción"
             labelPlacement="stacked" [autoGrow]="true" rows="1" class="text-sm font-semibold"></ion-textarea>
         </ion-item>
+        @if (suggestions().length > 0) {
+          <div class="flex flex-wrap gap-2 px-4 py-2 border-t border-gray-50">
+            @for (s of suggestions(); track s) {
+              <button type="button" (click)="onSuggestionSelect(s)"
+                class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 active:bg-monefy-mint active:text-monefy-green transition-colors">
+                {{ s }}
+              </button>
+            }
+          </div>
+        }
         <ion-item lines="none" class="ion-no-padding px-4">
           <ion-textarea formControlName="notes" placeholder="Notas adicionales..." label="Notas"
             labelPlacement="stacked" [autoGrow]="true" rows="1" class="text-xs text-gray-500"></ion-textarea>

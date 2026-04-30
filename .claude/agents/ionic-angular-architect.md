@@ -29,6 +29,7 @@ Consultar el archivo correspondiente **antes de escribir código**:
 | Estilos / Tailwind | `.claude/rules/tailwind.md` |
 
 Si un requerimiento choca con alguna regla → **señalar el conflicto y escalar al Orchestrator antes de proceder.**
+- nunca utilices ion-fab-button, utiliza en su lugar un ion-button.
 
 ## Responsabilidades
 
@@ -80,6 +81,28 @@ orchestrator
 | Revisión antes de merge | `/wf-code-review` |
 | Datos de desarrollo en Sheets | `/mock-data-seeder` |
 | Reglas de capa antes de generar código | `.claude/rules/` (angular, html, ionic, ngrx, typescript, tailwind) |
+
+## Ejemplo de desplegables 
+
+´´´html
+      <!-- Accordeones inline web (≥768px) — se muestran debajo del grid de tiles -->
+        <div class="hidden md:block bg-white rounded-2xl border border-gray-100 shadow-sm mb-3 p-3">
+          <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Seleccioná una categoría</h4>
+          <div class="grid grid-cols-4 md:grid-cols-6 gap-2">
+            @for (cat of filteredCategories(); track cat.categoryId) {
+              <div class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2"
+                   style="height: 72px;"
+                   [style.border-color]="cat.color"
+                   [style.background-color]="selectedCategoryId() === cat.categoryId ? cat.color + '33' : cat.color + '1a'"
+                   (click)="onPickerCategorySelect(cat.categoryId)">
+                <span class="text-2xl leading-none">{{ cat.icon }}</span>
+                <span class="text-[10px] text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ cat.name }}</span>
+              </div>
+            }
+          </div>
+        </div>
+´´´
+
 
 ## Flujo de Trabajo
 

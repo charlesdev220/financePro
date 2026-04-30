@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, forkJoin, map, of, switchMap } from 'rxjs';
+import { Observable, forkJoin, map } from 'rxjs';
 import { SheetsApiService } from './sheets-api.service';
 import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 

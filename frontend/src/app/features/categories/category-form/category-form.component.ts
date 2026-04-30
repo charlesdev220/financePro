@@ -175,6 +175,24 @@ export class CategoryFormComponent implements OnInit {
   async save(): Promise<void> {
     if (this.form.invalid) return;
     const value = this.form.getRawValue();
+    const trimmedName = value.name.trim().toLowerCase();
+
+    const duplicate = this.categoriesState.items().find(
+      c => c.name.toLowerCase() === trimmedName &&
+           c.type === value.type &&
+           c.categoryId !== this.category?.categoryId,
+    );
+
+    if (duplicate) {
+      const alert = await this.alertCtrl.create({
+        header: 'Nombre duplicado',
+        message: `Ya existe una categoría "${duplicate.name}" de tipo ${value.type === 'expense' ? 'gasto' : 'ingreso'} en este espacio.`,
+        buttons: [{ text: 'Entendido', role: 'cancel' }],
+      });
+      await alert.present();
+      return;
+    }
+
     const now = new Date().toISOString();
     const budgetAmount = value.budgetAmount ? Number(value.budgetAmount) : null;
     const isExpense = value.type === 'expense';

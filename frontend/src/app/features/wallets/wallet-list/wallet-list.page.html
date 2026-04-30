@@ -52,9 +52,13 @@
   </div>
   }
 
-  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
-    <ion-fab-button (click)="openAddModal()" color="primary">
+  <div class="fixed left-0 right-0 flex justify-center px-4"
+    style="bottom: calc(56px + 12px); padding-bottom: env(safe-area-inset-bottom);">
+    <ion-button (click)="openAddModal()" class="font-semibold text-center"
+      style="--background: var(--color-green-500); --background-activated: --color-green-700; --border-radius: 12px; text-transform: none;">
       <ion-icon name="add-outline"></ion-icon>
-    </ion-fab-button>
-  </ion-fab>
+      crear cartera
+    </ion-button>
+  </div>
+
 </ion-content>

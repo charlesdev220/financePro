@@ -13,8 +13,10 @@ import { TransactionsStateService } from '@core/state/transactions.state';
 import { WalletsStateService } from '@core/state/wallets.state';
 import { CategoriesStateService } from '@core/state/categories.state';
 import { BudgetsStateService } from '@core/state/budgets.state';
+import { ConceptsService } from '@features/transactions/services/concepts.service';
 import { ITransaction } from '@models/transaction.model';
 import { IBudget } from '@models/budget.model';
+import { IConcept } from '@models/concept.model';
 import { BudgetIndicatorComponent } from '@shared/components/budget-indicator/budget-indicator.component';
 import { TRANSACTION_TYPES, TransactionType } from '@core/constants/transaction.constants';
 
@@ -62,6 +64,7 @@ export class TransactionFormComponent implements OnInit {
   private readonly walletsState = inject(WalletsStateService);
   private readonly categoriesState = inject(CategoriesStateService);
   private readonly budgetsState = inject(BudgetsStateService);
+  private readonly conceptsService = inject(ConceptsService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly modalCtrl = inject(ModalController);
 
@@ -125,6 +128,19 @@ export class TransactionFormComponent implements OnInit {
 
   /** Controla el accordion de pickers en web (≥768px). Mutex: solo uno abierto a la vez. */
   readonly openPicker = signal<'wallet' | 'category' | 'currency' | null>(null);
+
+  /** Conceptos del usuario cargados una vez al abrir el formulario. */
+  private readonly _concepts = signal<IConcept[]>([]);
+  /** Espejo reactivo del campo concept para derivar sugerencias con OnPush. */
+  readonly conceptValue = signal<string>('');
+  /** Sugerencias filtradas por categoría activa y prefijo escrito, máx. 5. */
+  readonly suggestions = computed(() => {
+    const prefix = this.conceptValue().trim();
+    if (!prefix) return [];
+    return this.conceptsService
+      .getSuggestions(this.selectedCategoryId(), prefix, this._concepts())
+      .slice(0, 5);
+  });
 
   /** Fecha y hora de creación del registro formateada para mostrar en modo edición. Null en creación. */
   readonly createdAtFormatted = computed(() => {
@@ -225,6 +241,14 @@ export class TransactionFormComponent implements OnInit {
         this.form.patchValue({ categoryId: firstCategory?.categoryId ?? '' });
         this.selectedCategoryId.set(firstCategory?.categoryId ?? '');
       });
+
+    this.form.get('concept')!.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(v => this.conceptValue.set(v ?? ''));
+
+    this.conceptsService.loadConcepts()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(concepts => this._concepts.set(concepts));
   }
 
   /**
@@ -393,6 +417,11 @@ export class TransactionFormComponent implements OnInit {
     this.form.get('categoryId')?.setValue(categoryId);
     this.selectedCategoryId.set(categoryId);
     this.openPicker.set(null);
+  }
+
+  onSuggestionSelect(text: string): void {
+    this.form.get('concept')?.setValue(text);
+    this.conceptValue.set(text);
   }
 
   onPickerCurrencySelect(currency: string): void {

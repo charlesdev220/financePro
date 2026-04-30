@@ -6,8 +6,11 @@ import {
 } from '@ionic/angular/standalone';
 import { IWorkspace } from '@models/workspace.model';
 import { WorkspacesStateService } from '@core/state/workspaces.state';
+import { CategoriesStateService } from '@core/state/categories.state';
 import { AuthService } from '@core/services/auth.service';
+import { DataSeedService } from '@core/services/data-seed.service';
 import { WORKSPACE_DEFAULTS } from '@core/constants/workspace.constants';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-workspace-form',
@@ -28,10 +31,12 @@ export class WorkspaceFormComponent implements OnInit {
   @Input() workspace?: IWorkspace;
   @Input() rowNumber?: number;
 
-  private readonly workspacesState = inject(WorkspacesStateService);
-  private readonly authService     = inject(AuthService);
-  private readonly modalCtrl       = inject(ModalController);
-  private readonly toastCtrl       = inject(ToastController);
+  private readonly workspacesState  = inject(WorkspacesStateService);
+  private readonly categoriesState  = inject(CategoriesStateService);
+  private readonly authService      = inject(AuthService);
+  private readonly dataSeedService  = inject(DataSeedService);
+  private readonly modalCtrl        = inject(ModalController);
+  private readonly toastCtrl        = inject(ToastController);
 
   readonly name = signal<string>('');
   readonly icon = signal<string>(WORKSPACE_DEFAULTS.ICON);
@@ -63,16 +68,20 @@ export class WorkspaceFormComponent implements OnInit {
     } else {
       const user = this.authService.getUser();
       if (!user) return;
-      this.workspacesState.create({
+      const newWs = await this.workspacesState.create({
         userId:    user.sub,
         name,
         icon,
         color:     WORKSPACE_DEFAULTS.COLOR,
         isDefault: false,
       });
+      await firstValueFrom(
+        this.dataSeedService.seedCategoriesForWorkspace(newWs.workspaceId, user.sub),
+      );
+      this.categoriesState.load();
     }
     const toast = await this.toastCtrl.create({
-      message:  this.isEditMode ? 'Espacio actualizado' : 'Espacio creado',
+      message:  this.isEditMode ? 'Espacio actualizado' : `${icon} ${name} listo`,
       color:    'success',
       duration: 2000,
       position: 'bottom',

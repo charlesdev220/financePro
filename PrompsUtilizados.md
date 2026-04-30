@@ -30,8 +30,9 @@ en un nuevo sdd implementa estas tareas:
 - la pila de porcentaje por categoria delante del icono no es la misma que el porcentaje total de todas las categorias, una cosa es el porcentaje que llevamos gastado en una categoria y otra es el porcentaje que representa esa categoria sobre el total de gastos de todas las categorias que es el que esta al lado del monto total que lleva esa categoria
 
 -quiero analizar otras propuetas: A) quiero crear un md con la documentacion funcional del proyecto, por tabs con su tratamiento de datos entre       
-  features y la bd, este debe ser lo primero que vea el agente cuando lance una correccion o nueva implementacion. B) quiero un agente que enriquesca  
-  los prompts que envio ya sea una correccion o una nueva implementacion basandose en el fichero md creado en la opcion A. C) quiero eliminar el tab   
+  features y la bd, este debe ser lo primero que vea el agente cuando lance una correccion o nueva implementacion. 
+  B) quiero un agente que enriquesca los prompts que envio ya sea una correccion o una nueva implementacion basandose en el fichero md creado en la opcion A. 
+  C) quiero eliminar el tab   
   de presupuesto y trasladar su funcionalidad al tab de mas tomando como patron las opciones existentes. D) utilizar el componente entero del tab      
   movimientos en el dashboard, elimiinando asi el tab de movimiento. E) quiero que el editar presupuesto sea mas entendible, las opciones deben ser    
   presupuesto indefinido, presupuesto desde una fecha hasta otra fecha, y desabilitar presupuesto lo que incluye que no se muestre su barra de         
@@ -40,6 +41,9 @@ en un nuevo sdd implementa estas tareas:
 
 
 
+
+- las nuevas transacciones deben sujerir descripciones ya usadas con anterioridad, que empiecen a escribirse segun el usuario ya este escribiendo algo en el campo de descricion
+- las categorias no se pueden repetir en nombre, debe ser unico por workspace, si existe ya la categoria, no se puede crear otra igual. 
 
 
 - analiza detenidamente todos los state y generame un fichero md con toda la logica, el flujo de datos para un programador junior angular 

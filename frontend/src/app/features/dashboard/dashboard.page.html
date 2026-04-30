@@ -37,14 +37,16 @@
         (switched)="onWorkspaceSwitched($event)" (newRequested)="onNewWorkspace()">
       </app-workspace-selector>
       <div class="flex items-center gap-2 px-2">
-        <button class="p-2 text-white/80 hover:text-white transition-colors" (click)="onNavigatePrev()" aria-label="Período anterior">
+        <button class="p-2 text-white/80 hover:text-white transition-colors" (click)="onNavigatePrev()"
+          aria-label="Período anterior">
           <ion-icon name="chevron-back-outline" class="text-xl"></ion-icon>
         </button>
         <div class="flex-1">
           <app-period-selector [activeTab]="activePeriodTab()" (tabChange)="onTabChange($event)"></app-period-selector>
           <p class="text-center text-white/80 text-xs mt-1 font-medium">{{ periodLabel() }}</p>
         </div>
-        <button class="p-2 text-white/80 hover:text-white transition-colors disabled:opacity-30" (click)="onNavigateNext()" [disabled]="!canNavigateForward()" aria-label="Período siguiente">
+        <button class="p-2 text-white/80 hover:text-white transition-colors disabled:opacity-30"
+          (click)="onNavigateNext()" [disabled]="!canNavigateForward()" aria-label="Período siguiente">
           <ion-icon name="chevron-forward-outline" class="text-xl"></ion-icon>
         </button>
       </div>
@@ -152,6 +154,7 @@
       <ion-icon name="add-outline" slot="start"></ion-icon>
       Registrar ingreso
     </ion-button>
+
   </div>
   } }
 
