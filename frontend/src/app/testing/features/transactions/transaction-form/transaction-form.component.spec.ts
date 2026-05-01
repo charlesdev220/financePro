@@ -1,11 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { of } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
 import { TransactionFormComponent } from '../../../../features/transactions/transaction-form/transaction-form.component';
 import { TransactionsStateService } from '../../../../core/state/transactions.state';
 import { WalletsStateService } from '../../../../core/state/wallets.state';
 import { CategoriesStateService } from '../../../../core/state/categories.state';
 import { BudgetsStateService } from '../../../../core/state/budgets.state';
+import { ConceptsService } from '../../../../features/transactions/services/concepts.service';
 import { IBudget } from '../../../../models/budget.model';
 import { ITransaction } from '../../../../models/transaction.model';
 import { IWallet } from '../../../../models/wallet.model';
@@ -127,10 +131,20 @@ describe('TransactionFormComponent – budget logic (REQ-13)', () => {
     await TestBed.configureTestingModule({
       imports: [TransactionFormComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: TransactionsStateService, useValue: txStateMock },
         { provide: WalletsStateService,       useValue: buildWalletsStateMock() },
         { provide: CategoriesStateService,    useValue: buildCategoriesStateMock() },
         { provide: BudgetsStateService,       useValue: budgetsStateMock },
+        {
+          provide: ConceptsService,
+          useValue: {
+            loadConcepts:   jest.fn().mockReturnValue(of([])),
+            getSuggestions: jest.fn().mockReturnValue([]),
+            upsertConcept:  jest.fn().mockResolvedValue(undefined),
+          },
+        },
         {
           provide: ModalController,
           useValue: {
@@ -235,10 +249,20 @@ describe('TransactionFormComponent – numpad sign, delete and save guard (REQ-1
     await TestBed.configureTestingModule({
       imports: [TransactionFormComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: TransactionsStateService, useValue: txStateMock },
         { provide: WalletsStateService,       useValue: buildWalletsStateMock() },
         { provide: CategoriesStateService,    useValue: buildCategoriesStateMock() },
         { provide: BudgetsStateService,       useValue: buildBudgetsStateMock() },
+        {
+          provide: ConceptsService,
+          useValue: {
+            loadConcepts:   jest.fn().mockReturnValue(of([])),
+            getSuggestions: jest.fn().mockReturnValue([]),
+            upsertConcept:  jest.fn().mockResolvedValue(undefined),
+          },
+        },
         {
           provide: ModalController,
           useValue: {

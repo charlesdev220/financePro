@@ -65,8 +65,9 @@ describe('DashboardChartComponent — expenseItems', () => {
     expect(items[0].budgetMeta.hasBudget).toBe(true);
   });
 
-  // REQ-02 sc2: categoría sin presupuesto → showBudgetLabel = false
-  it('expenseItems_shouldHaveShowBudgetLabelFalse_whenCategoryHasNoBudget', () => {
+  // REQ-02 sc2: categoría sin presupuesto explícito → hasBudget=false, showBudgetLabel=true (siempre visible)
+  // showBudgetLabel es siempre true — todas las categorías de gasto muestran consumo vs presupuesto por defecto
+  it('expenseItems_shouldHaveHasBudgetFalse_whenCategoryHasNoBudget', () => {
     // Given
     TestBed.configureTestingModule({ imports: [DashboardChartComponent] });
     const fixture = TestBed.createComponent(DashboardChartComponent);
@@ -85,7 +86,8 @@ describe('DashboardChartComponent — expenseItems', () => {
 
     // Then
     expect(items.length).toBe(1);
-    expect(items[0].budgetMeta.showBudgetLabel).toBe(false);
+    // showBudgetLabel es siempre true — se usa defaultBudget cuando no hay presupuesto explícito
+    expect(items[0].budgetMeta.showBudgetLabel).toBe(true);
     expect(items[0].budgetMeta.hasBudget).toBe(false);
   });
 

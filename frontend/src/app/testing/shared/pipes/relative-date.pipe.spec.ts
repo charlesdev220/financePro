@@ -1,5 +1,13 @@
 import { RelativeDatePipe } from '../../../shared/pipes/relative-date.pipe';
 
+// toISOString() devuelve UTC — en timezones adelantados puede dar un día menos.
+// La pipe parsea fechas como hora local, así que el test debe usar fecha local.
+function localDateStr(offsetDays = 0): string {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 describe('RelativeDatePipe', () => {
   let pipe: RelativeDatePipe;
 
@@ -8,22 +16,15 @@ describe('RelativeDatePipe', () => {
   });
 
   it('should return "Hoy" for today\'s date', () => {
-    const today = new Date().toISOString().split('T')[0];
-    expect(pipe.transform(today)).toBe('Hoy');
+    expect(pipe.transform(localDateStr(0))).toBe('Hoy');
   });
 
   it('should return "Ayer" for yesterday', () => {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const str = yesterday.toISOString().split('T')[0];
-    expect(pipe.transform(str)).toBe('Ayer');
+    expect(pipe.transform(localDateStr(-1))).toBe('Ayer');
   });
 
   it('should return "Hace N días" for N days ago (2-6)', () => {
-    const threeDaysAgo = new Date();
-    threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-    const str = threeDaysAgo.toISOString().split('T')[0];
-    expect(pipe.transform(str)).toBe('Hace 3 días');
+    expect(pipe.transform(localDateStr(-3))).toBe('Hace 3 días');
   });
 
   it('should return "—" for null or undefined', () => {

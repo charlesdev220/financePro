@@ -8,6 +8,12 @@ import { SheetsApiService } from '../../../../core/services/sheets-api.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ITransaction } from '../../../../models/transaction.model';
 
+// toISOString() da UTC — en timezones adelantados puede devolver el día anterior.
+// processRecurring parsea fechas como hora local, así que usamos fecha local.
+function localDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 const mockTx = (overrides: Partial<ITransaction> = {}): ITransaction => ({
   txId:           'tx-001',
   userId:         'user-001',
@@ -89,7 +95,7 @@ describe('TransactionService', () => {
   it('should generate new transaction for overdue monthly recurring', () => {
     const lastMonth = new Date();
     lastMonth.setMonth(lastMonth.getMonth() - 1);
-    const lastMonthStr = lastMonth.toISOString().split('T')[0];
+    const lastMonthStr = localDateStr(lastMonth);
 
     const recurring = mockTx({ isRecurring: true, recurrenceRule: 'monthly', date: lastMonthStr });
     const result = service.processRecurring([recurring]);
@@ -103,11 +109,11 @@ describe('TransactionService', () => {
   it('should not duplicate recurring if already generated this period', () => {
     const lastMonth = new Date();
     lastMonth.setMonth(lastMonth.getMonth() - 1);
-    const lastMonthStr = lastMonth.toISOString().split('T')[0];
+    const lastMonthStr = localDateStr(lastMonth);
 
     const thisMonth = new Date();
     thisMonth.setDate(1);
-    const thisMonthStr = thisMonth.toISOString().split('T')[0];
+    const thisMonthStr = localDateStr(thisMonth);
 
     const original        = mockTx({ isRecurring: true, recurrenceRule: 'monthly', date: lastMonthStr });
     const alreadyGenerated = mockTx({ txId: 'tx-002', isRecurring: true, recurrenceRule: 'monthly', date: thisMonthStr });

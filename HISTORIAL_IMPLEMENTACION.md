@@ -4,6 +4,26 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (fase5-features — Custom Month Start, Workspace Settings, Dashboard Period Fix, Month Navigation & Jest Migration):
+*Fase actual:* Phases 1–14: apply completo
+*Estado actual:* Completado ✅ | 2026-05-02
+- ✔️ **`period.constants.ts`:** Tipo `PeriodTab` + array `PERIOD_TABS` con labels en español.
+- ✔️ **`period.service.ts`:** `getDateRange()` y `getPeriodLabel()` para 4 períodos (día/semana/mes/año) con `monthStartDay` personalizable (1–28) y navegación por `offset`.
+- ✔️ **`user-settings.model.ts` + `user-settings.state.ts`:** Campo `month_start_day` con `saveMonthStartDay()` (valida 1–28, append/update en Sheets).
+- ✔️ **`dashboard.service.ts`:** Firma de `calculateSummary`, `calculateBreakdown` y `getRecentTransactions` migrada de `period: string` a `range: { from; to }`.
+- ✔️ **`period-selector.component`:** Output renombrado `periodChange` → `tabChange: OutputEmitterRef<PeriodTab>`.
+- ✔️ **`dashboard.page`:** Signals `activePeriodTab`, `navigationOffset`, computeds `dateRange`/`periodLabel`/`canNavigateForward`, métodos `onTabChange`/`onNavigatePrev`/`onNavigateNext`.
+- ✔️ **`settings.page`:** Selector de workspace activo (checkmark + botón "Activar") y sección "Período" con `ion-select` de día de inicio (1–28).
+- ✔️ **Jest infra (Phase 6):** `jest.config.ts`, `setup-jest.ts`, `tsconfig.spec.json`, `angular.json` migrados; Karma/Jasmine eliminados.
+- ✔️ **Jest Lotes 1–5 (Phases 7–11):** 12 suites de feature components migradas — 81 tests green.
+- ✔️ **Jest E2E stubs (Phase 12):** `*.e2e.spec.ts` confirmados excluidos por `testPathIgnorePatterns`.
+- ✔️ **`period.service.spec.ts` (Phase 13):** 13 tests nuevos (mes estándar, mes personalizado, semana, día, año, etiquetas, offset).
+- ✔️ **Fallos preexistentes corregidos:** `relative-date.pipe.spec.ts` (3) y `transaction.service.spec.ts` (1) — off-by-one de timezone por uso de `toISOString()` en lugar de fecha local.
+*Deuda técnica documentada:* Ninguna.
+*Próximos pasos:* Correr suite completa de jest para confirmación final; continuar con `sdd-verify` + `sdd-archive` de fase5-features.
+
+---
+
 ### Qué hemos completado hasta ahora (mejoras-transversales-2026 — Archive):
 *Fase actual:* SDD completo: propose → tasks → apply → verify → archive
 *Estado actual:* Archivado ✅ | 2026-05-01

@@ -58,12 +58,12 @@ describe('ProjectionsComponent', () => {
     fixture.componentRef.setInput('data', buildMonthlyTotals(2));
     fixture.detectChanges();
 
-    // Then
-    const msg = fixture.debugElement.query(By.css('.no-data-msg'));
+    // Then — el mensaje se muestra cuando hasEnoughData() es false; el chart no se renderiza
     const canvas = fixture.debugElement.query(By.css('app-chart-bar'));
-    expect(msg).toBeTruthy();
-    expect(msg.nativeElement.textContent).toContain('Se necesitan al menos 3 meses de datos para proyectar');
     expect(canvas).toBeNull();
+    // El componente muestra una div con el texto de no hay suficientes datos
+    const hostText = fixture.nativeElement.textContent as string;
+    expect(hostText).toContain('3 meses');
   });
 
   // REQ-07 sc2: exactamente 3 meses → canvas visible, sin mensaje

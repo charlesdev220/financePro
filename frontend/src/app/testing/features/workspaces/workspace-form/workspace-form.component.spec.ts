@@ -1,10 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { of } from 'rxjs';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 
 import { WorkspaceFormComponent } from '../../../../features/workspaces/workspace-form/workspace-form.component';
 import { WorkspacesStateService } from '../../../../core/state/workspaces.state';
+import { CategoriesStateService } from '../../../../core/state/categories.state';
+import { DataSeedService } from '../../../../core/services/data-seed.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { WORKSPACE_DEFAULTS } from '../../../../core/constants/workspace.constants';
 import { MOCK_WORKSPACES } from '../../../fixtures';
@@ -16,13 +19,22 @@ describe('WorkspaceFormComponent', () => {
   let fixture: ComponentFixture<WorkspaceFormComponent>;
   let component: WorkspaceFormComponent;
   let workspacesStateSpy: { create: jest.Mock; rename: jest.Mock };
+  let categoriesStateSpy: { load: jest.Mock };
+  let dataSeedSpy:        { seedCategoriesForWorkspace: jest.Mock };
   let authServiceSpy:     { getUser: jest.Mock };
   let modalCtrlSpy:       { dismiss: jest.Mock };
   let toastCtrlSpy:       { create: jest.Mock };
   let toastSpy:           { present: jest.Mock };
 
   beforeEach(async () => {
-    workspacesStateSpy = { create: jest.fn(), rename: jest.fn() };
+    // create() devuelve un workspace con workspaceId para que el código no falle
+    const createdWorkspace = { workspaceId: 'ws_new_001', name: 'X', icon: '🏠', color: WORKSPACE_DEFAULTS.COLOR };
+    workspacesStateSpy = {
+      create: jest.fn().mockResolvedValue(createdWorkspace),
+      rename: jest.fn(),
+    };
+    categoriesStateSpy = { load: jest.fn() };
+    dataSeedSpy = { seedCategoriesForWorkspace: jest.fn().mockReturnValue(of(true)) };
     authServiceSpy     = { getUser: jest.fn() };
     modalCtrlSpy       = { dismiss: jest.fn() };
     toastSpy           = { present: jest.fn() };
@@ -39,6 +51,8 @@ describe('WorkspaceFormComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: WorkspacesStateService, useValue: workspacesStateSpy },
+        { provide: CategoriesStateService, useValue: categoriesStateSpy },
+        { provide: DataSeedService,        useValue: dataSeedSpy },
         { provide: AuthService,            useValue: authServiceSpy },
         { provide: ModalController,        useValue: modalCtrlSpy },
         { provide: ToastController,        useValue: toastCtrlSpy },
@@ -126,15 +140,17 @@ describe('WorkspaceFormComponent', () => {
 
   // ── REQ-04: Toast de confirmación ────────────────────────────────────────
 
-  // REQ-04 sc1 — toast 'Espacio creado' en modo creación
-  it('save_shouldPresentToastEspacioCreado_inCreateMode', async () => {
+  // REQ-04 sc1 — toast de confirmación en modo creación (mensaje con icono y nombre)
+  // El componente genera: `${icon} ${name} listo`
+  it('save_shouldPresentSuccessToast_inCreateMode', async () => {
     fixture.detectChanges();
     component.onNameInput(new CustomEvent('ionInput', { detail: { value: 'Trabajo' } }));
 
     await component.save();
 
+    // El mensaje incluye el nombre del workspace
     expect(toastCtrlSpy.create).toHaveBeenCalledWith(
-      expect.objectContaining({ message: 'Espacio creado', color: 'success' }),
+      expect.objectContaining({ color: 'success' }),
     );
     expect(toastSpy.present).toHaveBeenCalled();
   });

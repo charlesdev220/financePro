@@ -1,5 +1,7 @@
 import { TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
 import { signal } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 
 import { CategoryFormComponent } from '../../../../features/categories/category-form/category-form.component';
@@ -32,6 +34,8 @@ describe('CategoryFormComponent — default budget pre-fill', () => {
     TestBed.configureTestingModule({
       imports: [CategoryFormComponent],
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: CategoriesStateService,  useValue: categoriesStateSpy },
         { provide: UserSettingsStateService, useValue: userSettingsSpy },
         { provide: ModalController,          useValue: modalCtrlSpy },
