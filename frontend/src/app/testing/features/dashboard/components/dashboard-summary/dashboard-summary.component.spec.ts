@@ -31,7 +31,7 @@ describe('DashboardSummaryComponent', () => {
     fixture.detectChanges();
 
     // When / Then
-    expect(component.balanceIsNegative()).toBeFalse();
+    expect(component.balanceIsNegative()).toBe(false);
   });
 
   // REQ-04 sc1 (edge): balance exactamente 0 → no es negativo
@@ -41,7 +41,7 @@ describe('DashboardSummaryComponent', () => {
     fixture.detectChanges();
 
     // When / Then
-    expect(component.balanceIsNegative()).toBeFalse();
+    expect(component.balanceIsNegative()).toBe(false);
   });
 
   // REQ-04 sc2: balance negativo → balanceIsNegative = true → color alerta (warning)
@@ -51,7 +51,7 @@ describe('DashboardSummaryComponent', () => {
     fixture.detectChanges();
 
     // When / Then
-    expect(component.balanceIsNegative()).toBeTrue();
+    expect(component.balanceIsNegative()).toBe(true);
   });
 
   // REQ-04 sc2 (edge): -0.01 → todavía negativo
@@ -61,6 +61,6 @@ describe('DashboardSummaryComponent', () => {
     fixture.detectChanges();
 
     // When / Then
-    expect(component.balanceIsNegative()).toBeTrue();
+    expect(component.balanceIsNegative()).toBe(true);
   });
 });

@@ -30,18 +30,17 @@ const mockTx = (overrides: Partial<ITransaction> = {}): ITransaction => ({
 
 describe('TransactionService', () => {
   let service: TransactionService;
-  let currencySpy: jasmine.SpyObj<CurrencyApiService>;
-  let sheetsSpy: jasmine.SpyObj<SheetsApiService>;
-  let authSpy: jasmine.SpyObj<AuthService>;
+  let currencySpy: jest.Mocked<Pick<CurrencyApiService, 'getRate'>>;
+  let sheetsSpy:   jest.Mocked<Pick<SheetsApiService, 'getRange' | 'appendRow' | 'updateRow' | 'deleteRow'>>;
+  let authSpy:     jest.Mocked<Pick<AuthService, 'getUser' | 'signIn' | 'isAuthenticated' | 'getAccessToken'>>;
 
   beforeEach(() => {
-    currencySpy = jasmine.createSpyObj('CurrencyApiService', ['getRate']);
-    sheetsSpy = jasmine.createSpyObj('SheetsApiService', ['getRange', 'appendRow', 'updateRow', 'deleteRow']);
-    authSpy = jasmine.createSpyObj('AuthService', ['getUser', 'signIn', 'isAuthenticated', 'getAccessToken']);
+    currencySpy = { getRate: jest.fn() };
+    sheetsSpy   = { getRange: jest.fn(), appendRow: jest.fn(), updateRow: jest.fn(), deleteRow: jest.fn() };
+    authSpy     = { getUser: jest.fn(), signIn: jest.fn(), isAuthenticated: jest.fn(), getAccessToken: jest.fn() };
 
-    // Mocks básicos para evitar errores si se llaman (aunque no deberían con los spies)
-    authSpy.isAuthenticated.and.returnValue(true);
-    authSpy.getUser.and.returnValue({ sub: 'user-001', email: 'test@test.com', name: 'Tester' });
+    authSpy.isAuthenticated.mockReturnValue(true);
+    authSpy.getUser.mockReturnValue({ sub: 'user-001', email: 'test@test.com', name: 'Tester' });
 
     TestBed.configureTestingModule({
       providers: [
@@ -49,8 +48,8 @@ describe('TransactionService', () => {
         provideHttpClientTesting(),
         TransactionService,
         { provide: CurrencyApiService, useValue: currencySpy },
-        { provide: SheetsApiService, useValue: sheetsSpy },
-        { provide: AuthService, useValue: authSpy },
+        { provide: SheetsApiService,   useValue: sheetsSpy },
+        { provide: AuthService,        useValue: authSpy },
       ],
     });
     service = TestBed.inject(TransactionService);
@@ -58,13 +57,15 @@ describe('TransactionService', () => {
 
   // REQ-03 sc1: transacción en divisa diferente a la base
   it('should calculate amountBase using currency rate', async () => {
-    currencySpy.getRate.and.returnValue(of(0.92));
+    currencySpy.getRate.mockReturnValue(of(0.92));
     const draft = {
       userId: 'user-001', walletId: 'wal-001', categoryId: 'cat-001',
       amount: 100, currency: 'USD', concept: 'Test', date: '2026-04-01',
       type: 'expense' as const, isRecurring: false, recurrenceRule: null, notes: null,
     };
+
     const tx = await service.createTransaction(draft, 'tx-001', 'ws_test', 'EUR');
+
     expect(tx.amountBase).toBeCloseTo(92, 1);
     expect(tx.txId).toBe('tx-001');
     expect(currencySpy.getRate).toHaveBeenCalledWith('USD', 'EUR');
@@ -72,13 +73,15 @@ describe('TransactionService', () => {
 
   // REQ-03 sc2: transacción en divisa base — amountBase = amount
   it('should set amountBase = amount when currency equals base', async () => {
-    currencySpy.getRate.and.returnValue(of(1));
+    currencySpy.getRate.mockReturnValue(of(1));
     const draft = {
       userId: 'user-001', walletId: 'wal-001', categoryId: 'cat-001',
       amount: 50, currency: 'EUR', concept: '', date: '2026-04-01',
       type: 'expense' as const, isRecurring: false, recurrenceRule: null, notes: null,
     };
+
     const tx = await service.createTransaction(draft, 'tx-002', 'ws_test', 'EUR');
+
     expect(tx.amountBase).toBe(50);
   });
 
@@ -90,9 +93,10 @@ describe('TransactionService', () => {
 
     const recurring = mockTx({ isRecurring: true, recurrenceRule: 'monthly', date: lastMonthStr });
     const result = service.processRecurring([recurring]);
+
     expect(result.length).toBe(1);
     expect(result[0].txId).not.toBe(recurring.txId);
-    expect(result[0].isRecurring).toBeTrue();
+    expect(result[0].isRecurring).toBe(true);
   });
 
   // REQ-07 sc2: recurrente al día — no duplica si ya existe en período
@@ -105,9 +109,10 @@ describe('TransactionService', () => {
     thisMonth.setDate(1);
     const thisMonthStr = thisMonth.toISOString().split('T')[0];
 
-    const original = mockTx({ isRecurring: true, recurrenceRule: 'monthly', date: lastMonthStr });
+    const original        = mockTx({ isRecurring: true, recurrenceRule: 'monthly', date: lastMonthStr });
     const alreadyGenerated = mockTx({ txId: 'tx-002', isRecurring: true, recurrenceRule: 'monthly', date: thisMonthStr });
     const result = service.processRecurring([original, alreadyGenerated]);
+
     expect(result.length).toBe(0);
   });
 });
@@ -117,6 +122,7 @@ describe('rowToTransaction / transactionToRow', () => {
     const tx = mockTx();
     const row = transactionToRow(tx);
     const restored = rowToTransaction(row);
+
     expect(restored.txId).toBe(tx.txId);
     expect(restored.amount).toBe(tx.amount);
     expect(restored.amountBase).toBe(tx.amountBase);

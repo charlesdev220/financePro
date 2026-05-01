@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 
 import { WalletService } from '../../../../features/wallets/services/wallet.service';
 import { SheetsApiService } from '../../../../core/services/sheets-api.service';
@@ -11,8 +12,8 @@ import { MOCK_WALLETS } from '../../../fixtures';
 // ─────────────────────────────────────────────────────────────────────────────
 describe('WalletService', () => {
   let service: WalletService;
-  let sheetsApiSpy: jasmine.SpyObj<SheetsApiService>;
-  let authSpy: jasmine.SpyObj<AuthService>;
+  let sheetsApiSpy: jest.Mocked<Pick<SheetsApiService, 'getRange' | 'appendRow' | 'updateRow' | 'deleteRow'>>;
+  let authSpy: jest.Mocked<Pick<AuthService, 'getUser'>>;
 
   const MOCK_USER = { sub: 'usr_001', email: 'user@test.com', name: 'Test' };
 
@@ -24,12 +25,19 @@ describe('WalletService', () => {
   ];
 
   beforeEach(() => {
-    sheetsApiSpy = jasmine.createSpyObj('SheetsApiService', ['getRange', 'appendRow', 'updateRow', 'deleteRow']);
-    authSpy      = jasmine.createSpyObj('AuthService', ['getUser']);
+    sheetsApiSpy = {
+      getRange:  jest.fn(),
+      appendRow: jest.fn(),
+      updateRow: jest.fn(),
+      deleteRow: jest.fn(),
+    };
+    authSpy = { getUser: jest.fn() };
 
-    authSpy.getUser.and.returnValue(MOCK_USER);
-    sheetsApiSpy.getRange.and.returnValue(of({ range: 'WALLETS!A:I', majorDimension: 'ROWS' as const, values: SHEETS_ROWS }));
-    sheetsApiSpy.deleteRow.and.returnValue(of(undefined));
+    authSpy.getUser.mockReturnValue(MOCK_USER);
+    sheetsApiSpy.getRange.mockReturnValue(
+      of({ range: 'WALLETS!A:I', majorDimension: 'ROWS' as const, values: SHEETS_ROWS }),
+    );
+    sheetsApiSpy.deleteRow.mockReturnValue(of(undefined));
 
     TestBed.configureTestingModule({
       providers: [
@@ -43,26 +51,23 @@ describe('WalletService', () => {
   });
 
   // REQ-06 sc1 — loadWallets() devuelve solo carteras del usuario, rowMap correcto
-  it('loadWallets_shouldReturnOnlyCurrentUserWallets_withCorrectRowMap', (done) => {
-    service.loadWallets().subscribe(({ wallets, rowMap }) => {
-      // Solo carteras del usuario usr_001
-      expect(wallets.every(w => w.userId === 'usr_001')).toBeTrue();
-      expect(wallets.some(w => w.userId === 'other-user')).toBeFalse();
-      // rowMap: walletId → número de fila (header=1, datos desde fila 2)
-      expect(rowMap[MOCK_WALLETS[0].walletId]).toBe(2);
-      expect(rowMap[MOCK_WALLETS[1].walletId]).toBe(3);
-      done();
-    });
+  it('loadWallets_shouldReturnOnlyCurrentUserWallets_withCorrectRowMap', async () => {
+    const { wallets, rowMap } = await firstValueFrom(service.loadWallets());
+
+    expect(wallets.every(w => w.userId === 'usr_001')).toBe(true);
+    expect(wallets.some(w => w.userId === 'other-user')).toBe(false);
+    expect(rowMap[MOCK_WALLETS[0].walletId]).toBe(2);
+    expect(rowMap[MOCK_WALLETS[1].walletId]).toBe(3);
   });
 
   // REQ-06 sc2 — deleteWallet() llama a SheetsApiService con el rowNumber correcto
-  it('deleteWallet_shouldCallSheetsApiWithCorrectRowNumber', (done) => {
+  it('deleteWallet_shouldCallSheetsApiWithCorrectRowNumber', async () => {
     const targetRow = 3;
 
-    service.deleteWallet(targetRow).subscribe(() => {
-      const [range] = sheetsApiSpy.deleteRow.calls.mostRecent().args;
-      expect(range).toContain(`A${targetRow}`);
-      done();
-    });
+    await firstValueFrom(service.deleteWallet(targetRow));
+
+    const lastCall = sheetsApiSpy.deleteRow.mock.calls[sheetsApiSpy.deleteRow.mock.calls.length - 1];
+    const [range] = lastCall;
+    expect(range).toContain(`A${targetRow}`);
   });
 });

@@ -20,7 +20,7 @@ export function rowToBudget(row: unknown[], defaultWsId = ''): IBudget {
     spentAmount:  Number(row[5] ?? 0),
     status:       (String(row[6] ?? 'ok') as 'ok' | 'warning' | 'exceeded'),
     lastUpdated:  String(row[7] ?? new Date().toISOString()),
-    workspaceId:  String(row[8] ?? defaultWsId),
+    workspaceId:  String(row[8] || defaultWsId),
     mode:         ((String(row[9] ?? '') as BudgetMode) || BUDGET_MODES.INDEFINITE),
     startDate:    row[10] ? String(row[10]) : undefined,
     endDate:      row[11] ? String(row[11]) : undefined,

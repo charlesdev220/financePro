@@ -37,10 +37,10 @@ const mockTransaction = (): ITransaction => ({
 
 describe('ConceptsService.getSuggestions', () => {
   let service: ConceptsService;
-  let sheetsSpy: jasmine.SpyObj<SheetsApiService>;
+  let sheetsSpy: jest.Mocked<Pick<SheetsApiService, 'getRange' | 'appendRow' | 'updateRow'>>;
 
   beforeEach(() => {
-    sheetsSpy = jasmine.createSpyObj('SheetsApiService', ['getRange', 'appendRow', 'updateRow']);
+    sheetsSpy = { getRange: jest.fn(), appendRow: jest.fn(), updateRow: jest.fn() };
     TestBed.configureTestingModule({
       providers: [
         ConceptsService,
@@ -53,12 +53,11 @@ describe('ConceptsService.getSuggestions', () => {
   // REQ-09 sc1: sugerencias ordenadas por usage_count DESC
   it('should return suggestions ordered by usageCount DESC', () => {
     const concepts: IConcept[] = [
-      mockConcept({ text: 'Mercadona', usageCount: 5 }),
-      mockConcept({ conceptId: 'con-002', text: 'Maderas', usageCount: 10 }), 
+      mockConcept({ text: 'Mercadona',  usageCount: 5 }),
+      mockConcept({ conceptId: 'con-002', text: 'Maderas',   usageCount: 10 }),
       mockConcept({ conceptId: 'con-003', text: 'Mermelada', usageCount: 8 }),
     ];
-    // Prefix 'Mer' -> Mercadona y Mermelada
-    // Orden desc: Mermelada (8), Mercadona (5)
+    // Prefix 'Mer' → Mercadona y Mermelada; orden desc: Mermelada (8), Mercadona (5)
     const result = service.getSuggestions('cat-001', 'Mer', concepts);
     expect(result).toEqual(['Mermelada', 'Mercadona']);
   });
@@ -84,10 +83,10 @@ describe('ConceptsService.getSuggestions', () => {
 
 describe('ConceptsService.upsertConcept', () => {
   let service: ConceptsService;
-  let sheetsSpy: jasmine.SpyObj<SheetsApiService>;
+  let sheetsSpy: jest.Mocked<Pick<SheetsApiService, 'getRange' | 'appendRow' | 'updateRow'>>;
 
   beforeEach(() => {
-    sheetsSpy = jasmine.createSpyObj('SheetsApiService', ['getRange', 'appendRow', 'updateRow']);
+    sheetsSpy = { getRange: jest.fn(), appendRow: jest.fn(), updateRow: jest.fn() };
     TestBed.configureTestingModule({
       providers: [
         ConceptsService,
@@ -107,27 +106,35 @@ describe('ConceptsService.upsertConcept', () => {
 
   // REQ-08 sc1: concepto nuevo → appendRow
   it('should appendRow when concept does not exist', async () => {
-    sheetsSpy.getRange.and.returnValue(of({ range: 'CONCEPTS!A:F', majorDimension: 'ROWS', values: [['concept_id','user_id','category_id','text','usage_count','last_used']] }));
-    sheetsSpy.appendRow.and.returnValue(of({}));
+    sheetsSpy.getRange.mockReturnValue(
+      of({ range: 'CONCEPTS!A:F', majorDimension: 'ROWS', values: [['concept_id','user_id','category_id','text','usage_count','last_used']] }),
+    );
+    sheetsSpy.appendRow.mockReturnValue(of({} as any));
+
     await service.upsertConcept(mockTransaction());
+
     expect(sheetsSpy.appendRow).toHaveBeenCalledWith(
       'CONCEPTS!A1',
-      jasmine.arrayContaining([jasmine.arrayContaining(['user-001', 'cat-001', 'Mercadona', 1])]),
+      expect.arrayContaining([expect.arrayContaining(['user-001', 'cat-001', 'Mercadona', 1])]),
     );
   });
 
   // REQ-08 sc2: concepto existente → updateRow con usage_count + 1
   it('should updateRow with usage_count + 1 when concept exists', async () => {
     const existingRow = ['con-001', 'user-001', 'cat-001', 'mercadona', 5, '2026-04-01T00:00:00.000Z'];
-    sheetsSpy.getRange.and.returnValue(of({
-      range: 'CONCEPTS!A:F',
-      majorDimension: 'ROWS',
-      values: [['concept_id','user_id','category_id','text','usage_count','last_used'], existingRow],
-    }));
-    sheetsSpy.updateRow.and.returnValue(of({}));
+    sheetsSpy.getRange.mockReturnValue(
+      of({
+        range: 'CONCEPTS!A:F',
+        majorDimension: 'ROWS',
+        values: [['concept_id','user_id','category_id','text','usage_count','last_used'], existingRow],
+      }),
+    );
+    sheetsSpy.updateRow.mockReturnValue(of({} as any));
+
     await service.upsertConcept(mockTransaction());
+
     expect(sheetsSpy.updateRow).toHaveBeenCalled();
-    const updateCall = sheetsSpy.updateRow.calls.mostRecent().args;
-    expect(updateCall[1][0][4]).toBe(6); // usage_count = 5 + 1
+    const lastCall = sheetsSpy.updateRow.mock.calls[sheetsSpy.updateRow.mock.calls.length - 1];
+    expect(lastCall[1][0][4]).toBe(6); // usage_count = 5 + 1
   });
 });

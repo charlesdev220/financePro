@@ -18,6 +18,11 @@ describe('ChartPieComponent', () => {
     component = fixture.componentInstance;
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.useRealTimers();
+  });
+
   it('should create', () => {
     fixture.detectChanges();
     expect(component).toBeTruthy();
@@ -25,13 +30,16 @@ describe('ChartPieComponent', () => {
 
   // REQ-05 sc3: ngOnDestroy llama chart.destroy() para liberar la instancia Chart.js
   it('calls chart.destroy() on ngOnDestroy when chart exists', () => {
-    const destroySpy = spyOn(Chart.prototype, 'destroy').and.callThrough();
+    jest.useFakeTimers();
 
     fixture.componentRef.setInput('data', {
       labels: ['A', 'B'],
       datasets: [{ data: [10, 20] }],
     });
-    fixture.detectChanges(); // dispara ngAfterViewInit → effect → createChart()
+    fixture.detectChanges(); // ngAfterViewInit → effect → setTimeout(100)
+    jest.runAllTimers();     // avanza el timeout → createChart() ejecuta
+
+    const destroySpy = jest.spyOn(component['chart'] as Chart, 'destroy');
 
     component.ngOnDestroy();
 
@@ -47,19 +55,22 @@ describe('ChartPieComponent', () => {
 
   // efecto destruye y re-crea el chart cuando data cambia
   it('destroys and re-creates chart when data input changes', () => {
+    jest.useFakeTimers();
+
     fixture.componentRef.setInput('data', {
       labels: ['X'],
       datasets: [{ data: [100] }],
     });
     fixture.detectChanges();
+    jest.runAllTimers(); // primer chart creado
 
-    const destroySpy = spyOn(component['chart'] as any, 'destroy').and.callThrough();
+    const destroySpy = jest.spyOn(component['chart'] as Chart, 'destroy');
 
     fixture.componentRef.setInput('data', {
       labels: ['Y', 'Z'],
       datasets: [{ data: [50, 50] }],
     });
-    fixture.detectChanges();
+    fixture.detectChanges(); // effect: destroy → setTimeout para el nuevo chart
 
     expect(destroySpy).toHaveBeenCalled();
   });

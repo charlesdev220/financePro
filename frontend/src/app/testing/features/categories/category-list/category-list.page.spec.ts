@@ -25,10 +25,15 @@ function makeCategory(categoryId: string, type: 'income' | 'expense' = 'expense'
   };
 }
 
-const mockToast       = { present: jasmine.createSpy('present').and.returnValue(Promise.resolve()) };
-const mockModal       = { present: jasmine.createSpy('present').and.returnValue(Promise.resolve()), onWillDismiss: jasmine.createSpy('onWillDismiss').and.returnValue(Promise.resolve({ role: 'cancel', data: null })) };
-const mockActionSheet = { present: jasmine.createSpy('present').and.returnValue(Promise.resolve()) };
-const mockAlert       = { present: jasmine.createSpy('present').and.returnValue(Promise.resolve()) };
+const mockToast = {
+  present: jest.fn().mockResolvedValue(undefined),
+};
+const mockModal = {
+  present:        jest.fn().mockResolvedValue(undefined),
+  onWillDismiss:  jest.fn().mockResolvedValue({ role: 'cancel', data: null }),
+};
+const mockActionSheet = { present: jest.fn().mockResolvedValue(undefined) };
+const mockAlert       = { present: jest.fn().mockResolvedValue(undefined) };
 
 function buildCategoriesStateMock() {
   const _items   = signal<ICategory[]>([]);
@@ -40,10 +45,10 @@ function buildCategoriesStateMock() {
     loading: _loading.asReadonly(),
     error:   _error.asReadonly(),
     rowMap:  _rowMap.asReadonly(),
-    load:    jasmine.createSpy('load'),
-    add:     jasmine.createSpy('add'),
-    update:  jasmine.createSpy('update'),
-    delete:  jasmine.createSpy('delete'),
+    load:    jest.fn(),
+    add:     jest.fn(),
+    update:  jest.fn(),
+    delete:  jest.fn(),
     _items,
     _rowMap,
   };
@@ -58,6 +63,8 @@ describe('CategoryListPage – selection mode (REQ-17)', () => {
 
   beforeEach(async () => {
     categoriesStateMock = buildCategoriesStateMock();
+    mockActionSheet.present.mockClear();
+    mockAlert.present.mockClear();
 
     await TestBed.configureTestingModule({
       imports: [CategoryListPage],
@@ -65,19 +72,19 @@ describe('CategoryListPage – selection mode (REQ-17)', () => {
         { provide: CategoriesStateService, useValue: categoriesStateMock },
         {
           provide: ModalController,
-          useValue: { create: jasmine.createSpy('create').and.returnValue(Promise.resolve(mockModal)) },
+          useValue: { create: jest.fn().mockResolvedValue(mockModal) },
         },
         {
           provide: ToastController,
-          useValue: { create: jasmine.createSpy('create').and.returnValue(Promise.resolve(mockToast)) },
+          useValue: { create: jest.fn().mockResolvedValue(mockToast) },
         },
         {
           provide: ActionSheetController,
-          useValue: { create: jasmine.createSpy('create').and.returnValue(Promise.resolve(mockActionSheet)) },
+          useValue: { create: jest.fn().mockResolvedValue(mockActionSheet) },
         },
         {
           provide: AlertController,
-          useValue: { create: jasmine.createSpy('create').and.returnValue(Promise.resolve(mockAlert)) },
+          useValue: { create: jest.fn().mockResolvedValue(mockAlert) },
         },
         {
           provide: AuthService,
@@ -91,23 +98,18 @@ describe('CategoryListPage – selection mode (REQ-17)', () => {
     fixture.detectChanges();
   });
 
-  afterEach(() => {
-    mockActionSheet.present.calls.reset();
-    mockAlert.present.calls.reset();
-  });
-
   it('toggleSelection_shouldAddId_whenIdIsNotInSelectedIds', () => {
     component.toggleSelection('cat-1');
-    expect(component.selectedIds().has('cat-1')).toBeTrue();
+    expect(component.selectedIds().has('cat-1')).toBe(true);
   });
 
   it('toggleSelection_shouldRemoveId_whenCalledTwiceWithSameId', () => {
     component.toggleSelection('cat-1');
-    expect(component.selectedIds().has('cat-1')).toBeTrue();
+    expect(component.selectedIds().has('cat-1')).toBe(true);
 
     component.toggleSelection('cat-1');
 
-    expect(component.selectedIds().has('cat-1')).toBeFalse();
+    expect(component.selectedIds().has('cat-1')).toBe(false);
   });
 
   it('selectedCount_shouldReflectSelectedIdsSize', () => {
@@ -120,38 +122,38 @@ describe('CategoryListPage – selection mode (REQ-17)', () => {
   });
 
   it('toggleSelectionMode_shouldActivateSelectionMode_whenCalledWhileInactive', () => {
-    expect(component.selectionMode()).toBeFalse();
+    expect(component.selectionMode()).toBe(false);
 
     component.toggleSelectionMode();
 
-    expect(component.selectionMode()).toBeTrue();
+    expect(component.selectionMode()).toBe(true);
   });
 
   it('toggleSelectionMode_shouldDeactivateModeAndClearSelection_whenCalledWhileActive', () => {
     component.toggleSelectionMode();
     component.toggleSelection('cat-1');
     component.toggleSelection('cat-2');
-    expect(component.selectionMode()).toBeTrue();
+    expect(component.selectionMode()).toBe(true);
     expect(component.selectedIds().size).toBe(2);
 
     component.toggleSelectionMode();
 
-    expect(component.selectionMode()).toBeFalse();
+    expect(component.selectionMode()).toBe(false);
     expect(component.selectedIds().size).toBe(0);
   });
 
   it('onTilePress_shouldCallToggleSelection_whenSelectionModeIsActive', async () => {
     const cat = makeCategory('cat-1');
     component.toggleSelectionMode();
-    const toggleSpy = spyOn(component, 'toggleSelection').and.callThrough();
+    const toggleSpy = jest.spyOn(component, 'toggleSelection');
     const actionSheetCtrl = TestBed.inject(ActionSheetController);
-    const createSpy = actionSheetCtrl.create as jasmine.Spy;
-    createSpy.calls.reset();
+    const createMock = actionSheetCtrl.create as jest.Mock;
+    createMock.mockClear();
 
     await component.onTilePress(cat);
 
     expect(toggleSpy).toHaveBeenCalledWith('cat-1');
-    expect(createSpy).not.toHaveBeenCalled();
+    expect(createMock).not.toHaveBeenCalled();
   });
 
   it('ngOnInit_shouldCallCategoriesStateLoad', () => {

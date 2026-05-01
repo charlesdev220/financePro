@@ -94,12 +94,12 @@ describe('ProjectionsComponent', () => {
   it('hasEnoughData should be false when data length < 3', () => {
     fixture.componentRef.setInput('data', buildMonthlyTotals(2));
     fixture.detectChanges();
-    expect(component.hasEnoughData()).toBeFalse();
+    expect(component.hasEnoughData()).toBe(false);
   });
 
   it('hasEnoughData should be true when data length >= 3', () => {
     fixture.componentRef.setInput('data', buildMonthlyTotals(3));
     fixture.detectChanges();
-    expect(component.hasEnoughData()).toBeTrue();
+    expect(component.hasEnoughData()).toBe(true);
   });
 });

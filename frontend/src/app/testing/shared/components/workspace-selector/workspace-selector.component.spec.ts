@@ -74,6 +74,6 @@ describe('WorkspaceSelectorComponent', () => {
     newButton!.nativeElement.click();
     fixture.detectChanges();
 
-    expect(emitted).toBeTrue();
+    expect(emitted).toBe(true);
   });
 });

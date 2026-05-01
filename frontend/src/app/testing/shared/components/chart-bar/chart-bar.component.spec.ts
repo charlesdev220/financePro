@@ -23,6 +23,10 @@ describe('ChartBarComponent', () => {
     component = fixture.componentInstance;
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('should create', () => {
     fixture.detectChanges();
     expect(component).toBeTruthy();
@@ -56,7 +60,7 @@ describe('ChartBarComponent', () => {
     fixture.componentRef.setInput('labels', sampleLabels);
     fixture.detectChanges();
 
-    const destroySpy = spyOn((component as any).chart, 'destroy').and.callThrough();
+    const destroySpy = jest.spyOn((component as any).chart as Chart, 'destroy');
 
     component.ngOnDestroy();
 
@@ -76,7 +80,7 @@ describe('ChartBarComponent', () => {
     fixture.componentRef.setInput('labels', sampleLabels);
     fixture.detectChanges();
 
-    const destroySpy = spyOn((component as any).chart, 'destroy').and.callThrough();
+    const destroySpy = jest.spyOn((component as any).chart as Chart, 'destroy');
 
     fixture.componentRef.setInput('datasets', [
       { label: 'Gastos', data: [50, 80, 120], backgroundColor: '#FF6384' },

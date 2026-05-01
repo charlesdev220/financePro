@@ -4,12 +4,12 @@
   </div>
   <ul class="list-none p-0 m-0 divide-y divide-gray-100">
     @for (item of recurrentes(); track item.concept) {
-      <li class="flex justify-between items-center px-4 py-3">
-        <span class="text-sm text-gray-800">{{ item.concept }}</span>
+      <li class="ranking-item flex justify-between items-center px-4 py-3">
+        <span class="ranking-concept text-sm text-gray-800">{{ item.concept }}</span>
         <span class="font-semibold text-sm text-red-500">{{ item.amountBase | currencyFormat:userCurrency() }}</span>
       </li>
     } @empty {
-      <li class="text-sm text-gray-400 text-center py-5">Sin datos suficientes</li>
+      <li class="ranking-empty text-sm text-gray-400 text-center py-5">Sin datos suficientes</li>
     }
   </ul>
 </div>
@@ -20,12 +20,12 @@
   </div>
   <ul class="list-none p-0 m-0 divide-y divide-gray-100">
     @for (item of superfluos(); track item.concept) {
-      <li class="flex justify-between items-center px-4 py-3">
-        <span class="text-sm text-gray-800">{{ item.concept }}</span>
+      <li class="ranking-item flex justify-between items-center px-4 py-3">
+        <span class="ranking-concept text-sm text-gray-800">{{ item.concept }}</span>
         <span class="font-semibold text-sm text-red-500">{{ item.amountBase | currencyFormat:userCurrency() }}</span>
       </li>
     } @empty {
-      <li class="text-sm text-gray-400 text-center py-5">Sin datos suficientes</li>
+      <li class="ranking-empty text-sm text-gray-400 text-center py-5">Sin datos suficientes</li>
     }
   </ul>
 </div>

@@ -9,12 +9,16 @@ const config: Config = {
     '<rootDir>/www/',
     '\\.e2e\\.spec\\.ts$',
   ],
+  transformIgnorePatterns: [
+    'node_modules/(?!(.*\\.mjs$|@angular/common/locales/.*\\.js$|@ionic/angular|@ionic/core|@stencil/core|ionicons))',
+  ],
   moduleNameMapper: {
     '^@core/(.*)$':     '<rootDir>/src/app/core/$1',
     '^@shared/(.*)$':   '<rootDir>/src/app/shared/$1',
     '^@features/(.*)$': '<rootDir>/src/app/features/$1',
     '^@models/(.*)$':   '<rootDir>/src/app/models/$1',
     '^@env/(.*)$':      '<rootDir>/src/environments/$1',
+    '^ionicons/(.*)$':  '<rootDir>/src/__mocks__/ionicons-stub.js',
   },
   coverageDirectory: 'coverage',
   collectCoverageFrom: [

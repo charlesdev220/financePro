@@ -61,8 +61,8 @@ describe('DashboardChartComponent — expenseItems', () => {
 
     // Then
     expect(items.length).toBe(1);
-    expect(items[0].budgetMeta.showBudgetLabel).toBeTrue();
-    expect(items[0].budgetMeta.hasBudget).toBeTrue();
+    expect(items[0].budgetMeta.showBudgetLabel).toBe(true);
+    expect(items[0].budgetMeta.hasBudget).toBe(true);
   });
 
   // REQ-02 sc2: categoría sin presupuesto → showBudgetLabel = false
@@ -85,8 +85,8 @@ describe('DashboardChartComponent — expenseItems', () => {
 
     // Then
     expect(items.length).toBe(1);
-    expect(items[0].budgetMeta.showBudgetLabel).toBeFalse();
-    expect(items[0].budgetMeta.hasBudget).toBeFalse();
+    expect(items[0].budgetMeta.showBudgetLabel).toBe(false);
+    expect(items[0].budgetMeta.hasBudget).toBe(false);
   });
 
   // REQ-02 sc3: pct de pila con presupuesto = spentAmount/budgetAmount

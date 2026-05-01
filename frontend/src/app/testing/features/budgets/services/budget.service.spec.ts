@@ -1,7 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { calculateStatus, rowToBudget, BudgetService } from '../../../../features/budgets/services/budget.service';
 import { SheetsApiService } from '../../../../core/services/sheets-api.service';
+import { AuthService } from '../../../../core/services/auth.service';
 import { IBudget } from '../../../../models/budget.model';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -10,65 +14,37 @@ import { IBudget } from '../../../../models/budget.model';
 describe('calculateStatus', () => {
   // REQ-08 sc1: gasto < 80% → 'ok'
   it('returns ok when spent is below 80%', () => {
-    // Given: 300/500 = 60%
-    // When
-    const result = calculateStatus(300, 500);
-    // Then
-    expect(result).toBe('ok');
+    expect(calculateStatus(300, 500)).toBe('ok');
   });
 
   // REQ-08 sc2: gasto entre 80% y 99% → 'warning'
   it('returns warning when spent is between 80% and 99%', () => {
-    // Given: 420/500 = 84%
-    // When
-    const result = calculateStatus(420, 500);
-    // Then
-    expect(result).toBe('warning');
+    expect(calculateStatus(420, 500)).toBe('warning');
   });
 
   // REQ-08 sc3: gasto >= 100% → 'exceeded'
   it('returns exceeded when spent is >= 100%', () => {
-    // Given: 520/500 = 104%
-    // When
-    const result = calculateStatus(520, 500);
-    // Then
-    expect(result).toBe('exceeded');
+    expect(calculateStatus(520, 500)).toBe('exceeded');
   });
 
   // REQ-08 sc4: exactamente 80% → 'warning' (límite inferior de warning)
   it('returns warning at exactly 80%', () => {
-    // Given: 400/500 = 80%
-    // When
-    const result = calculateStatus(400, 500);
-    // Then
-    expect(result).toBe('warning');
+    expect(calculateStatus(400, 500)).toBe('warning');
   });
 
   // REQ-08 sc5: exactamente 100% → 'exceeded' (límite inferior de exceeded)
   it('returns exceeded at exactly 100%', () => {
-    // Given: 500/500 = 100%
-    // When
-    const result = calculateStatus(500, 500);
-    // Then
-    expect(result).toBe('exceeded');
+    expect(calculateStatus(500, 500)).toBe('exceeded');
   });
 
   // REQ-08 sc6: 0 gasto → 'ok'
   it('returns ok when spent is 0', () => {
-    // Given: 0/500 = 0%
-    // When
-    const result = calculateStatus(0, 500);
-    // Then
-    expect(result).toBe('ok');
+    expect(calculateStatus(0, 500)).toBe('ok');
   });
 
   // Edge: budgetAmount <= 0 → siempre 'exceeded' (división por cero protegida)
   it('returns exceeded when budgetAmount is 0', () => {
-    // Given: cualquier gasto con presupuesto 0
-    // When
-    const result = calculateStatus(0, 0);
-    // Then
-    expect(result).toBe('exceeded');
+    expect(calculateStatus(0, 0)).toBe('exceeded');
   });
 });
 
@@ -77,21 +53,19 @@ describe('calculateStatus', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 describe('rowToBudget', () => {
   const mockRow = [
-    'b-001',          // A: budget_id
-    'u-001',          // B: user_id
-    'cat-food',       // C: category_id
-    '2026-04',        // D: period
-    '500',            // E: budget_amount
-    '320',            // F: spent_amount
-    'ok',             // G: status
-    '2026-04-12T00:00:00Z', // H: last_updated
+    'b-001',
+    'u-001',
+    'cat-food',
+    '2026-04',
+    '500',
+    '320',
+    'ok',
+    '2026-04-12T00:00:00Z',
   ];
 
   it('maps all 8 fields from schema BUDGETS A:H correctly', () => {
-    // When
     const budget: IBudget = rowToBudget(mockRow);
 
-    // Then
     expect(budget.budgetId).toBe('b-001');
     expect(budget.userId).toBe('u-001');
     expect(budget.categoryId).toBe('cat-food');
@@ -103,13 +77,10 @@ describe('rowToBudget', () => {
   });
 
   it('converts amount fields to numbers', () => {
-    // Given: valores como strings (tal como llegan de Sheets API)
     const row = ['b-002', 'u-001', 'cat-1', '2026-04', '1000', '850', 'warning', '2026-04-01T00:00:00Z'];
 
-    // When
     const budget = rowToBudget(row);
 
-    // Then
     expect(typeof budget.budgetAmount).toBe('number');
     expect(typeof budget.spentAmount).toBe('number');
     expect(budget.budgetAmount).toBe(1000);
@@ -117,18 +88,15 @@ describe('rowToBudget', () => {
   });
 
   it('defaults to empty string and 0 for missing or undefined cells', () => {
-    // Given: fila parcialmente vacía
     const partialRow: unknown[] = [undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined];
 
-    // When
     const budget = rowToBudget(partialRow);
 
-    // Then
     expect(budget.budgetId).toBe('');
     expect(budget.userId).toBe('');
     expect(budget.budgetAmount).toBe(0);
     expect(budget.spentAmount).toBe(0);
-    expect(budget.status).toBe('ok'); // default fallback
+    expect(budget.status).toBe('ok');
   });
 });
 
@@ -145,7 +113,7 @@ describe('rowToBudget — mode y workspaceId', () => {
     expect(budget.mode).toBe('indefinite');
   });
 
-  // REQ-11 sc2 — row[9] = 'period', row[10] = '2026-01-01', row[11] = '2026-03-31' → parsea fechas
+  // REQ-11 sc2 — row[9] = 'period' → parsea fechas de inicio y fin
   it('parses_mode_period_with_startDate_and_endDate', () => {
     const row = ['b-002', 'u-001', 'cat-1', '2026-04', '500', '0', 'ok', '2026-04-01T00:00:00Z', 'ws_aaa', 'period', '2026-01-01', '2026-03-31'];
 
@@ -182,25 +150,34 @@ describe('rowToBudget — mode y workspaceId', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 describe('BudgetService.loadBudgets', () => {
   let service: BudgetService;
-  let sheetsApiSpy: jasmine.SpyObj<SheetsApiService>;
+  let sheetsApiSpy: jest.Mocked<Pick<SheetsApiService, 'getRange' | 'appendRow' | 'updateRow' | 'deleteRow'>>;
+  let authSpy: jest.Mocked<Pick<AuthService, 'getUser' | 'signIn' | 'isAuthenticated' | 'getAccessToken'>>;
 
   beforeEach(() => {
-    sheetsApiSpy = jasmine.createSpyObj('SheetsApiService', [
-      'getRange', 'appendRow', 'updateRow', 'deleteRow',
-    ]);
+    sheetsApiSpy = {
+      getRange:  jest.fn(),
+      appendRow: jest.fn(),
+      updateRow: jest.fn(),
+      deleteRow: jest.fn(),
+    };
+    authSpy = { getUser: jest.fn(), signIn: jest.fn(), isAuthenticated: jest.fn(), getAccessToken: jest.fn() };
+    authSpy.isAuthenticated.mockReturnValue(false);
+
     TestBed.configureTestingModule({
       providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
         BudgetService,
         { provide: SheetsApiService, useValue: sheetsApiSpy },
+        { provide: AuthService,      useValue: authSpy },
       ],
     });
     service = TestBed.inject(BudgetService);
   });
 
   // REQ-11 sc2: hoja solo con encabezados (1 fila) → {budgets:[], rowMap:{}}
-  it('loadBudgets_shouldReturnEmpty_whenSheetHasOnlyHeaderRow', done => {
-    // Given: Sheets devuelve solo la fila de encabezados
-    sheetsApiSpy.getRange.and.returnValue(
+  it('loadBudgets_shouldReturnEmpty_whenSheetHasOnlyHeaderRow', async () => {
+    sheetsApiSpy.getRange.mockReturnValue(
       of({
         range: 'BUDGETS!A:H',
         majorDimension: 'ROWS',
@@ -208,42 +185,31 @@ describe('BudgetService.loadBudgets', () => {
       }),
     );
 
-    // When
-    service.loadBudgets().subscribe(result => {
-      // Then
-      expect(result.budgets).toEqual([]);
-      expect(result.rowMap).toEqual({});
-      done();
-    });
+    const result = await firstValueFrom(service.loadBudgets());
+
+    expect(result.budgets).toEqual([]);
+    expect(result.rowMap).toEqual({});
   });
 
   // REQ-11 sc2 (edge): respuesta null → vacío sin error
-  it('loadBudgets_shouldReturnEmpty_whenResponseIsNull', done => {
-    // Given: respuesta null de Sheets (hoja nueva sin datos)
-    sheetsApiSpy.getRange.and.returnValue(of(null));
+  it('loadBudgets_shouldReturnEmpty_whenResponseIsNull', async () => {
+    sheetsApiSpy.getRange.mockReturnValue(of(null));
 
-    // When
-    service.loadBudgets().subscribe(result => {
-      // Then
-      expect(result.budgets).toEqual([]);
-      expect(result.rowMap).toEqual({});
-      done();
-    });
+    const result = await firstValueFrom(service.loadBudgets());
+
+    expect(result.budgets).toEqual([]);
+    expect(result.rowMap).toEqual({});
   });
 
   // REQ-11 sc2 (edge): values array vacío → vacío sin error
-  it('loadBudgets_shouldReturnEmpty_whenValuesArrayIsEmpty', done => {
-    // Given
-    sheetsApiSpy.getRange.and.returnValue(
+  it('loadBudgets_shouldReturnEmpty_whenValuesArrayIsEmpty', async () => {
+    sheetsApiSpy.getRange.mockReturnValue(
       of({ range: 'BUDGETS!A:H', majorDimension: 'ROWS', values: [] }),
     );
 
-    // When
-    service.loadBudgets().subscribe(result => {
-      // Then
-      expect(result.budgets).toEqual([]);
-      expect(result.rowMap).toEqual({});
-      done();
-    });
+    const result = await firstValueFrom(service.loadBudgets());
+
+    expect(result.budgets).toEqual([]);
+    expect(result.rowMap).toEqual({});
   });
 });

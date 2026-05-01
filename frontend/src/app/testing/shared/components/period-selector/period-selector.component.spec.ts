@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PeriodSelectorComponent } from '../../../../shared/components/period-selector/period-selector.component';
+import { PeriodTab } from '../../../../core/constants/period.constants';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// PeriodSelectorComponent — selección de períodos por tab
+// PeriodSelectorComponent — selección de períodos por tab (API v2: activeTab + tabChange)
 // ─────────────────────────────────────────────────────────────────────────────
 describe('PeriodSelectorComponent', () => {
   let component: PeriodSelectorComponent;
@@ -15,69 +16,55 @@ describe('PeriodSelectorComponent', () => {
 
     fixture = TestBed.createComponent(PeriodSelectorComponent);
     component = fixture.componentInstance;
+    fixture.detectChanges();
   });
 
   it('should create', () => {
-    fixture.componentRef.setInput('period', '2026-04');
-    fixture.detectChanges();
     expect(component).toBeTruthy();
   });
 
-  // REQ-08 sc1 — selectPeriod('month') emite YYYY-MM
-  it('selectPeriod_month_shouldEmitYYYYMM', () => {
-    fixture.componentRef.setInput('period', '2026-04');
-    fixture.detectChanges();
-    const emitted: string[] = [];
-    component.periodChange.subscribe((v: string) => emitted.push(v));
-
-    component.selectPeriod('month');
-
-    expect(emitted.length).toBe(1);
-    expect(emitted[0]).toMatch(/^\d{4}-\d{2}$/);
+  // sc1 — activeTab por defecto es 'month'
+  it('activeTab_defaultShouldBeMonth', () => {
+    expect(component.activeTab()).toBe('month');
   });
 
-  // REQ-08 sc1 — selectPeriod('day') emite YYYY-MM-DD
-  it('selectPeriod_day_shouldEmitYYYYMMDD', () => {
-    fixture.componentRef.setInput('period', '2026-04-26');
+  // sc2 — activeTab refleja el valor del input del padre
+  it('activeTab_shouldReflectInputValue', () => {
+    fixture.componentRef.setInput('activeTab', 'week');
     fixture.detectChanges();
-    const emitted: string[] = [];
-    component.periodChange.subscribe((v: string) => emitted.push(v));
+    expect(component.activeTab()).toBe('week');
+  });
+
+  // sc3 — selectPeriod('day') emite tabChange con 'day'
+  it('selectPeriod_shouldEmitTabChange_forDay', () => {
+    const emitted: PeriodTab[] = [];
+    component.tabChange.subscribe((v: PeriodTab) => emitted.push(v));
 
     component.selectPeriod('day');
 
     expect(emitted.length).toBe(1);
-    expect(emitted[0]).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(emitted[0]).toBe('day');
   });
 
-  // REQ-08 sc1 — activeTab es 'month' cuando period es 'YYYY-MM'
-  it('activeTab_shouldBeMonth_whenPeriodIsYYYYMM', () => {
-    fixture.componentRef.setInput('period', '2026-04');
-    fixture.detectChanges();
+  // sc4 — selectPeriod emite el tab correcto para cada uno de los 4 tipos
+  it('selectPeriod_shouldEmitCorrectTab_forAllTypes', () => {
+    const tabs: PeriodTab[] = ['day', 'week', 'month', 'year'];
 
-    expect(component.activeTab()).toBe('month');
+    tabs.forEach(tab => {
+      const emitted: PeriodTab[] = [];
+      component.tabChange.subscribe((v: PeriodTab) => emitted.push(v));
+      component.selectPeriod(tab);
+      expect(emitted[emitted.length - 1]).toBe(tab);
+    });
   });
 
-  // REQ-08 sc1 — activeTab es 'week' cuando period contiene 'W'
-  it('activeTab_shouldBeWeek_whenPeriodContainsW', () => {
-    fixture.componentRef.setInput('period', '2026-W17');
-    fixture.detectChanges();
-
-    expect(component.activeTab()).toBe('week');
-  });
-
-  // activeTab es 'day' cuando period tiene longitud 10 (YYYY-MM-DD)
-  it('activeTab_shouldBeDay_whenPeriodIsFullDate', () => {
-    fixture.componentRef.setInput('period', '2026-04-26');
-    fixture.detectChanges();
-
-    expect(component.activeTab()).toBe('day');
-  });
-
-  // activeTab es 'year' cuando period tiene longitud 4 (YYYY)
-  it('activeTab_shouldBeYear_whenPeriodIsYYYY', () => {
-    fixture.componentRef.setInput('period', '2026');
-    fixture.detectChanges();
-
-    expect(component.activeTab()).toBe('year');
+  // sc5 — tabs expone los 4 períodos esperados
+  it('tabs_shouldContainAll4PeriodIds', () => {
+    expect(component.tabs.length).toBe(4);
+    const ids = component.tabs.map(t => t.id);
+    expect(ids).toContain('day');
+    expect(ids).toContain('week');
+    expect(ids).toContain('month');
+    expect(ids).toContain('year');
   });
 });

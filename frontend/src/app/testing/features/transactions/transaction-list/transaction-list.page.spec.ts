@@ -45,8 +45,8 @@ function makeTx(
 
 const MOCK_USER = { sub: 'usr_001', email: 'test@test.com', name: 'Test' };
 
-const mockToast = { present: jasmine.createSpy('present').and.returnValue(Promise.resolve()) };
-const mockModal = { present: jasmine.createSpy('present').and.returnValue(Promise.resolve()) };
+const mockToast = { present: jest.fn().mockResolvedValue(undefined) };
+const mockModal = { present: jest.fn().mockResolvedValue(undefined) };
 
 function buildTxStateMock() {
   const _items   = signal<ITransaction[]>([]);
@@ -58,10 +58,10 @@ function buildTxStateMock() {
     error:   _error.asReadonly(),
     rowMap:  _rowMap.asReadonly(),
     loading: _loading.asReadonly(),
-    load:    jasmine.createSpy('load'),
-    add:     jasmine.createSpy('add'),
-    update:  jasmine.createSpy('update'),
-    delete:  jasmine.createSpy('delete'),
+    load:    jest.fn(),
+    add:     jest.fn(),
+    update:  jest.fn(),
+    delete:  jest.fn(),
     _items,
   };
 }
@@ -73,10 +73,10 @@ function buildWalletsStateMock() {
     loading: signal(false).asReadonly(),
     error:   signal<string|null>(null).asReadonly(),
     rowMap:  signal<Record<string,number>>({}).asReadonly(),
-    load:    jasmine.createSpy('load'),
-    add:     jasmine.createSpy('add'),
-    update:  jasmine.createSpy('update'),
-    delete:  jasmine.createSpy('delete'),
+    load:    jest.fn(),
+    add:     jest.fn(),
+    update:  jest.fn(),
+    delete:  jest.fn(),
   };
 }
 
@@ -87,10 +87,10 @@ function buildCategoriesStateMock() {
     loading: signal(false).asReadonly(),
     error:   signal<string|null>(null).asReadonly(),
     rowMap:  signal<Record<string,number>>({}).asReadonly(),
-    load:    jasmine.createSpy('load'),
-    add:     jasmine.createSpy('add'),
-    update:  jasmine.createSpy('update'),
-    delete:  jasmine.createSpy('delete'),
+    load:    jest.fn(),
+    add:     jest.fn(),
+    update:  jest.fn(),
+    delete:  jest.fn(),
   };
 }
 
@@ -102,10 +102,10 @@ function buildCurrencyStateMock() {
     rowMap:                signal<Record<string,number>>({}).asReadonly(),
     baseCurrency:          signal<string|null>('EUR').asReadonly(),
     baseCurrencyRowNumber: signal<number|null>(null).asReadonly(),
-    load:                  jasmine.createSpy('load'),
-    fetchAndPersistRate:   jasmine.createSpy('fetchAndPersistRate'),
-    saveCurrency:          jasmine.createSpy('saveCurrency'),
-    setBaseCurrency:       jasmine.createSpy('setBaseCurrency'),
+    load:                  jest.fn(),
+    fetchAndPersistRate:   jest.fn(),
+    saveCurrency:          jest.fn(),
+    setBaseCurrency:       jest.fn(),
   };
 }
 
@@ -117,11 +117,11 @@ function buildProviders(txStateMock: ReturnType<typeof buildTxStateMock>) {
     { provide: CurrencyStateService,       useValue: buildCurrencyStateMock() },
     {
       provide: ModalController,
-      useValue: { create: jasmine.createSpy('create').and.returnValue(Promise.resolve(mockModal)) },
+      useValue: { create: jest.fn().mockResolvedValue(mockModal) },
     },
     {
       provide: ToastController,
-      useValue: { create: jasmine.createSpy('create').and.returnValue(Promise.resolve(mockToast)) },
+      useValue: { create: jest.fn().mockResolvedValue(mockToast) },
     },
     {
       provide: AuthService,
@@ -176,7 +176,7 @@ describe('TransactionListPage – filter logic (REQ-17, REQ-19)', () => {
     const result = component.transactionsEnriched();
 
     expect(result.length).toBe(2);
-    result.forEach(t => expect(t.date >= '2026-04-01' && t.date <= '2026-04-30').toBeTrue());
+    result.forEach(t => expect(t.date >= '2026-04-01' && t.date <= '2026-04-30').toBe(true));
   });
 
   it('transactions_shouldApplyAllActiveFilters_whenMultipleFiltersSet', () => {
@@ -293,20 +293,20 @@ describe('TransactionListPage – dateRangeInvalid and clearFilters (REQ-17)', (
     expect(component.filterDateFrom()).toBe('');
     expect(component.filterDateTo()).toBe('');
 
-    expect(component.dateRangeInvalid()).toBeFalse();
+    expect(component.dateRangeInvalid()).toBe(false);
   });
 
   it('dateRangeInvalid_shouldBeFalse_whenOnlyOneDateIsSet', () => {
     component.filterDateFrom.set('2026-04-01');
 
-    expect(component.dateRangeInvalid()).toBeFalse();
+    expect(component.dateRangeInvalid()).toBe(false);
   });
 
   it('dateRangeInvalid_shouldBeTrue_whenFilterDateFromIsGreaterThanFilterDateTo', () => {
     component.filterDateFrom.set('2026-04-30');
     component.filterDateTo.set('2026-04-01');
 
-    expect(component.dateRangeInvalid()).toBeTrue();
+    expect(component.dateRangeInvalid()).toBe(true);
   });
 
   it('clearFilters_shouldResetAllFiltersToDefaults_whenCalled', () => {

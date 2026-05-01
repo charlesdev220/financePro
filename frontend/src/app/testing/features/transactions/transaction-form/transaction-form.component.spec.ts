@@ -59,15 +59,15 @@ function makeExpenseTx(amount: number, categoryId: string, date: string): ITrans
 function buildBudgetsStateMock() {
   const _items = signal<IBudget[]>([]);
   return {
-    items:   _items.asReadonly(),
-    loading: signal(false).asReadonly(),
-    error:   signal<string|null>(null).asReadonly(),
-    rowMap:  signal<Record<string,number>>({}).asReadonly(),
-    load:       jasmine.createSpy('load'),
-    save:       jasmine.createSpy('save'),
-    update:     jasmine.createSpy('update'),
-    delete:     jasmine.createSpy('delete'),
-    recalculate: jasmine.createSpy('recalculate'),
+    items:       _items.asReadonly(),
+    loading:     signal(false).asReadonly(),
+    error:       signal<string|null>(null).asReadonly(),
+    rowMap:      signal<Record<string,number>>({}).asReadonly(),
+    load:        jest.fn(),
+    save:        jest.fn(),
+    update:      jest.fn(),
+    delete:      jest.fn(),
+    recalculate: jest.fn(),
     _items,
   };
 }
@@ -78,10 +78,10 @@ function buildTxStateMock() {
     loading: signal(false).asReadonly(),
     error:   signal<string|null>(null).asReadonly(),
     rowMap:  signal<Record<string,number>>({}).asReadonly(),
-    load:    jasmine.createSpy('load'),
-    add:     jasmine.createSpy('add'),
-    update:  jasmine.createSpy('update'),
-    delete:  jasmine.createSpy('delete'),
+    load:    jest.fn(),
+    add:     jest.fn(),
+    update:  jest.fn(),
+    delete:  jest.fn(),
   };
 }
 
@@ -91,10 +91,10 @@ function buildWalletsStateMock() {
     loading: signal(false).asReadonly(),
     error:   signal<string|null>(null).asReadonly(),
     rowMap:  signal<Record<string,number>>({}).asReadonly(),
-    load:    jasmine.createSpy('load'),
-    add:     jasmine.createSpy('add'),
-    update:  jasmine.createSpy('update'),
-    delete:  jasmine.createSpy('delete'),
+    load:    jest.fn(),
+    add:     jest.fn(),
+    update:  jest.fn(),
+    delete:  jest.fn(),
   };
 }
 
@@ -104,10 +104,10 @@ function buildCategoriesStateMock() {
     loading: signal(false).asReadonly(),
     error:   signal<string|null>(null).asReadonly(),
     rowMap:  signal<Record<string,number>>({}).asReadonly(),
-    load:    jasmine.createSpy('load'),
-    add:     jasmine.createSpy('add'),
-    update:  jasmine.createSpy('update'),
-    delete:  jasmine.createSpy('delete'),
+    load:    jest.fn(),
+    add:     jest.fn(),
+    update:  jest.fn(),
+    delete:  jest.fn(),
   };
 }
 
@@ -134,8 +134,8 @@ describe('TransactionFormComponent – budget logic (REQ-13)', () => {
         {
           provide: ModalController,
           useValue: {
-            create: jasmine.createSpy('create'),
-            dismiss: jasmine.createSpy('dismiss').and.returnValue(Promise.resolve()),
+            create:  jest.fn(),
+            dismiss: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
@@ -189,7 +189,7 @@ describe('TransactionFormComponent – budget logic (REQ-13)', () => {
     budgetsStateMock._items.set([budget]);
     component.form.patchValue({ type: 'expense', categoryId: 'cat-1', date: '2026-04-10', amount: 200 });
 
-    expect(component.getBudgetWarning()).toBeTrue();
+    expect(component.getBudgetWarning()).toBe(true);
   });
 
   // REQ-13 sc3: monto nuevo + spentAmount <= budgetAmount → sin warning
@@ -198,7 +198,7 @@ describe('TransactionFormComponent – budget logic (REQ-13)', () => {
     budgetsStateMock._items.set([budget]);
     component.form.patchValue({ type: 'expense', categoryId: 'cat-1', date: '2026-04-10', amount: 100 });
 
-    expect(component.getBudgetWarning()).toBeFalse();
+    expect(component.getBudgetWarning()).toBe(false);
   });
 
   // REQ-13 sc4: edición → resta el monto original para no contar doble
@@ -208,7 +208,7 @@ describe('TransactionFormComponent – budget logic (REQ-13)', () => {
     budgetsStateMock._items.set([budget]);
     component.form.patchValue({ type: 'expense', categoryId: 'cat-1', date: '2026-04-05', amount: 100 });
 
-    expect(component.getBudgetWarning()).toBeFalse();
+    expect(component.getBudgetWarning()).toBe(false);
   });
 
   // REQ-13 sc4: edición donde el monto nuevo supera incluso restando el original
@@ -218,7 +218,7 @@ describe('TransactionFormComponent – budget logic (REQ-13)', () => {
     budgetsStateMock._items.set([budget]);
     component.form.patchValue({ type: 'expense', categoryId: 'cat-1', date: '2026-04-05', amount: 300 });
 
-    expect(component.getBudgetWarning()).toBeTrue();
+    expect(component.getBudgetWarning()).toBe(true);
   });
 });
 
@@ -242,8 +242,8 @@ describe('TransactionFormComponent – numpad sign, delete and save guard (REQ-1
         {
           provide: ModalController,
           useValue: {
-            create: jasmine.createSpy('create'),
-            dismiss: jasmine.createSpy('dismiss').and.returnValue(Promise.resolve()),
+            create:  jest.fn(),
+            dismiss: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
@@ -258,37 +258,28 @@ describe('TransactionFormComponent – numpad sign, delete and save guard (REQ-1
 
   it('onToggleSign_shouldPrependMinus_whenAmountStringIsPositive', () => {
     component.amountString.set('150');
-
     component.onToggleSign();
-
     expect(component.amountString()).toBe('-150');
   });
 
   it('onToggleSign_shouldRemoveMinus_whenAmountStringIsNegative', () => {
     component.amountString.set('-150');
-
     component.onToggleSign();
-
     expect(component.amountString()).toBe('150');
   });
 
   it('onToggleSign_shouldNotAlterAmountString_whenValueIsZero', () => {
     component.amountString.set('0');
-
     component.onToggleSign();
-
     expect(component.amountString()).toBe('0');
   });
 
   it('onDelete_shouldResetToZero_whenDeletingLastDigitOfNegativeOneDigitValue', () => {
     component.amountString.set('-1');
-
     component.onDelete();
-
     expect(component.amountString()).toBe('0');
   });
 
-  // save() no llama a txState.add() cuando amount === 0
   it('save_shouldNotCallTxStateAdd_whenAmountIsZero', async () => {
     component.form.patchValue({
       type: 'expense',

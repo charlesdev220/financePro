@@ -51,7 +51,6 @@ describe('AnalyticsService', () => {
 
     // REQ-01 sc1: txs mixtas en 3 meses → totales correctos por mes
     it('getMonthlyTotals_shouldReturnCorrectTotals_whenMixedTxsInThreeMonths', () => {
-      // Given
       const txs: ITransaction[] = [
         tx('t1', 'income',  1000, '2026-01-10'),
         tx('t2', 'expense',  200, '2026-01-15'),
@@ -61,10 +60,8 @@ describe('AnalyticsService', () => {
         tx('t6', 'expense',  400, '2026-03-25'),
       ];
 
-      // When
       const result = service.getMonthlyTotals(txs, 3);
 
-      // Then
       expect(result.length).toBe(3);
       expect(result[0]).toEqual({ period: '2026-01', income: 1000, expense: 200 });
       expect(result[1]).toEqual({ period: '2026-02', income: 1500, expense: 300 });
@@ -73,15 +70,12 @@ describe('AnalyticsService', () => {
 
     // REQ-01 sc2: mes sin income → income: 0
     it('getMonthlyTotals_shouldSetIncomeZero_whenMonthHasOnlyExpenses', () => {
-      // Given
       const txs: ITransaction[] = [
         tx('t1', 'expense', 150, '2026-01-10'),
       ];
 
-      // When
       const result = service.getMonthlyTotals(txs, 3);
 
-      // Then
       expect(result.length).toBe(1);
       expect(result[0].income).toBe(0);
       expect(result[0].expense).toBe(150);
@@ -94,7 +88,6 @@ describe('AnalyticsService', () => {
 
     // slice: solo devuelve los últimos N meses con datos
     it('getMonthlyTotals_shouldReturnLastNMonths_whenMoreDataExists', () => {
-      // Given: 5 meses de datos, pedimos 3
       const txs: ITransaction[] = [
         tx('t1', 'income', 100, '2025-11-01'),
         tx('t2', 'income', 100, '2025-12-01'),
@@ -103,10 +96,8 @@ describe('AnalyticsService', () => {
         tx('t5', 'income', 100, '2026-03-01'),
       ];
 
-      // When
       const result = service.getMonthlyTotals(txs, 3);
 
-      // Then
       expect(result.length).toBe(3);
       expect(result[0].period).toBe('2026-01');
       expect(result[2].period).toBe('2026-03');
@@ -120,17 +111,14 @@ describe('AnalyticsService', () => {
 
     // REQ-02 sc1: sin filtro → una entrada por categoría
     it('getCategoryTotals_shouldReturnOneEntryPerCategory_whenNoFilter', () => {
-      // Given
       const txs: ITransaction[] = [
         tx('t1', 'expense', 100, '2026-01-01', 'cat-1'),
         tx('t2', 'expense', 200, '2026-01-02', 'cat-2'),
         tx('t3', 'expense',  50, '2026-01-03', 'cat-1'),
       ];
 
-      // When
       const result = service.getCategoryTotals(txs);
 
-      // Then
       expect(result.length).toBe(2);
       const cat1 = result.find(r => r.categoryId === 'cat-1');
       expect(cat1?.total).toBe(150);
@@ -138,16 +126,13 @@ describe('AnalyticsService', () => {
 
     // REQ-02 sc2: filtro por categoryId → solo esa categoría
     it('getCategoryTotals_shouldReturnOnlyFilteredCategory_whenCategoryIdPassed', () => {
-      // Given
       const txs: ITransaction[] = [
         tx('t1', 'expense', 100, '2026-01-01', 'cat-1'),
         tx('t2', 'expense', 200, '2026-01-02', 'cat-2'),
       ];
 
-      // When
       const result = service.getCategoryTotals(txs, 'cat-1');
 
-      // Then
       expect(result.length).toBe(1);
       expect(result[0].categoryId).toBe('cat-1');
       expect(result[0].total).toBe(100);
@@ -167,29 +152,23 @@ describe('AnalyticsService', () => {
 
     // REQ-03 sc1: pendiente exacta = 10
     it('linearRegression_shouldReturnExactSlope_whenPointsAreCollinear', () => {
-      // Given
       const points = [{ x: 1, y: 10 }, { x: 2, y: 20 }, { x: 3, y: 30 }];
 
-      // When
       const result = service.linearRegression(points);
 
-      // Then
       expect(result.slope).toBe(10);
       expect(result.intercept).toBe(0);
     });
 
     // REQ-03 sc2: datos con ruido → slope positivo
     it('linearRegression_shouldReturnPositiveSlope_whenDataHasPositiveTrend', () => {
-      // Given
       const points = [
         { x: 1, y: 100 }, { x: 2, y: 250 }, { x: 3, y: 180 },
         { x: 4, y: 320 }, { x: 5, y: 400 },
       ];
 
-      // When
       const result = service.linearRegression(points);
 
-      // Then
       expect(result.slope).toBeGreaterThan(0);
     });
 
@@ -207,37 +186,30 @@ describe('AnalyticsService', () => {
 
     // REQ-04 sc1: isRecurring:true → en recurrentes
     it('classifySpending_shouldIncludeInRecurrentes_whenIsRecurringTrue', () => {
-      // Given
       const txs: ITransaction[] = [
         tx('t1', 'expense', 100, '2026-01-01', 'cat-1', 'Netflix', true),
       ];
 
-      // When
       const result = service.classifySpending(txs, ['2026-01']);
 
-      // Then
-      expect(result.recurrentes.some(i => i.concept === 'Netflix')).toBeTrue();
+      expect(result.recurrentes.some(i => i.concept === 'Netflix')).toBe(true);
     });
 
     // REQ-04 sc2: concepto en ≥3 períodos → en recurrentes
     it('classifySpending_shouldIncludeInRecurrentes_whenConceptAppearsInThreeOrMorePeriods', () => {
-      // Given
       const txs: ITransaction[] = [
         tx('t1', 'expense', 100, '2026-01-01', 'cat-1', 'Gym'),
         tx('t2', 'expense', 100, '2026-02-01', 'cat-1', 'Gym'),
         tx('t3', 'expense', 100, '2026-03-01', 'cat-1', 'Gym'),
       ];
 
-      // When
       const result = service.classifySpending(txs, ['2026-01', '2026-02', '2026-03']);
 
-      // Then
-      expect(result.recurrentes.some(i => i.concept === 'Gym')).toBeTrue();
+      expect(result.recurrentes.some(i => i.concept === 'Gym')).toBe(true);
     });
 
     // REQ-04 sc3: amountBase ≥ P75 (con ≥4 gastos) → en superfluos
     it('classifySpending_shouldIncludeInSuperfluos_whenAmountBaseAboveP75', () => {
-      // Given: 4 gastos, el más caro (400) supera P75
       const txs: ITransaction[] = [
         tx('t1', 'expense', 100, '2026-01-01', 'cat-1', 'A'),
         tx('t2', 'expense', 200, '2026-01-02', 'cat-1', 'B'),
@@ -245,41 +217,33 @@ describe('AnalyticsService', () => {
         tx('t4', 'expense', 400, '2026-01-04', 'cat-1', 'D'),
       ];
 
-      // When
       const result = service.classifySpending(txs, ['2026-01']);
 
-      // Then
       expect(result.superfluos.length).toBeGreaterThan(0);
       expect(result.superfluos[0].amountBase).toBeGreaterThanOrEqual(300);
     });
 
     // REQ-04 sc4: < 4 gastos → superfluos vacío
     it('classifySpending_shouldReturnEmptySuperfluos_whenFewerThanFourExpenses', () => {
-      // Given
       const txs: ITransaction[] = [
         tx('t1', 'expense', 100, '2026-01-01'),
         tx('t2', 'expense', 200, '2026-01-02'),
         tx('t3', 'expense', 300, '2026-01-03'),
       ];
 
-      // When
       const result = service.classifySpending(txs, ['2026-01']);
 
-      // Then
       expect(result.superfluos).toEqual([]);
     });
 
     // REQ-04 sc5: sin gastos (solo income) → ambas listas vacías
     it('classifySpending_shouldReturnEmptyBothLists_whenNoExpenses', () => {
-      // Given
       const txs: ITransaction[] = [
         tx('t1', 'income', 2000, '2026-01-01'),
       ];
 
-      // When
       const result = service.classifySpending(txs, ['2026-01']);
 
-      // Then
       expect(result.recurrentes).toEqual([]);
       expect(result.superfluos).toEqual([]);
     });
@@ -306,24 +270,21 @@ describe('AnalyticsService', () => {
     }
 
     const categories: ICategory[] = [
-      cat('cat-1', 'Comida',      '🍔', '#4CAF50'),
-      cat('cat-2', 'Transporte',  '🚗', '#2196F3'),
-      cat('cat-3', 'Ocio',        '🎮', '#FF9800'),
+      cat('cat-1', 'Comida',     '🍔', '#4CAF50'),
+      cat('cat-2', 'Transporte', '🚗', '#2196F3'),
+      cat('cat-3', 'Ocio',       '🎮', '#FF9800'),
     ];
 
     // REQ-09 sc1: transacciones mixtas → solo EXPENSE acumuladas
     it('getCategorySpending_shouldIncludeOnlyExpenses_whenMixedTransactions', () => {
-      // Given
       const txs: ITransaction[] = [
         tx('t1', 'income',  1000, '2026-04-01', 'cat-1'),
         tx('t2', 'expense',  300, '2026-04-05', 'cat-2'),
         tx('t3', 'expense',  150, '2026-04-10', 'cat-2'),
       ];
 
-      // When
       const result: CategorySpendingItem[] = service.getCategorySpending(txs, categories);
 
-      // Then — solo cat-2 (gastos), income ignorado
       expect(result.length).toBe(1);
       expect(result[0].categoryId).toBe('cat-2');
       expect(result[0].total).toBe(450);
@@ -331,29 +292,23 @@ describe('AnalyticsService', () => {
 
     // REQ-09 sc2: sin gastos → []
     it('getCategorySpending_shouldReturnEmpty_whenNoExpenses', () => {
-      // Given
       const txs: ITransaction[] = [
         tx('t1', 'income', 500, '2026-04-01', 'cat-1'),
       ];
 
-      // When
       const result = service.getCategorySpending(txs, categories);
 
-      // Then
       expect(result).toEqual([]);
     });
 
     // REQ-09 sc3: categoría sin match → fallback name/icon/color
     it('getCategorySpending_shouldUseFallbacks_whenCategoryNotFound', () => {
-      // Given: categoryId 'cat-unknown' no existe en categories
       const txs: ITransaction[] = [
         tx('t1', 'expense', 200, '2026-04-01', 'cat-unknown'),
       ];
 
-      // When
       const result = service.getCategorySpending(txs, categories);
 
-      // Then
       expect(result.length).toBe(1);
       expect(result[0].name).toBe('Otros');
       expect(result[0].icon).toBe('💰');
@@ -362,17 +317,14 @@ describe('AnalyticsService', () => {
 
     // REQ-09 sc4: varios gastos → ordenados DESC por total
     it('getCategorySpending_shouldOrderDescByTotal', () => {
-      // Given: cat-3 tiene 800, cat-1 tiene 500, cat-2 tiene 200
       const txs: ITransaction[] = [
         tx('t1', 'expense', 500, '2026-04-01', 'cat-1'),
         tx('t2', 'expense', 200, '2026-04-02', 'cat-2'),
         tx('t3', 'expense', 800, '2026-04-03', 'cat-3'),
       ];
 
-      // When
       const result = service.getCategorySpending(txs, categories);
 
-      // Then
       expect(result[0].categoryId).toBe('cat-3');
       expect(result[0].total).toBe(800);
       expect(result[1].categoryId).toBe('cat-1');
@@ -383,15 +335,12 @@ describe('AnalyticsService', () => {
 
     // REQ-09 sc5: metadatos correctamente enriquecidos
     it('getCategorySpending_shouldEnrichWithCategoryMetadata', () => {
-      // Given
       const txs: ITransaction[] = [
         tx('t1', 'expense', 300, '2026-04-01', 'cat-1'),
       ];
 
-      // When
       const result = service.getCategorySpending(txs, categories);
 
-      // Then
       expect(result[0].name).toBe('Comida');
       expect(result[0].icon).toBe('🍔');
       expect(result[0].color).toBe('#4CAF50');
