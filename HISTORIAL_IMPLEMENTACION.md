@@ -4,6 +4,32 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (mejoras-transversales-2026 — Archive):
+*Fase actual:* SDD completo: propose → tasks → apply → verify → archive
+*Estado actual:* Archivado ✅ | 2026-05-01
+- ✔️ **`docs/google-sheets-schema.md`:** Schema completo de 8 tabs — índices, tipos, PII, ETag, ADR-03/05/06.
+- ✔️ **`docs/backend-research.md`:** Análisis Spring Boot + Railway/Cloud Run + PostgreSQL; recomendación: Supabase como puente para MVP.
+- ✔️ **`docs/historial-como-palanca.md`:** Ritual pre-SDD de 5 min + 4 patrones de extracción de historiales + checklist de consulta.
+- ✔️ **`.claude/commands/web-design-guidelines.md`:** Reescrito con Monefy DS (tokens, componentes, WCAG AA, flat design). PropTech DS eliminado.
+- ✔️ **`.claude/commands/playwright-inspector.md`:** Skill creado con flujos críticos de MyFinance y protocolo `feature-report.md` obligatorio por integración.
+*Deuda técnica documentada:* Ninguna.
+*Próximos pasos:* Para aplicar MDS a features existentes → `/web-design-guidelines` por feature. Para avanzar con backend → SDD `backend-migration`. Para decidir si Supabase → prototipo antes de Spring Boot.
+
+---
+
+### Qué hemos completado hasta ahora (mejoras-transversales-2026):
+*Fase actual:* SDD apply — 5 tareas de documentación, tooling y proceso
+*Estado actual:* Completado ✅ | 2026-05-01
+- ✔️ **`docs/google-sheets-schema.md`:** Schema completo de las 8 tabs de Sheets — índices de columna, tipos de dato, prefijos de ID, reglas PII, flujo de lectura/escritura ETag, ADRs vigentes (ADR-03, ADR-05, ADR-06).
+- ✔️ **`docs/backend-research.md`:** Investigación Spring Boot — análisis de plataformas de despliegue (Railway, Render, Fly.io, Cloud Run), bases de datos candidatas (PostgreSQL recomendado), impacto sobre la arquitectura actual y estimación de esfuerzo de migración.
+- ✔️ **`docs/historial-como-palanca.md`:** Metodología de consulta de historiales — ritual pre-SDD, tabla de señales de alerta por tipo de cambio, patrones de extracción (bugs recurrentes, ADRs implícitos, deuda técnica) e integración con el flujo SDD.
+- ✔️ **`.claude/commands/web-design-guidelines.md`:** Skill reescrito con el Monefy Design Language — tokens de color (`monefy-green`, `monefy-red`, `monefy-mint`), componentes clave (balance pill, FAB dual, category tile, period tabs), checklist WCAG AA, flat design, tipografía numérica.
+- ✔️ **`.claude/commands/playwright-inspector.md`:** Protocolo de entrega de `feature-report.md` — formato estructurado con descripción funcional, guía de uso, estados de UI, evidencias visuales, bugs detectados y resultado de consola.
+*Deuda técnica documentada:* Ninguna. Todos los entregables son documentación y tooling — sin código Angular/Ionic.
+*Próximos pasos:* Si se decide avanzar con backend → abrir SDD `backend-migration`. Para aplicar el MDS a features existentes → usar el skill `/web-design-guidelines` sobre cada feature y abrir SDD de revisión visual.
+
+---
+
 ### Qué hemos completado hasta ahora (workspace-create-fix — Verify & Archive):
 *Fase actual:* Fase SDD completa: explore → propose → spec → design → tasks → apply → verify → archive
 *Estado actual:* Archivado ✅ | 2026-04-30

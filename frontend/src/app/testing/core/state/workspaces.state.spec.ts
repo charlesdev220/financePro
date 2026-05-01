@@ -1,9 +1,9 @@
 import { TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
-import { WorkspacesStateService } from '../../../core/state/workspaces.state';
-import { WorkspaceService } from '../../../features/workspaces/services/workspace.service';
-import { AuthService } from '../../../core/services/auth.service';
+import { WorkspacesStateService } from '@core/state/workspaces.state';
+import { WorkspaceService } from '@features/workspaces/services/workspace.service';
+import { AuthService } from '@core/services/auth.service';
 import { MOCK_WORKSPACES, MOCK_WORKSPACE_ID_A, MOCK_WORKSPACE_ID_B } from '../../fixtures';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -11,25 +11,23 @@ import { MOCK_WORKSPACES, MOCK_WORKSPACE_ID_A, MOCK_WORKSPACE_ID_B } from '../..
 // ─────────────────────────────────────────────────────────────────────────────
 describe('WorkspacesStateService', () => {
   let service: WorkspacesStateService;
-  let workspaceServiceSpy: jasmine.SpyObj<WorkspaceService>;
-  let authServiceSpy: jasmine.SpyObj<AuthService>;
+  let workspaceServiceSpy: jest.Mocked<WorkspaceService>;
+  let authServiceSpy: jest.Mocked<AuthService>;
 
   const TWO_WS = MOCK_WORKSPACES;
   const DEFAULT_WS = MOCK_WORKSPACES[0];
 
   beforeEach(() => {
-    workspaceServiceSpy = jasmine.createSpyObj('WorkspaceService', [
-      'loadWorkspaces',
-      'saveWorkspace',
-      'updateWorkspace',
-      'deleteWorkspace',
-    ]);
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['getUser']);
-    authServiceSpy.getUser.and.returnValue({ sub: 'usr_001', name: 'Test', email: 'test@test.com' });
+    workspaceServiceSpy = {
+      loadWorkspaces:  jest.fn(),
+      saveWorkspace:   jest.fn().mockReturnValue(of(undefined)),
+      updateWorkspace: jest.fn().mockReturnValue(of(undefined)),
+      deleteWorkspace: jest.fn().mockReturnValue(of(undefined)),
+    } as unknown as jest.Mocked<WorkspaceService>;
 
-    workspaceServiceSpy.saveWorkspace.and.returnValue(of(undefined));
-    workspaceServiceSpy.updateWorkspace.and.returnValue(of(undefined));
-    workspaceServiceSpy.deleteWorkspace.and.returnValue(of(undefined));
+    authServiceSpy = {
+      getUser: jest.fn().mockReturnValue({ sub: 'usr_001', name: 'Test', email: 'test@test.com' }),
+    } as unknown as jest.Mocked<AuthService>;
 
     TestBed.configureTestingModule({
       providers: [
@@ -45,19 +43,19 @@ describe('WorkspacesStateService', () => {
   // REQ-02 sc1 — load() con workspaces en Sheets → items() poblado
   it('load_shouldSetItems_whenWorkspacesExist', fakeAsync(() => {
     const rowMap = { [MOCK_WORKSPACE_ID_A]: 2, [MOCK_WORKSPACE_ID_B]: 3 };
-    workspaceServiceSpy.loadWorkspaces.and.returnValue(of({ workspaces: TWO_WS, rowMap }));
+    workspaceServiceSpy.loadWorkspaces.mockReturnValue(of({ workspaces: TWO_WS, rowMap }));
 
     service.load();
     flushMicrotasks();
 
     expect(service.items().length).toBe(2);
-    expect(service.loading()).toBeFalse();
+    expect(service.loading()).toBe(false);
     expect(service.error()).toBeNull();
   }));
 
   // REQ-02 sc2 — load() con workspaces → activeWorkspaceId es el default
   it('load_shouldSetActiveToDefault_whenWorkspacesExist', fakeAsync(() => {
-    workspaceServiceSpy.loadWorkspaces.and.returnValue(
+    workspaceServiceSpy.loadWorkspaces.mockReturnValue(
       of({ workspaces: TWO_WS, rowMap: { [MOCK_WORKSPACE_ID_A]: 2 } }),
     );
 
@@ -73,19 +71,19 @@ describe('WorkspacesStateService', () => {
     // Primera llamada: vacía → dispara _createDefault() → save → load().
     // Segunda llamada (tras save): retorna el workspace creado para que no se vuelva a disparar _createDefault().
     const createdWs = { workspaceId: 'ws_default', name: 'Personal', isDefault: true, userId: 'usr_001', icon: '🏠', color: '--color-green-500', createdAt: new Date().toISOString() };
-    workspaceServiceSpy.loadWorkspaces.and.returnValues(
-      of({ workspaces: [], rowMap: {} }),
-      of({ workspaces: [createdWs], rowMap: { 'ws_default': 2 } }),
-    );
-    workspaceServiceSpy.saveWorkspace.and.returnValue(of(undefined));
+    workspaceServiceSpy.loadWorkspaces
+      .mockReturnValueOnce(of({ workspaces: [], rowMap: {} }))
+      .mockReturnValueOnce(of({ workspaces: [createdWs], rowMap: { 'ws_default': 2 } }));
+    workspaceServiceSpy.saveWorkspace.mockReturnValue(of(undefined));
 
     service.load();
     flushMicrotasks();
 
     expect(workspaceServiceSpy.saveWorkspace).toHaveBeenCalledTimes(1);
-    const savedWs = workspaceServiceSpy.saveWorkspace.calls.mostRecent().args[0];
+    const calls = workspaceServiceSpy.saveWorkspace.mock.calls;
+    const savedWs = calls[calls.length - 1][0];
     expect(savedWs.name).toBe('Personal');
-    expect(savedWs.isDefault).toBeTrue();
+    expect(savedWs.isDefault).toBe(true);
   }));
 
   // REQ-02 sc4 — setActive() → activeWorkspaceId actualiza sin HTTP
@@ -98,7 +96,7 @@ describe('WorkspacesStateService', () => {
 
   // REQ-08 sc1 — delete() en workspace default → no ejecuta deleteWorkspace
   it('delete_shouldNotDelete_whenWorkspaceIsDefault', fakeAsync(() => {
-    workspaceServiceSpy.loadWorkspaces.and.returnValue(
+    workspaceServiceSpy.loadWorkspaces.mockReturnValue(
       of({ workspaces: TWO_WS, rowMap: { [MOCK_WORKSPACE_ID_A]: 2 } }),
     );
     service.load();
@@ -113,7 +111,7 @@ describe('WorkspacesStateService', () => {
 
   // REQ-02 sc5 — load() con error de API → error() en lenguaje natural, no stack trace
   it('load_shouldSetError_whenLoadFails', fakeAsync(() => {
-    workspaceServiceSpy.loadWorkspaces.and.returnValue(
+    workspaceServiceSpy.loadWorkspaces.mockReturnValue(
       throwError(() => new Error('Network error')),
     );
 
@@ -122,7 +120,7 @@ describe('WorkspacesStateService', () => {
 
     expect(service.error()).not.toBeNull();
     expect(service.items().length).toBe(0);
-    expect(service.loading()).toBeFalse();
+    expect(service.loading()).toBe(false);
   }));
 
   // REQ-05 sc1 — create() activa sincrónicamente el nuevo workspace
@@ -140,19 +138,19 @@ describe('WorkspacesStateService', () => {
     const newActive = service.activeWorkspaceId();
     expect(newActive).not.toBe(prevActive);
     expect(newActive).toMatch(/^ws_/);
-    expect(service.items().some(ws => ws.workspaceId === newActive)).toBeTrue();
+    expect(service.items().some(ws => ws.workspaceId === newActive)).toBe(true);
   });
 
   // REQ-05 sc3 — create() revierte _allItems si saveWorkspace falla
   it('create_shouldRollbackItems_whenSaveFails', fakeAsync(() => {
-    workspaceServiceSpy.loadWorkspaces.and.returnValue(
+    workspaceServiceSpy.loadWorkspaces.mockReturnValue(
       of({ workspaces: MOCK_WORKSPACES, rowMap: { [MOCK_WORKSPACE_ID_A]: 2, [MOCK_WORKSPACE_ID_B]: 3 } }),
     );
     service.load();
     flushMicrotasks();
 
     const prevCount = service.items().length;
-    workspaceServiceSpy.saveWorkspace.and.returnValue(throwError(() => new Error('net')));
+    workspaceServiceSpy.saveWorkspace.mockReturnValue(throwError(() => new Error('net')));
 
     service.create({
       userId: 'usr_001',
@@ -160,7 +158,7 @@ describe('WorkspacesStateService', () => {
       icon: '❌',
       color: '--color-green-500',
       isDefault: false,
-    });
+    }).catch(() => { /* rollback esperado */ });
     flushMicrotasks();
 
     expect(service.items().length).toBe(prevCount);

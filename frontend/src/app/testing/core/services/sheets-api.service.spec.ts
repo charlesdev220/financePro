@@ -12,6 +12,12 @@ describe('SheetsApiService', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
+    // Evita que AuthService.constructor llame a signIn() con credenciales reales
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (environment as any).googleServiceAccountEmail = '';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (environment as any).googlePrivateKey = '';
+
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
@@ -19,7 +25,13 @@ describe('SheetsApiService', () => {
     httpMock = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => httpMock.verify());
+  afterEach(() => {
+    httpMock.verify();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (environment as any).googleServiceAccountEmail = '';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (environment as any).googlePrivateKey = '';
+  });
 
   it('should be created', () => {
     expect(service).toBeTruthy();

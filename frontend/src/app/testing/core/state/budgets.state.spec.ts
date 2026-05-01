@@ -1,17 +1,18 @@
 import { TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 
-import { BudgetsStateService } from '../../../core/state/budgets.state';
-import { BudgetService } from '../../../features/budgets/services/budget.service';
-import { MOCK_BUDGETS, MOCK_TRANSACTIONS } from '../../fixtures';
-import { IBudget } from '../../../models/budget.model';
+import { BudgetsStateService } from '@core/state/budgets.state';
+import { BudgetService } from '@features/budgets/services/budget.service';
+import { WorkspacesStateService } from '@core/state/workspaces.state';
+import { MOCK_BUDGETS, MOCK_TRANSACTIONS, MOCK_WORKSPACE_ID_A } from '../../fixtures';
+import { IBudget } from '@models/budget.model';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BudgetsStateService — REQ-03
 // ─────────────────────────────────────────────────────────────────────────────
 describe('BudgetsStateService', () => {
   let service: BudgetsStateService;
-  let budgetServiceSpy: jasmine.SpyObj<BudgetService>;
+  let budgetServiceSpy: jest.Mocked<BudgetService>;
 
   const ONE_BUDGET = [MOCK_BUDGETS[0]];
   const ROW_MAP: Record<string, number> = { [MOCK_BUDGETS[0].budgetId]: 2 };
@@ -29,22 +30,26 @@ describe('BudgetsStateService', () => {
     mode:         'indefinite',
   };
 
-  beforeEach(() => {
-    budgetServiceSpy = jasmine.createSpyObj('BudgetService', [
-      'loadBudgets',
-      'saveBudget',
-      'updateBudget',
-      'deleteBudget',
-    ]);
+  let workspacesStateSpy: jest.Mocked<WorkspacesStateService>;
 
-    budgetServiceSpy.saveBudget.and.returnValue(of(undefined));
-    budgetServiceSpy.updateBudget.and.returnValue(of(undefined));
-    budgetServiceSpy.deleteBudget.and.returnValue(of(undefined));
+  beforeEach(() => {
+    budgetServiceSpy = {
+      loadBudgets:  jest.fn(),
+      saveBudget:   jest.fn().mockReturnValue(of(undefined)),
+      updateBudget: jest.fn().mockReturnValue(of(undefined)),
+      deleteBudget: jest.fn().mockReturnValue(of(undefined)),
+    } as unknown as jest.Mocked<BudgetService>;
+
+    workspacesStateSpy = {
+      activeWorkspaceId:  jest.fn().mockReturnValue(MOCK_WORKSPACE_ID_A),
+      defaultWorkspaceId: jest.fn().mockReturnValue(MOCK_WORKSPACE_ID_A),
+    } as unknown as jest.Mocked<WorkspacesStateService>;
 
     TestBed.configureTestingModule({
       providers: [
         BudgetsStateService,
-        { provide: BudgetService, useValue: budgetServiceSpy },
+        { provide: BudgetService,          useValue: budgetServiceSpy },
+        { provide: WorkspacesStateService, useValue: workspacesStateSpy },
       ],
     });
 
@@ -53,7 +58,7 @@ describe('BudgetsStateService', () => {
 
   // REQ-03 sc1 — load() exitoso → items() y rowMap() populados
   it('load_shouldSetItemsAndRowMap_whenLoadSucceeds', fakeAsync(() => {
-    budgetServiceSpy.loadBudgets.and.returnValue(
+    budgetServiceSpy.loadBudgets.mockReturnValue(
       of({ budgets: ONE_BUDGET, rowMap: ROW_MAP }),
     );
 
@@ -62,19 +67,19 @@ describe('BudgetsStateService', () => {
 
     expect(service.items().length).toBe(1);
     expect(service.rowMap()[ONE_BUDGET[0].budgetId]).toBe(2);
-    expect(service.loading()).toBeFalse();
+    expect(service.loading()).toBe(false);
     expect(service.error()).toBeNull();
   }));
 
   // REQ-03 sc2 — save() rollback al fallar → items() vuelve a 1
   it('save_shouldRollback_whenSaveFails', fakeAsync(() => {
-    budgetServiceSpy.loadBudgets.and.returnValue(
+    budgetServiceSpy.loadBudgets.mockReturnValue(
       of({ budgets: ONE_BUDGET, rowMap: ROW_MAP }),
     );
     service.load();
     flushMicrotasks();
 
-    budgetServiceSpy.saveBudget.and.returnValue(throwError(() => new Error('Save failed')));
+    budgetServiceSpy.saveBudget.mockReturnValue(throwError(() => new Error('Save failed')));
 
     service.save(NEW_BUDGET);
     flushMicrotasks();
@@ -86,7 +91,7 @@ describe('BudgetsStateService', () => {
   // REQ-03 sc3 — recalculate() actualiza spentAmount y status
   it('recalculate_shouldUpdateSpentAmountAndStatus', fakeAsync(() => {
     const budget = { ...MOCK_BUDGETS[0], spentAmount: 0, status: 'ok' as const };
-    budgetServiceSpy.loadBudgets.and.returnValue(
+    budgetServiceSpy.loadBudgets.mockReturnValue(
       of({ budgets: [budget], rowMap: { [budget.budgetId]: 2 } }),
     );
     service.load();
@@ -105,7 +110,7 @@ describe('BudgetsStateService', () => {
 
   // REQ-03 sc4 — recalculate() sin presupuesto existente → no-op, sin error
   it('recalculate_shouldBeNoOp_whenNoBudgetForCategory', fakeAsync(() => {
-    budgetServiceSpy.loadBudgets.and.returnValue(
+    budgetServiceSpy.loadBudgets.mockReturnValue(
       of({ budgets: ONE_BUDGET, rowMap: ROW_MAP }),
     );
     service.load();

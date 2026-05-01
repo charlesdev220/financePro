@@ -4,6 +4,20 @@ Registro de lecciones técnicas extraídas de cada iteración del proyecto. Appe
 
 ---
 
+### Qué hemos aprendido en el desarrollo de esta iteración (mejoras-transversales-2026 — Archive):
+*Qué se aprendió:* El skill `web-design-guidelines` tenía el design system PropTech (blue-600) hardcodeado — incongruente con el Monefy DS del proyecto. Un skill desactualizado genera revisiones contradictorias con las rules de `.claude/rules/`. La consistencia entre skills y rules es tan crítica como la del código. Además, el `Write` tool puede no persistir en disco si la herramienta falla silenciosamente — verificar con `find` o `ls` después de cualquier creación de archivo importante.
+*Por qué se aprendió:* La T4 (ux-ui-skill) reveló la inconsistencia entre el skill y las rules. El verify detectó que `web-design-guidelines.md` no existía tras el primer Write — hubo que recrearlo.
+*Dónde se aprendió:* `.claude/commands/web-design-guidelines.md`; fase verify de `mejoras-transversales-2026`.
+
+---
+
+### Qué hemos aprendido en el desarrollo de esta iteración (mejoras-transversales-2026 — Documentación y Tooling):
+*Qué se aprendió:* 1) El skill `web-design-guidelines` existente usaba el design system PropTech (blue-600, slate-*) — completamente distinto al Monefy DS del proyecto. Un skill desactualizado genera revisiones contradictorias con las rules reales de `.claude/rules/`. La consistencia entre skills y rules es tan importante como la consistencia del código. 2) Centralizar el schema de Google Sheets en un único `docs/google-sheets-schema.md` elimina la necesidad de consultar 3 archivos distintos (sheets-api.md, PROJECT_FUNCTIONAL_DOC.md, state services). El índice de columna es el dato crítico — si cambia, rompe todos los parsers. 3) Los historiales de aprendizaje e implementación son más valiosos cuando se consultan ANTES de escribir código, no solo al archivarlo. El ritual pre-SDD de 5 minutos convierte el historial de un log pasivo en una herramienta de prevención activa. 4) La investigación de backend antes de cualquier decisión técnica mayor (migrar de Sheets) es una inversión de tiempo baja con alto retorno en claridad. Documentar opciones descartadas (Firebase Firestore → peor que Sheets para este caso) es tan valioso como documentar la opción elegida.
+*Por qué se aprendió:* La tarea T4 reveló que el skill de revisión UX estaba generando sugerencias incorrectas (tokens PropTech en lugar de Monefy). La tarea T5 reveló que el schema estaba fragmentado en 3 fuentes con distintos niveles de detalle. Las tareas T2 y T3 surgieron de la necesidad de formalizar investigación y metodología que se hacía implícitamente.
+*Dónde se aprendió:* `.claude/commands/web-design-guidelines.md` (T4); `docs/google-sheets-schema.md` (T5); `docs/historial-como-palanca.md` (T3); `docs/backend-research.md` (T2).
+
+---
+
 ### Qué hemos aprendido en el desarrollo de esta iteración (workspace-create-fix — Mocks recursivos en tests de state):
 *Qué se aprendió:* Cuando un método de producción llama a `load()` internamente tras un `save()` (patrón optimistic + reload), el mock del test debe simular la respuesta *post-save* en la segunda llamada a `loadWorkspaces`, no una lista vacía. Devolver `[]` en la segunda llamada dispara de nuevo el guard `if (workspaces.length === 0)` → `_createDefault()` → segundo `saveWorkspace()` → el test falla por count incorrecto. La segunda entrada de `returnValues` debe retornar al menos el workspace recién creado para cortar la recursión en el test.
 *Por qué se aprendió:* El test `load_shouldCreatePersonalWorkspace_whenNoWorkspacesExist` fallaba con "Expected spy saveWorkspace to have been called once. It was called 2 times." El código de producción era correcto; el mock no simulaba fielmente el estado de Sheets post-save.
