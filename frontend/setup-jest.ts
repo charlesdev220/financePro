@@ -2,7 +2,14 @@ import { webcrypto } from 'crypto';
 import { setupZoneTestEnv } from 'jest-preset-angular/setup-env/zone';
 import '@testing-library/jest-dom';
 
-setupZoneTestEnv();
+try {
+  setupZoneTestEnv();
+} catch (error) {
+  // @angular-builders/jest ya inicializa el entorno, pero npx jest lo necesita.
+  if (!(error instanceof Error && error.message.includes('already been called'))) {
+    throw error;
+  }
+}
 
 // jsdom no implementa Web Crypto API — polyfill con la implementación nativa de Node.js
 if (!globalThis.crypto?.subtle) {

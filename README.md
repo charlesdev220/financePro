@@ -95,6 +95,9 @@ npm start
 
 npx ng test --watch=false --browsers=ChromeHeadless 2>&1 | tail -30
 # → http://localhost:8100
+npm test
+
+npx jest
 ```
 
 ## Seguridad y PII
