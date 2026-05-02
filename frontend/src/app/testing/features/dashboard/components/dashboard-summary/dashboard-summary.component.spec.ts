@@ -1,13 +1,13 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
 import { DashboardSummaryComponent } from '../../../../../features/dashboard/components/dashboard-summary/dashboard-summary.component';
 import { DashboardSummary } from '../../../../../features/dashboard/services/dashboard.service';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DashboardSummaryComponent — computed balanceIsNegative (REQ-04)
-// ─────────────────────────────────────────────────────────────────────────────
 describe('DashboardSummaryComponent', () => {
-  let component: DashboardSummaryComponent;
-  let fixture: ComponentFixture<DashboardSummaryComponent>;
+  let spectator: Spectator<DashboardSummaryComponent>;
+
+  const createComponent = createComponentFactory({
+    component: DashboardSummaryComponent,
+  });
 
   function buildSummary(balance: number): DashboardSummary {
     const income = balance >= 0 ? 2000 : 1000;
@@ -15,52 +15,31 @@ describe('DashboardSummaryComponent', () => {
     return { totalIncome: income, totalExpenses: expenses, balance };
   }
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [DashboardSummaryComponent],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(DashboardSummaryComponent);
-    component = fixture.componentInstance;
+  beforeEach(() => {
+    spectator = createComponent({
+      props: {
+        summary: { totalIncome: 0, totalExpenses: 0, balance: 0 }
+      }
+    });
   });
 
-  // REQ-04 sc1: balance positivo → balanceIsNegative = false → color normal
   it('balanceIsNegative_shouldReturnFalse_whenBalanceIsPositive', () => {
-    // Given: el usuario tiene más ingresos que gastos en el período
-    fixture.componentRef.setInput('summary', buildSummary(1500));
-    fixture.detectChanges();
-
-    // When / Then
-    expect(component.balanceIsNegative()).toBe(false);
+    spectator.setInput('summary', buildSummary(1500));
+    expect(spectator.component.balanceIsNegative()).toBe(false);
   });
 
-  // REQ-04 sc1 (edge): balance exactamente 0 → no es negativo
   it('balanceIsNegative_shouldReturnFalse_whenBalanceIsZero', () => {
-    // Given: ingresos == gastos
-    fixture.componentRef.setInput('summary', buildSummary(0));
-    fixture.detectChanges();
-
-    // When / Then
-    expect(component.balanceIsNegative()).toBe(false);
+    spectator.setInput('summary', buildSummary(0));
+    expect(spectator.component.balanceIsNegative()).toBe(false);
   });
 
-  // REQ-04 sc2: balance negativo → balanceIsNegative = true → color alerta (warning)
   it('balanceIsNegative_shouldReturnTrue_whenBalanceIsNegative', () => {
-    // Given: más gastos que ingresos en el período
-    fixture.componentRef.setInput('summary', buildSummary(-300));
-    fixture.detectChanges();
-
-    // When / Then
-    expect(component.balanceIsNegative()).toBe(true);
+    spectator.setInput('summary', buildSummary(-300));
+    expect(spectator.component.balanceIsNegative()).toBe(true);
   });
 
-  // REQ-04 sc2 (edge): -0.01 → todavía negativo
   it('balanceIsNegative_shouldReturnTrue_whenBalanceIsSlightlyBelowZero', () => {
-    // Given
-    fixture.componentRef.setInput('summary', buildSummary(-0.01));
-    fixture.detectChanges();
-
-    // When / Then
-    expect(component.balanceIsNegative()).toBe(true);
+    spectator.setInput('summary', buildSummary(-0.01));
+    expect(spectator.component.balanceIsNegative()).toBe(true);
   });
 });

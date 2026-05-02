@@ -1,12 +1,8 @@
-import { TestBed } from '@angular/core/testing';
-import { Component, signal } from '@angular/core';
+import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
 import { DashboardChartComponent } from '../../../../../features/dashboard/components/dashboard-chart/dashboard-chart.component';
 import { CategoryBreakdown } from '../../../../../features/dashboard/services/dashboard.service';
 import { IBudget } from '../../../../../models/budget.model';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ─────────────────────────────────────────────────────────────────────────────
 function makeBreakdown(overrides: Partial<CategoryBreakdown> = {}): CategoryBreakdown {
   return {
     categoryId: 'cat-1',
@@ -35,79 +31,58 @@ function makeBudget(overrides: Partial<IBudget> = {}): IBudget {
   };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// DashboardChartComponent — expenseItems computed
-// ─────────────────────────────────────────────────────────────────────────────
-describe('DashboardChartComponent — expenseItems', () => {
+describe('DashboardChartComponent', () => {
+  let spectator: Spectator<DashboardChartComponent>;
 
-  // REQ-02 sc1: categoría con presupuesto → showBudgetLabel = true
+  const createComponent = createComponentFactory({
+    component: DashboardChartComponent,
+    shallow: true,
+  });
+
+  beforeEach(() => {
+    spectator = createComponent({
+      props: {
+        breakdown: [],
+        balance: 0,
+        currency: 'EUR'
+      }
+    });
+  });
+
   it('expenseItems_shouldHaveShowBudgetLabelTrue_whenCategoryHasBudget', () => {
-    // Given
-    TestBed.configureTestingModule({ imports: [DashboardChartComponent] });
-    const fixture = TestBed.createComponent(DashboardChartComponent);
-    const comp    = fixture.componentInstance;
+    spectator.setInput('breakdown', [makeBreakdown()]);
+    spectator.setInput('balance', 500);
+    spectator.setInput('currency', 'EUR');
+    spectator.setInput('budgets', [makeBudget({ categoryId: 'cat-1', spentAmount: 120, budgetAmount: 200 })]);
 
-    const breakdown = [makeBreakdown()];
-    const budgets   = [makeBudget({ categoryId: 'cat-1', spentAmount: 120, budgetAmount: 200 })];
+    const items = spectator.component.expenseItems();
 
-    fixture.componentRef.setInput('breakdown', breakdown);
-    fixture.componentRef.setInput('balance', 500);
-    fixture.componentRef.setInput('currency', 'EUR');
-    fixture.componentRef.setInput('budgets', budgets);
-    fixture.detectChanges();
-
-    // When
-    const items = comp.expenseItems();
-
-    // Then
     expect(items.length).toBe(1);
     expect(items[0].budgetMeta.showBudgetLabel).toBe(true);
     expect(items[0].budgetMeta.hasBudget).toBe(true);
   });
 
-  // REQ-02 sc2: categoría sin presupuesto explícito → hasBudget=false, showBudgetLabel=true (siempre visible)
-  // showBudgetLabel es siempre true — todas las categorías de gasto muestran consumo vs presupuesto por defecto
   it('expenseItems_shouldHaveHasBudgetFalse_whenCategoryHasNoBudget', () => {
-    // Given
-    TestBed.configureTestingModule({ imports: [DashboardChartComponent] });
-    const fixture = TestBed.createComponent(DashboardChartComponent);
-    const comp    = fixture.componentInstance;
+    spectator.setInput('breakdown', [makeBreakdown({ categoryId: 'cat-2' })]);
+    spectator.setInput('balance', 500);
+    spectator.setInput('currency', 'EUR');
+    spectator.setInput('budgets', []);
 
-    const breakdown = [makeBreakdown({ categoryId: 'cat-2' })];
+    const items = spectator.component.expenseItems();
 
-    fixture.componentRef.setInput('breakdown', breakdown);
-    fixture.componentRef.setInput('balance', 500);
-    fixture.componentRef.setInput('currency', 'EUR');
-    fixture.componentRef.setInput('budgets', []);
-    fixture.detectChanges();
-
-    // When
-    const items = comp.expenseItems();
-
-    // Then
     expect(items.length).toBe(1);
-    // showBudgetLabel es siempre true — se usa defaultBudget cuando no hay presupuesto explícito
     expect(items[0].budgetMeta.showBudgetLabel).toBe(true);
     expect(items[0].budgetMeta.hasBudget).toBe(false);
   });
 
-  // REQ-02 sc3: pct de pila con presupuesto = spentAmount/budgetAmount
   it('expenseItems_pilaPercent_shouldBeSpentOverBudget_whenHasBudget', () => {
-    // Given: 120 gastado de 200 = 60%
-    TestBed.configureTestingModule({ imports: [DashboardChartComponent] });
-    const fixture = TestBed.createComponent(DashboardChartComponent);
-    const comp    = fixture.componentInstance;
+    spectator.setInput('breakdown', [makeBreakdown({ amount: 200 })]);
+    spectator.setInput('balance', 0);
+    spectator.setInput('currency', 'EUR');
+    spectator.setInput('budgets', [makeBudget({ spentAmount: 120, budgetAmount: 200 })]);
 
-    fixture.componentRef.setInput('breakdown', [makeBreakdown({ amount: 200 })]);
-    fixture.componentRef.setInput('balance', 0);
-    fixture.componentRef.setInput('currency', 'EUR');
-    fixture.componentRef.setInput('budgets', [makeBudget({ spentAmount: 120, budgetAmount: 200 })]);
-    fixture.detectChanges();
+    const pct = spectator.component.expenseItems()[0].budgetMeta.pct;
 
-    // When
-    const pct = comp.expenseItems()[0].budgetMeta.pct;
-
-    // Then
     expect(pct).toBe(60);
   });
 });

@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { createComponentFactory, Spectator, mockProvider } from '@ngneat/spectator/jest';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
@@ -11,199 +11,142 @@ import { DataSeedService } from '../../../../core/services/data-seed.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { WORKSPACE_DEFAULTS } from '../../../../core/constants/workspace.constants';
 import { MOCK_WORKSPACES } from '../../../fixtures';
+import { MODAL_CONTROLLER_MOCK, TOAST_CONTROLLER_MOCK } from '../../../ionic-mocks';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// WorkspaceFormComponent — REQ-01, REQ-02, REQ-03, REQ-04, REQ-06, REQ-07
-// ─────────────────────────────────────────────────────────────────────────────
 describe('WorkspaceFormComponent', () => {
-  let fixture: ComponentFixture<WorkspaceFormComponent>;
-  let component: WorkspaceFormComponent;
-  let workspacesStateSpy: { create: jest.Mock; rename: jest.Mock };
-  let categoriesStateSpy: { load: jest.Mock };
-  let dataSeedSpy:        { seedCategoriesForWorkspace: jest.Mock };
-  let authServiceSpy:     { getUser: jest.Mock };
-  let modalCtrlSpy:       { dismiss: jest.Mock };
-  let toastCtrlSpy:       { create: jest.Mock };
-  let toastSpy:           { present: jest.Mock };
+  let spectator: Spectator<WorkspaceFormComponent>;
+  const createdWorkspace = { workspaceId: 'ws_new_001', name: 'X', icon: '🏠', color: WORKSPACE_DEFAULTS.COLOR };
 
-  beforeEach(async () => {
-    // create() devuelve un workspace con workspaceId para que el código no falle
-    const createdWorkspace = { workspaceId: 'ws_new_001', name: 'X', icon: '🏠', color: WORKSPACE_DEFAULTS.COLOR };
-    workspacesStateSpy = {
-      create: jest.fn().mockResolvedValue(createdWorkspace),
-      rename: jest.fn(),
-    };
-    categoriesStateSpy = { load: jest.fn() };
-    dataSeedSpy = { seedCategoriesForWorkspace: jest.fn().mockReturnValue(of(true)) };
-    authServiceSpy     = { getUser: jest.fn() };
-    modalCtrlSpy       = { dismiss: jest.fn() };
-    toastSpy           = { present: jest.fn() };
-    toastCtrlSpy       = { create: jest.fn() };
+  const createComponent = createComponentFactory({
+    component: WorkspaceFormComponent,
+    providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
+      mockProvider(CategoriesStateService),
+      mockProvider(DataSeedService, {
+        seedCategoriesForWorkspace: jest.fn().mockReturnValue(of(true)),
+      }),
+      mockProvider(AuthService, {
+        getUser: jest.fn().mockReturnValue({ sub: 'usr_001', name: 'Test', email: 'test@test.com' }),
+      }),
+      mockProvider(ModalController, MODAL_CONTROLLER_MOCK),
+      mockProvider(ToastController, TOAST_CONTROLLER_MOCK),
+    ],
+  });
 
-    authServiceSpy.getUser.mockReturnValue({ sub: 'usr_001', name: 'Test', email: 'test@test.com' });
-    modalCtrlSpy.dismiss.mockResolvedValue(true);
-    toastSpy.present.mockResolvedValue(undefined);
-    toastCtrlSpy.create.mockResolvedValue(toastSpy);
-
-    await TestBed.configureTestingModule({
-      imports: [WorkspaceFormComponent],
+  beforeEach(() => {
+    spectator = createComponent({
       providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        { provide: WorkspacesStateService, useValue: workspacesStateSpy },
-        { provide: CategoriesStateService, useValue: categoriesStateSpy },
-        { provide: DataSeedService,        useValue: dataSeedSpy },
-        { provide: AuthService,            useValue: authServiceSpy },
-        { provide: ModalController,        useValue: modalCtrlSpy },
-        { provide: ToastController,        useValue: toastCtrlSpy },
-      ],
-    }).compileComponents();
-
-    fixture   = TestBed.createComponent(WorkspaceFormComponent);
-    component = fixture.componentInstance;
+        mockProvider(WorkspacesStateService, {
+          create: jest.fn().mockResolvedValue(createdWorkspace),
+          rename: jest.fn(),
+        }),
+      ]
+    });
   });
 
-  // ── REQ-01: Renderizado inicial ───────────────────────────────────────────
-
-  // REQ-01 sc1 — modo creación: signals inicializados con valores por defecto
   it('ngOnInit_shouldInitializeDefaultSignals_inCreateMode', () => {
-    fixture.detectChanges();
-
-    expect(component.name()).toBe('');
-    expect(component.icon()).toBe(WORKSPACE_DEFAULTS.ICON);
-    expect(component.isEditMode).toBe(false);
+    expect(spectator.component.name()).toBe('');
+    expect(spectator.component.icon()).toBe(WORKSPACE_DEFAULTS.ICON);
+    expect(spectator.component.isEditMode).toBe(false);
   });
 
-  // REQ-01 sc2 — modo edición: signals inicializados desde @Input workspace
   it('ngOnInit_shouldInitializeSignalsFromWorkspace_inEditMode', () => {
     const ws = MOCK_WORKSPACES[1];
-    component.workspace = ws;
-    component.rowNumber = 3;
-    fixture.detectChanges();
+    spectator = createComponent({
+      props: {
+        workspace: ws,
+        rowNumber: 3
+      }
+    });
 
-    expect(component.name()).toBe('Trabajo');
-    expect(component.icon()).toBe('💼');
-    expect(component.isEditMode).toBe(true);
+    expect(spectator.component.name()).toBe('Trabajo');
+    expect(spectator.component.icon()).toBe('💼');
+    expect(spectator.component.isEditMode).toBe(true);
   });
 
-  // REQ-01 sc3 — onNameInput actualiza el signal name
   it('onNameInput_shouldUpdateNameSignal', () => {
-    fixture.detectChanges();
-    component.onNameInput(new CustomEvent('ionInput', { detail: { value: 'Familia' } }));
-    expect(component.name()).toBe('Familia');
+    spectator.component.onNameInput(new CustomEvent('ionInput', { detail: { value: 'Familia' } }));
+    expect(spectator.component.name()).toBe('Familia');
   });
 
-  // ── REQ-02: Validación ────────────────────────────────────────────────────
-
-  // REQ-02 sc1 — isFormInvalid true cuando name está vacío
   it('isFormInvalid_shouldBeTrue_whenNameIsEmpty', () => {
-    fixture.detectChanges();
-    expect(component.isFormInvalid()).toBe(true);
+    expect(spectator.component.isFormInvalid()).toBe(true);
   });
 
-  // REQ-02 sc2 — isFormInvalid true cuando name tiene solo espacios
   it('isFormInvalid_shouldBeTrue_whenNameIsOnlySpaces', () => {
-    fixture.detectChanges();
-    component.onNameInput(new CustomEvent('ionInput', { detail: { value: '   ' } }));
-    expect(component.isFormInvalid()).toBe(true);
+    spectator.component.onNameInput(new CustomEvent('ionInput', { detail: { value: '   ' } }));
+    expect(spectator.component.isFormInvalid()).toBe(true);
   });
 
-  // REQ-02 sc3 — isFormInvalid false cuando name tiene contenido válido
   it('isFormInvalid_shouldBeFalse_whenNameHasContent', () => {
-    fixture.detectChanges();
-    component.onNameInput(new CustomEvent('ionInput', { detail: { value: 'Trabajo' } }));
-    expect(component.isFormInvalid()).toBe(false);
+    spectator.component.onNameInput(new CustomEvent('ionInput', { detail: { value: 'Trabajo' } }));
+    expect(spectator.component.isFormInvalid()).toBe(false);
   });
 
-  // REQ-02 edge — save() no llama create() si isFormInvalid es true
   it('save_shouldNotCallCreate_whenFormIsInvalid', async () => {
-    fixture.detectChanges();
-    await component.save();
-
-    expect(workspacesStateSpy.create).not.toHaveBeenCalled();
-    expect(toastCtrlSpy.create).not.toHaveBeenCalled();
+    await spectator.component.save();
+    expect(spectator.inject(WorkspacesStateService).create).not.toHaveBeenCalled();
   });
 
-  // ── REQ-03: Color por defecto ─────────────────────────────────────────────
-
-  // REQ-03 sc2 — save() incluye color: WORKSPACE_DEFAULTS.COLOR en el draft
   it('save_shouldUseDefaultColor_whenCreating', async () => {
-    fixture.detectChanges();
-    component.onNameInput(new CustomEvent('ionInput', { detail: { value: 'Familia' } }));
+    spectator.component.onNameInput(new CustomEvent('ionInput', { detail: { value: 'Familia' } }));
+    await spectator.component.save();
 
-    await component.save();
-
-    expect(workspacesStateSpy.create).toHaveBeenCalledWith(
+    expect(spectator.inject(WorkspacesStateService).create).toHaveBeenCalledWith(
       expect.objectContaining({ color: WORKSPACE_DEFAULTS.COLOR }),
     );
   });
 
-  // ── REQ-04: Toast de confirmación ────────────────────────────────────────
-
-  // REQ-04 sc1 — toast de confirmación en modo creación (mensaje con icono y nombre)
-  // El componente genera: `${icon} ${name} listo`
   it('save_shouldPresentSuccessToast_inCreateMode', async () => {
-    fixture.detectChanges();
-    component.onNameInput(new CustomEvent('ionInput', { detail: { value: 'Trabajo' } }));
+    spectator.component.onNameInput(new CustomEvent('ionInput', { detail: { value: 'Trabajo' } }));
+    await spectator.component.save();
 
-    await component.save();
-
-    // El mensaje incluye el nombre del workspace
-    expect(toastCtrlSpy.create).toHaveBeenCalledWith(
+    expect(spectator.inject(ToastController).create).toHaveBeenCalledWith(
       expect.objectContaining({ color: 'success' }),
     );
-    expect(toastSpy.present).toHaveBeenCalled();
   });
 
-  // REQ-04 sc2 — toast 'Espacio actualizado' en modo edición
   it('save_shouldPresentToastEspacioActualizado_inEditMode', async () => {
-    component.workspace = MOCK_WORKSPACES[0];
-    component.rowNumber = 2;
-    fixture.detectChanges();
-    component.onNameInput(new CustomEvent('ionInput', { detail: { value: 'Mi cuenta' } }));
+    spectator = createComponent({
+      props: {
+        workspace: MOCK_WORKSPACES[0],
+        rowNumber: 2
+      }
+    });
+    spectator.component.onNameInput(new CustomEvent('ionInput', { detail: { value: 'Mi cuenta' } }));
 
-    await component.save();
+    await spectator.component.save();
 
-    expect(toastCtrlSpy.create).toHaveBeenCalledWith(
+    expect(spectator.inject(ToastController).create).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'Espacio actualizado', color: 'success' }),
     );
   });
 
-  // ── REQ-06: Flujo de renombrado ───────────────────────────────────────────
-
-  // REQ-06 sc1 — save() llama rename() y NO create() en modo edición
   it('save_shouldCallRename_andNotCreate_inEditMode', async () => {
-    component.workspace = MOCK_WORKSPACES[0];
-    component.rowNumber = 2;
-    fixture.detectChanges();
-    component.onNameInput(new CustomEvent('ionInput', { detail: { value: 'Mi cuenta' } }));
+    spectator = createComponent({
+      props: {
+        workspace: MOCK_WORKSPACES[0],
+        rowNumber: 2
+      }
+    });
+    spectator.component.onNameInput(new CustomEvent('ionInput', { detail: { value: 'Mi cuenta' } }));
 
-    await component.save();
+    await spectator.component.save();
 
-    expect(workspacesStateSpy.rename).toHaveBeenCalledWith(
+    expect(spectator.inject(WorkspacesStateService).rename).toHaveBeenCalledWith(
       MOCK_WORKSPACES[0].workspaceId, 'Mi cuenta', 2,
     );
-    expect(workspacesStateSpy.create).not.toHaveBeenCalled();
+    expect(spectator.inject(WorkspacesStateService).create).not.toHaveBeenCalled();
   });
 
-  // REQ-06 sc2 — cancel() llama dismiss() sin side effects
   it('cancel_shouldDismissModal_withoutSideEffects', async () => {
-    fixture.detectChanges();
-
-    await component.cancel();
-
-    expect(modalCtrlSpy.dismiss).toHaveBeenCalledTimes(1);
-    expect(workspacesStateSpy.create).not.toHaveBeenCalled();
-    expect(workspacesStateSpy.rename).not.toHaveBeenCalled();
-    expect(toastCtrlSpy.create).not.toHaveBeenCalled();
+    await spectator.component.cancel();
+    expect(spectator.inject(ModalController).dismiss).toHaveBeenCalledTimes(1);
+    expect(spectator.inject(WorkspacesStateService).create).not.toHaveBeenCalled();
   });
 
-  // ── REQ-07: Sin ReactiveFormsModule ──────────────────────────────────────
-
-  // REQ-07 — el componente no tiene FormGroup en su definición
   it('component_shouldNotHaveFormGroupProperty', () => {
-    fixture.detectChanges();
-    expect((component as any).form).toBeUndefined();
-    expect((component as any).fb).toBeUndefined();
+    expect((spectator.component as any).form).toBeUndefined();
   });
 });

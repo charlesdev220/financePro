@@ -1,3 +1,4 @@
+import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
 import { AnalyticsService, MonthlyTotal, CategorySpendingItem } from '../../../../features/analytics/services/analytics.service';
 import { ITransaction } from '../../../../models/transaction.model';
 import { ICategory } from '../../../../models/category.model';
@@ -35,13 +36,14 @@ function tx(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AnalyticsService — servicio puro, instanciado directamente
+// AnalyticsService — REQ-01, REQ-02, REQ-03, REQ-04, REQ-09
 // ─────────────────────────────────────────────────────────────────────────────
 describe('AnalyticsService', () => {
-  let service: AnalyticsService;
+  let spectator: SpectatorService<AnalyticsService>;
+  const createService = createServiceFactory(AnalyticsService);
 
   beforeEach(() => {
-    service = new AnalyticsService();
+    spectator = createService();
   });
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -60,7 +62,7 @@ describe('AnalyticsService', () => {
         tx('t6', 'expense',  400, '2026-03-25'),
       ];
 
-      const result = service.getMonthlyTotals(txs, 3);
+      const result = spectator.service.getMonthlyTotals(txs, 3);
 
       expect(result.length).toBe(3);
       expect(result[0]).toEqual({ period: '2026-01', income: 1000, expense: 200 });
@@ -74,7 +76,7 @@ describe('AnalyticsService', () => {
         tx('t1', 'expense', 150, '2026-01-10'),
       ];
 
-      const result = service.getMonthlyTotals(txs, 3);
+      const result = spectator.service.getMonthlyTotals(txs, 3);
 
       expect(result.length).toBe(1);
       expect(result[0].income).toBe(0);
@@ -83,7 +85,7 @@ describe('AnalyticsService', () => {
 
     // REQ-01 sc3: array vacío → []
     it('getMonthlyTotals_shouldReturnEmpty_whenNoTransactions', () => {
-      expect(service.getMonthlyTotals([], 3)).toEqual([]);
+      expect(spectator.service.getMonthlyTotals([], 3)).toEqual([]);
     });
 
     // slice: solo devuelve los últimos N meses con datos
@@ -96,7 +98,7 @@ describe('AnalyticsService', () => {
         tx('t5', 'income', 100, '2026-03-01'),
       ];
 
-      const result = service.getMonthlyTotals(txs, 3);
+      const result = spectator.service.getMonthlyTotals(txs, 3);
 
       expect(result.length).toBe(3);
       expect(result[0].period).toBe('2026-01');
@@ -117,7 +119,7 @@ describe('AnalyticsService', () => {
         tx('t3', 'expense',  50, '2026-01-03', 'cat-1'),
       ];
 
-      const result = service.getCategoryTotals(txs);
+      const result = spectator.service.getCategoryTotals(txs);
 
       expect(result.length).toBe(2);
       const cat1 = result.find(r => r.categoryId === 'cat-1');
@@ -131,7 +133,7 @@ describe('AnalyticsService', () => {
         tx('t2', 'expense', 200, '2026-01-02', 'cat-2'),
       ];
 
-      const result = service.getCategoryTotals(txs, 'cat-1');
+      const result = spectator.service.getCategoryTotals(txs, 'cat-1');
 
       expect(result.length).toBe(1);
       expect(result[0].categoryId).toBe('cat-1');
@@ -141,7 +143,7 @@ describe('AnalyticsService', () => {
     // REQ-02 sc3: categoría inexistente → []
     it('getCategoryTotals_shouldReturnEmpty_whenCategoryNotFound', () => {
       const txs: ITransaction[] = [tx('t1', 'expense', 100, '2026-01-01', 'cat-1')];
-      expect(service.getCategoryTotals(txs, 'cat-999')).toEqual([]);
+      expect(spectator.service.getCategoryTotals(txs, 'cat-999')).toEqual([]);
     });
   });
 
@@ -154,7 +156,7 @@ describe('AnalyticsService', () => {
     it('linearRegression_shouldReturnExactSlope_whenPointsAreCollinear', () => {
       const points = [{ x: 1, y: 10 }, { x: 2, y: 20 }, { x: 3, y: 30 }];
 
-      const result = service.linearRegression(points);
+      const result = spectator.service.linearRegression(points);
 
       expect(result.slope).toBe(10);
       expect(result.intercept).toBe(0);
@@ -167,15 +169,15 @@ describe('AnalyticsService', () => {
         { x: 4, y: 320 }, { x: 5, y: 400 },
       ];
 
-      const result = service.linearRegression(points);
+      const result = spectator.service.linearRegression(points);
 
       expect(result.slope).toBeGreaterThan(0);
     });
 
     // REQ-03 sc3: menos de 2 puntos → {slope:0, intercept:0}
     it('linearRegression_shouldReturnZeros_whenFewerThanTwoPoints', () => {
-      expect(service.linearRegression([{ x: 1, y: 100 }])).toEqual({ slope: 0, intercept: 0 });
-      expect(service.linearRegression([])).toEqual({ slope: 0, intercept: 0 });
+      expect(spectator.service.linearRegression([{ x: 1, y: 100 }])).toEqual({ slope: 0, intercept: 0 });
+      expect(spectator.service.linearRegression([])).toEqual({ slope: 0, intercept: 0 });
     });
   });
 
@@ -190,7 +192,7 @@ describe('AnalyticsService', () => {
         tx('t1', 'expense', 100, '2026-01-01', 'cat-1', 'Netflix', true),
       ];
 
-      const result = service.classifySpending(txs, ['2026-01']);
+      const result = spectator.service.classifySpending(txs, ['2026-01']);
 
       expect(result.recurrentes.some(i => i.concept === 'Netflix')).toBe(true);
     });
@@ -203,7 +205,7 @@ describe('AnalyticsService', () => {
         tx('t3', 'expense', 100, '2026-03-01', 'cat-1', 'Gym'),
       ];
 
-      const result = service.classifySpending(txs, ['2026-01', '2026-02', '2026-03']);
+      const result = spectator.service.classifySpending(txs, ['2026-01', '2026-02', '2026-03']);
 
       expect(result.recurrentes.some(i => i.concept === 'Gym')).toBe(true);
     });
@@ -217,7 +219,7 @@ describe('AnalyticsService', () => {
         tx('t4', 'expense', 400, '2026-01-04', 'cat-1', 'D'),
       ];
 
-      const result = service.classifySpending(txs, ['2026-01']);
+      const result = spectator.service.classifySpending(txs, ['2026-01']);
 
       expect(result.superfluos.length).toBeGreaterThan(0);
       expect(result.superfluos[0].amountBase).toBeGreaterThanOrEqual(300);
@@ -231,7 +233,7 @@ describe('AnalyticsService', () => {
         tx('t3', 'expense', 300, '2026-01-03'),
       ];
 
-      const result = service.classifySpending(txs, ['2026-01']);
+      const result = spectator.service.classifySpending(txs, ['2026-01']);
 
       expect(result.superfluos).toEqual([]);
     });
@@ -242,7 +244,7 @@ describe('AnalyticsService', () => {
         tx('t1', 'income', 2000, '2026-01-01'),
       ];
 
-      const result = service.classifySpending(txs, ['2026-01']);
+      const result = spectator.service.classifySpending(txs, ['2026-01']);
 
       expect(result.recurrentes).toEqual([]);
       expect(result.superfluos).toEqual([]);
@@ -283,7 +285,7 @@ describe('AnalyticsService', () => {
         tx('t3', 'expense',  150, '2026-04-10', 'cat-2'),
       ];
 
-      const result: CategorySpendingItem[] = service.getCategorySpending(txs, categories);
+      const result: CategorySpendingItem[] = spectator.service.getCategorySpending(txs, categories);
 
       expect(result.length).toBe(1);
       expect(result[0].categoryId).toBe('cat-2');
@@ -296,7 +298,7 @@ describe('AnalyticsService', () => {
         tx('t1', 'income', 500, '2026-04-01', 'cat-1'),
       ];
 
-      const result = service.getCategorySpending(txs, categories);
+      const result = spectator.service.getCategorySpending(txs, categories);
 
       expect(result).toEqual([]);
     });
@@ -307,7 +309,7 @@ describe('AnalyticsService', () => {
         tx('t1', 'expense', 200, '2026-04-01', 'cat-unknown'),
       ];
 
-      const result = service.getCategorySpending(txs, categories);
+      const result = spectator.service.getCategorySpending(txs, categories);
 
       expect(result.length).toBe(1);
       expect(result[0].name).toBe('Otros');
@@ -323,7 +325,7 @@ describe('AnalyticsService', () => {
         tx('t3', 'expense', 800, '2026-04-03', 'cat-3'),
       ];
 
-      const result = service.getCategorySpending(txs, categories);
+      const result = spectator.service.getCategorySpending(txs, categories);
 
       expect(result[0].categoryId).toBe('cat-3');
       expect(result[0].total).toBe(800);
@@ -339,7 +341,7 @@ describe('AnalyticsService', () => {
         tx('t1', 'expense', 300, '2026-04-01', 'cat-1'),
       ];
 
-      const result = service.getCategorySpending(txs, categories);
+      const result = spectator.service.getCategorySpending(txs, categories);
 
       expect(result[0].name).toBe('Comida');
       expect(result[0].icon).toBe('🍔');

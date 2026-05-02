@@ -1,3 +1,4 @@
+import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
 import { DashboardService, DashboardSummary, CategoryBreakdown, DateRange } from '../../../../features/dashboard/services/dashboard.service';
 import { ITransaction } from '../../../../models/transaction.model';
 import { ICategory } from '../../../../models/category.model';
@@ -51,13 +52,14 @@ function cat(id: string, name: string, color: string): ICategory {
 const APRIL: DateRange = { from: '2026-04-01', to: '2026-04-30' };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DashboardService — servicio puro, se instancia directamente
+// DashboardService — REQ-01, REQ-02, REQ-06
 // ─────────────────────────────────────────────────────────────────────────────
 describe('DashboardService', () => {
-  let service: DashboardService;
+  let spectator: SpectatorService<DashboardService>;
+  const createService = createServiceFactory(DashboardService);
 
   beforeEach(() => {
-    service = new DashboardService();
+    spectator = createService();
   });
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -73,7 +75,7 @@ describe('DashboardService', () => {
         tx('t4', 'income', 500, '2026-03-01'), // fuera del rango — no debe contar
       ];
 
-      const summary: DashboardSummary = service.calculateSummary(transactions, APRIL);
+      const summary: DashboardSummary = spectator.service.calculateSummary(transactions, APRIL);
 
       expect(summary.totalIncome).toBe(2500);
       expect(summary.totalExpenses).toBe(500);
@@ -86,7 +88,7 @@ describe('DashboardService', () => {
         tx('t1', 'income', 1000, '2026-03-15'),
       ];
 
-      const summary = service.calculateSummary(transactions, APRIL);
+      const summary = spectator.service.calculateSummary(transactions, APRIL);
 
       expect(summary.totalIncome).toBe(0);
       expect(summary.totalExpenses).toBe(0);
@@ -100,7 +102,7 @@ describe('DashboardService', () => {
         tx('t2', 'expense', 200, '2026-04-20'),
       ];
 
-      const summary = service.calculateSummary(transactions, APRIL);
+      const summary = spectator.service.calculateSummary(transactions, APRIL);
 
       expect(summary.totalIncome).toBe(0);
       expect(summary.totalExpenses).toBe(600);
@@ -133,7 +135,7 @@ describe('DashboardService', () => {
         tx('t6', 'expense',  10, '2026-04-06', 'cat-6'),
       ];
 
-      const breakdown: CategoryBreakdown[] = service.calculateBreakdown(transactions, categories, APRIL);
+      const breakdown: CategoryBreakdown[] = spectator.service.calculateBreakdown(transactions, categories, APRIL);
 
       expect(breakdown.length).toBe(6);
       expect(breakdown.find((b: CategoryBreakdown) => b.categoryId === 'others')).toBeUndefined();
@@ -151,7 +153,7 @@ describe('DashboardService', () => {
         tx('t7', 'expense',  50, '2026-04-07', 'cat-7'), // va a "Otros"
       ];
 
-      const breakdown = service.calculateBreakdown(transactions, categories, APRIL);
+      const breakdown = spectator.service.calculateBreakdown(transactions, categories, APRIL);
 
       expect(breakdown.length).toBe(7); // 6 top + Otros
       const otros = breakdown.find((b: CategoryBreakdown) => b.categoryId === 'others-expense');
@@ -167,7 +169,7 @@ describe('DashboardService', () => {
         tx('t1', 'income', 2500, '2026-04-01', 'cat-1'),
       ];
 
-      const breakdown = service.calculateBreakdown(transactions, categories, APRIL);
+      const breakdown = spectator.service.calculateBreakdown(transactions, categories, APRIL);
 
       expect(breakdown.length).toBe(1);
       expect(breakdown[0].type).toBe('income');
@@ -181,7 +183,7 @@ describe('DashboardService', () => {
         tx('t2', 'expense',  100, '2026-04-05', 'cat-2'),
       ];
 
-      const breakdown = service.calculateBreakdown(transactions, categories, APRIL);
+      const breakdown = spectator.service.calculateBreakdown(transactions, categories, APRIL);
 
       expect(breakdown.length).toBe(2);
       expect(breakdown[0].type).toBe('income');
@@ -196,7 +198,7 @@ describe('DashboardService', () => {
         tx('t1', 'expense', 100, '2026-04-01', 'cat-1'),
       ];
 
-      const breakdown = service.calculateBreakdown(transactions, categories, APRIL);
+      const breakdown = spectator.service.calculateBreakdown(transactions, categories, APRIL);
 
       expect(breakdown[0].icon).toBe('📂');
       expect(breakdown[0].type).toBe('expense');
@@ -219,7 +221,7 @@ describe('DashboardService', () => {
         tx('t7', 'expense', 70, '2026-04-07'),
       ];
 
-      const result = service.getRecentTransactions(transactions, APRIL);
+      const result = spectator.service.getRecentTransactions(transactions, APRIL);
 
       expect(result.length).toBe(5);
     });
@@ -232,7 +234,7 @@ describe('DashboardService', () => {
         tx('t3', 'income',  500, '2026-04-03'),
       ];
 
-      const result = service.getRecentTransactions(transactions, APRIL);
+      const result = spectator.service.getRecentTransactions(transactions, APRIL);
 
       expect(result.length).toBe(3);
     });
@@ -245,7 +247,7 @@ describe('DashboardService', () => {
         tx('t2', 'expense', 20, '2026-04-08'),
       ];
 
-      const result = service.getRecentTransactions(transactions, APRIL);
+      const result = spectator.service.getRecentTransactions(transactions, APRIL);
 
       expect(result[0].date).toBe('2026-04-15');
       expect(result[1].date).toBe('2026-04-08');
@@ -264,7 +266,7 @@ describe('DashboardService', () => {
       const tMorning:   ITransaction = { ...base, txId: 'morning',   createdAt: '2026-04-27T09:00:00Z' };
       const tAfternoon: ITransaction = { ...base, txId: 'afternoon', createdAt: '2026-04-27T15:30:00Z' };
 
-      const result = service.getRecentTransactions([tMorning, tAfternoon], APRIL);
+      const result = spectator.service.getRecentTransactions([tMorning, tAfternoon], APRIL);
 
       expect(result[0].txId).toBe('afternoon');
       expect(result[1].txId).toBe('morning');
@@ -282,7 +284,7 @@ describe('DashboardService', () => {
       const tOld:    ITransaction = { ...base, txId: 'old',    date: '2026-04-10', createdAt: '' };
       const tRecent: ITransaction = { ...base, txId: 'recent', date: '2026-04-20', createdAt: '' };
 
-      const result = service.getRecentTransactions([tOld, tRecent], APRIL);
+      const result = spectator.service.getRecentTransactions([tOld, tRecent], APRIL);
 
       expect(result[0].txId).toBe('recent');
       expect(result[1].txId).toBe('old');

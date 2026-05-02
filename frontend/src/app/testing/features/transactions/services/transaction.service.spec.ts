@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
 import { of } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -35,58 +35,48 @@ const mockTx = (overrides: Partial<ITransaction> = {}): ITransaction => ({
 });
 
 describe('TransactionService', () => {
-  let service: TransactionService;
-  let currencySpy: jest.Mocked<Pick<CurrencyApiService, 'getRate'>>;
-  let sheetsSpy:   jest.Mocked<Pick<SheetsApiService, 'getRange' | 'appendRow' | 'updateRow' | 'deleteRow'>>;
-  let authSpy:     jest.Mocked<Pick<AuthService, 'getUser' | 'signIn' | 'isAuthenticated' | 'getAccessToken'>>;
+  let spectator: SpectatorService<TransactionService>;
+  const createService = createServiceFactory({
+    service: TransactionService,
+    mocks: [CurrencyApiService, SheetsApiService, AuthService],
+    providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
+    ],
+  });
 
   beforeEach(() => {
-    currencySpy = { getRate: jest.fn() };
-    sheetsSpy   = { getRange: jest.fn(), appendRow: jest.fn(), updateRow: jest.fn(), deleteRow: jest.fn() };
-    authSpy     = { getUser: jest.fn(), signIn: jest.fn(), isAuthenticated: jest.fn(), getAccessToken: jest.fn() };
-
-    authSpy.isAuthenticated.mockReturnValue(true);
-    authSpy.getUser.mockReturnValue({ sub: 'user-001', email: 'test@test.com', name: 'Tester' });
-
-    TestBed.configureTestingModule({
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        TransactionService,
-        { provide: CurrencyApiService, useValue: currencySpy },
-        { provide: SheetsApiService,   useValue: sheetsSpy },
-        { provide: AuthService,        useValue: authSpy },
-      ],
-    });
-    service = TestBed.inject(TransactionService);
+    spectator = createService();
+    spectator.inject(AuthService).isAuthenticated.mockReturnValue(true);
+    spectator.inject(AuthService).getUser.mockReturnValue({ sub: 'user-001', email: 'test@test.com', name: 'Tester' });
   });
 
   // REQ-03 sc1: transacción en divisa diferente a la base
   it('should calculate amountBase using currency rate', async () => {
-    currencySpy.getRate.mockReturnValue(of(0.92));
+    spectator.inject(CurrencyApiService).getRate.mockReturnValue(of(0.92));
     const draft = {
       userId: 'user-001', walletId: 'wal-001', categoryId: 'cat-001',
       amount: 100, currency: 'USD', concept: 'Test', date: '2026-04-01',
       type: 'expense' as const, isRecurring: false, recurrenceRule: null, notes: null,
     };
 
-    const tx = await service.createTransaction(draft, 'tx-001', 'ws_test', 'EUR');
+    const tx = await spectator.service.createTransaction(draft, 'tx-001', 'ws_test', 'EUR');
 
     expect(tx.amountBase).toBeCloseTo(92, 1);
     expect(tx.txId).toBe('tx-001');
-    expect(currencySpy.getRate).toHaveBeenCalledWith('USD', 'EUR');
+    expect(spectator.inject(CurrencyApiService).getRate).toHaveBeenCalledWith('USD', 'EUR');
   });
 
   // REQ-03 sc2: transacción en divisa base — amountBase = amount
   it('should set amountBase = amount when currency equals base', async () => {
-    currencySpy.getRate.mockReturnValue(of(1));
+    spectator.inject(CurrencyApiService).getRate.mockReturnValue(of(1));
     const draft = {
       userId: 'user-001', walletId: 'wal-001', categoryId: 'cat-001',
       amount: 50, currency: 'EUR', concept: '', date: '2026-04-01',
       type: 'expense' as const, isRecurring: false, recurrenceRule: null, notes: null,
     };
 
-    const tx = await service.createTransaction(draft, 'tx-002', 'ws_test', 'EUR');
+    const tx = await spectator.service.createTransaction(draft, 'tx-002', 'ws_test', 'EUR');
 
     expect(tx.amountBase).toBe(50);
   });
@@ -98,7 +88,7 @@ describe('TransactionService', () => {
     const lastMonthStr = localDateStr(lastMonth);
 
     const recurring = mockTx({ isRecurring: true, recurrenceRule: 'monthly', date: lastMonthStr });
-    const result = service.processRecurring([recurring]);
+    const result = spectator.service.processRecurring([recurring]);
 
     expect(result.length).toBe(1);
     expect(result[0].txId).not.toBe(recurring.txId);
@@ -117,7 +107,7 @@ describe('TransactionService', () => {
 
     const original        = mockTx({ isRecurring: true, recurrenceRule: 'monthly', date: lastMonthStr });
     const alreadyGenerated = mockTx({ txId: 'tx-002', isRecurring: true, recurrenceRule: 'monthly', date: thisMonthStr });
-    const result = service.processRecurring([original, alreadyGenerated]);
+    const result = spectator.service.processRecurring([original, alreadyGenerated]);
 
     expect(result.length).toBe(0);
   });

@@ -1,24 +1,23 @@
-import { TestBed, fakeAsync, flushMicrotasks } from '@angular/core/testing';
+import { fakeAsync, flushMicrotasks } from '@angular/core/testing';
+import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
 import { of, throwError } from 'rxjs';
 
 import { CurrencyStateService } from '@core/state/currency.state';
 import { CurrencyApiService } from '@core/services/currency-api.service';
 import { SheetsApiService } from '@core/services/sheets-api.service';
 import { AuthService } from '@core/services/auth.service';
+import { ICurrency } from '@models/currency.model';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CurrencyStateService — REQ-04
-// ─────────────────────────────────────────────────────────────────────────────
 describe('CurrencyStateService', () => {
-  let service: CurrencyStateService;
-  let currencyApiSpy: jest.Mocked<CurrencyApiService>;
-  let sheetsApiSpy: jest.Mocked<SheetsApiService>;
-  let authSpy: jest.Mocked<AuthService>;
+  let spectator: SpectatorService<CurrencyStateService>;
+
+  const createService = createServiceFactory({
+    service: CurrencyStateService,
+    mocks: [CurrencyApiService, SheetsApiService, AuthService],
+  });
 
   const MOCK_USER = { sub: 'usr_001', email: 'user@test.com', name: 'Test' };
 
-  // rowToCurrency usa row[0]=userId, row[1]=currencyCode, row[2]=name, row[3]=rate, row[4]=lastUpdated, row[5]=source
-  // La fila de datos empieza directamente con userId (sin columna id separada)
   const CURRENCIES_RESPONSE = {
     range: 'CURRENCIES!A:F', majorDimension: 'ROWS' as const,
     values: [
@@ -39,80 +38,115 @@ describe('CurrencyStateService', () => {
   };
 
   beforeEach(() => {
-    currencyApiSpy = {
-      getRate: jest.fn(),
-    } as unknown as jest.Mocked<CurrencyApiService>;
-
-    sheetsApiSpy = {
-      getRange:   jest.fn(),
-      appendRow:  jest.fn().mockReturnValue(of({ updates: { updatedRange: 'CURRENCIES!A3:F3' } })),
-      updateRow:  jest.fn().mockReturnValue(of(undefined)),
-    } as unknown as jest.Mocked<SheetsApiService>;
-
-    authSpy = {
-      getUser:         jest.fn().mockReturnValue(MOCK_USER),
-      getAccessToken:  jest.fn(),
-    } as unknown as jest.Mocked<AuthService>;
-
-    TestBed.configureTestingModule({
-      providers: [
-        CurrencyStateService,
-        { provide: CurrencyApiService, useValue: currencyApiSpy },
-        { provide: SheetsApiService,   useValue: sheetsApiSpy },
-        { provide: AuthService,        useValue: authSpy },
-      ],
-    });
-
-    service = TestBed.inject(CurrencyStateService);
+    spectator = createService();
+    spectator.inject(AuthService).getUser.mockReturnValue(MOCK_USER);
+    spectator.inject(SheetsApiService).appendRow.mockReturnValue(
+      of({ updates: { updatedRange: 'CURRENCIES!A3:F3' } }),
+    );
+    spectator.inject(SheetsApiService).updateRow.mockReturnValue(of(undefined));
   });
 
-  // REQ-04 sc1 — load() con baseCurrency → baseCurrency() es 'USD'
   it('load_shouldSetBaseCurrency_whenSettingExists', fakeAsync(() => {
-    sheetsApiSpy.getRange.mockImplementation((range: string) => {
+    spectator.inject(SheetsApiService).getRange.mockImplementation((range: string) => {
       if (range.includes('CURRENCIES')) return of(CURRENCIES_RESPONSE);
       return of(SETTINGS_RESPONSE_WITH_BASE);
     });
 
-    service.load();
+    spectator.service.load();
     flushMicrotasks();
 
-    expect(service.baseCurrency()).toBe('USD');
-    expect(service.items().length).toBe(1);
-    expect(service.loading()).toBe(false);
+    expect(spectator.service.baseCurrency()).toBe('USD');
+    expect(spectator.service.items().length).toBe(1);
+    expect(spectator.service.loading()).toBe(false);
   }));
 
-  // REQ-04 sc2 — load() sin baseCurrency → baseCurrency() es null
-  it('load_shouldLeaveBaseCurrencyNull_whenNoSettingExists', fakeAsync(() => {
-    sheetsApiSpy.getRange.mockImplementation((range: string) => {
+  it('load_shouldHandleError', fakeAsync(() => {
+    spectator.inject(SheetsApiService).getRange.mockReturnValue(throwError(() => 'API Error'));
+    spectator.service.load();
+    flushMicrotasks();
+    expect(spectator.service.error()).toBe('API Error');
+  }));
+
+  it('fetchAndPersistRate_shouldUpdateExisting_whenExists', fakeAsync(() => {
+    // 1. Cargar inicial
+    spectator.inject(SheetsApiService).getRange.mockImplementation((range: string) => {
       if (range.includes('CURRENCIES')) return of(CURRENCIES_RESPONSE);
       return of(SETTINGS_RESPONSE_EMPTY);
     });
-
-    service.load();
+    spectator.service.load();
     flushMicrotasks();
 
-    expect(service.baseCurrency()).toBeNull();
+    // 2. Fetch de la misma moneda
+    spectator.inject(CurrencyApiService).getRate.mockReturnValue(of(1.10));
+    spectator.service.fetchAndPersistRate('USD', 'EUR');
+    flushMicrotasks();
+
+    expect(spectator.inject(SheetsApiService).updateRow).toHaveBeenCalled();
+    expect(spectator.service.items().find(c => c.currencyCode === 'USD')?.rateToBase).toBe(1.10);
   }));
 
-  // REQ-04 sc3 — fetchAndPersistRate() registro nuevo → items() contiene la divisa
-  it('fetchAndPersistRate_shouldAddCurrency_whenNewRate', fakeAsync(() => {
-    sheetsApiSpy.getRange.mockReturnValue(of({ range: 'CURRENCIES!A:F', majorDimension: 'ROWS' as const, values: [] }));
-    currencyApiSpy.getRate.mockReturnValue(of(1.08));
+  it('saveCurrency_shouldAppendNew_whenDoesNotExist', fakeAsync(() => {
+    const newCurrency: ICurrency = {
+      currencyCode: 'GBP',
+      name: 'British Pound',
+      rateToBase: 0.8,
+      lastUpdated: 'now',
+      source: 'manual'
+    };
+    spectator.inject(SheetsApiService).appendRow.mockReturnValue(of({ updates: { updatedRange: 'CURRENCIES!10:10' } }));
 
-    service.fetchAndPersistRate('EUR', 'USD');
+    spectator.service.saveCurrency(newCurrency);
     flushMicrotasks();
 
-    expect(service.items().some(c => c.currencyCode === 'EUR')).toBe(true);
+    expect(spectator.inject(SheetsApiService).appendRow).toHaveBeenCalled();
+    expect(spectator.service.items().some(c => c.currencyCode === 'GBP')).toBe(true);
+    expect(spectator.service.rowMap()['GBP']).toBe(10);
   }));
 
-  // REQ-04 sc4 — fetchAndPersistRate() error de API → error() no null, items() sin cambio
-  it('fetchAndPersistRate_shouldSetError_whenApiFails', fakeAsync(() => {
-    currencyApiSpy.getRate.mockReturnValue(throwError(() => new Error('API error')));
-
-    service.fetchAndPersistRate('GBP', 'USD');
+  it('saveCurrency_shouldUpdateExisting_whenExists', fakeAsync(() => {
+    // 1. Cargar USD
+    spectator.inject(SheetsApiService).getRange.mockImplementation((range: string) => {
+      if (range.includes('CURRENCIES')) return of(CURRENCIES_RESPONSE);
+      return of(SETTINGS_RESPONSE_EMPTY);
+    });
+    spectator.service.load();
     flushMicrotasks();
 
-    expect(service.error()).not.toBeNull();
-    expect(service.items().some(c => c.currencyCode === 'GBP')).toBe(false);
+    const updated: ICurrency = {
+      currencyCode: 'USD',
+      name: 'US Dollar Mod',
+      rateToBase: 1.05,
+      lastUpdated: 'now',
+      source: 'manual'
+    };
+
+    spectator.service.saveCurrency(updated);
+    flushMicrotasks();
+
+    expect(spectator.inject(SheetsApiService).updateRow).toHaveBeenCalled();
+    expect(spectator.service.items().find(c => c.currencyCode === 'USD')?.name).toBe('US Dollar Mod');
+  }));
+
+  it('setBaseCurrency_shouldAppend_whenNoPreviousBase', fakeAsync(() => {
+    spectator.inject(SheetsApiService).appendRow.mockReturnValue(of({ updates: { updatedRange: 'USER_SETTINGS!5:5' } }));
+    spectator.service.setBaseCurrency('EUR');
+    flushMicrotasks();
+    expect(spectator.service.baseCurrency()).toBe('EUR');
+    expect(spectator.service.baseCurrencyRowNumber()).toBe(5);
+  }));
+
+  it('setBaseCurrency_shouldUpdate_whenPreviousBaseExists', fakeAsync(() => {
+    // 1. Cargar base inicial
+    spectator.inject(SheetsApiService).getRange.mockImplementation((range: string) => {
+      if (range.includes('CURRENCIES')) return of(CURRENCIES_RESPONSE);
+      return of(SETTINGS_RESPONSE_WITH_BASE);
+    });
+    spectator.service.load();
+    flushMicrotasks();
+
+    spectator.service.setBaseCurrency('JPY');
+    flushMicrotasks();
+    expect(spectator.inject(SheetsApiService).updateRow).toHaveBeenCalled();
+    expect(spectator.service.baseCurrency()).toBe('JPY');
   }));
 });

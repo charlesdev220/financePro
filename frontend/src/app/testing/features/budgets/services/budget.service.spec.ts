@@ -1,6 +1,5 @@
-import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { firstValueFrom } from 'rxjs';
+import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
+import { of, firstValueFrom } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { calculateStatus, rowToBudget, BudgetService } from '../../../../features/budgets/services/budget.service';
@@ -149,35 +148,24 @@ describe('rowToBudget — mode y workspaceId', () => {
 // BudgetService.loadBudgets — REQ-11 sc2: hoja vacía → []
 // ─────────────────────────────────────────────────────────────────────────────
 describe('BudgetService.loadBudgets', () => {
-  let service: BudgetService;
-  let sheetsApiSpy: jest.Mocked<Pick<SheetsApiService, 'getRange' | 'appendRow' | 'updateRow' | 'deleteRow'>>;
-  let authSpy: jest.Mocked<Pick<AuthService, 'getUser' | 'signIn' | 'isAuthenticated' | 'getAccessToken'>>;
+  let spectator: SpectatorService<BudgetService>;
+  const createService = createServiceFactory({
+    service: BudgetService,
+    mocks: [SheetsApiService, AuthService],
+    providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
+    ],
+  });
 
   beforeEach(() => {
-    sheetsApiSpy = {
-      getRange:  jest.fn(),
-      appendRow: jest.fn(),
-      updateRow: jest.fn(),
-      deleteRow: jest.fn(),
-    };
-    authSpy = { getUser: jest.fn(), signIn: jest.fn(), isAuthenticated: jest.fn(), getAccessToken: jest.fn() };
-    authSpy.isAuthenticated.mockReturnValue(false);
-
-    TestBed.configureTestingModule({
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        BudgetService,
-        { provide: SheetsApiService, useValue: sheetsApiSpy },
-        { provide: AuthService,      useValue: authSpy },
-      ],
-    });
-    service = TestBed.inject(BudgetService);
+    spectator = createService();
+    spectator.inject(AuthService).isAuthenticated.mockReturnValue(false);
   });
 
   // REQ-11 sc2: hoja solo con encabezados (1 fila) → {budgets:[], rowMap:{}}
   it('loadBudgets_shouldReturnEmpty_whenSheetHasOnlyHeaderRow', async () => {
-    sheetsApiSpy.getRange.mockReturnValue(
+    spectator.inject(SheetsApiService).getRange.mockReturnValue(
       of({
         range: 'BUDGETS!A:H',
         majorDimension: 'ROWS',
@@ -185,7 +173,7 @@ describe('BudgetService.loadBudgets', () => {
       }),
     );
 
-    const result = await firstValueFrom(service.loadBudgets());
+    const result = await firstValueFrom(spectator.service.loadBudgets());
 
     expect(result.budgets).toEqual([]);
     expect(result.rowMap).toEqual({});
@@ -193,9 +181,9 @@ describe('BudgetService.loadBudgets', () => {
 
   // REQ-11 sc2 (edge): respuesta null → vacío sin error
   it('loadBudgets_shouldReturnEmpty_whenResponseIsNull', async () => {
-    sheetsApiSpy.getRange.mockReturnValue(of(null));
+    spectator.inject(SheetsApiService).getRange.mockReturnValue(of(null));
 
-    const result = await firstValueFrom(service.loadBudgets());
+    const result = await firstValueFrom(spectator.service.loadBudgets());
 
     expect(result.budgets).toEqual([]);
     expect(result.rowMap).toEqual({});
@@ -203,11 +191,11 @@ describe('BudgetService.loadBudgets', () => {
 
   // REQ-11 sc2 (edge): values array vacío → vacío sin error
   it('loadBudgets_shouldReturnEmpty_whenValuesArrayIsEmpty', async () => {
-    sheetsApiSpy.getRange.mockReturnValue(
+    spectator.inject(SheetsApiService).getRange.mockReturnValue(
       of({ range: 'BUDGETS!A:H', majorDimension: 'ROWS', values: [] }),
     );
 
-    const result = await firstValueFrom(service.loadBudgets());
+    const result = await firstValueFrom(spectator.service.loadBudgets());
 
     expect(result.budgets).toEqual([]);
     expect(result.rowMap).toEqual({});

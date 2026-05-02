@@ -1,6 +1,5 @@
-import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
-import { firstValueFrom } from 'rxjs';
+import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
+import { of, firstValueFrom } from 'rxjs';
 
 import { CategoryService } from '../../../../features/categories/services/category.service';
 import { SheetsApiService } from '../../../../core/services/sheets-api.service';
@@ -11,9 +10,11 @@ import { MOCK_CATEGORIES } from '../../../fixtures';
 // CategoryService — REQ-05
 // ─────────────────────────────────────────────────────────────────────────────
 describe('CategoryService', () => {
-  let service: CategoryService;
-  let sheetsApiSpy: jest.Mocked<Pick<SheetsApiService, 'getRange' | 'appendRow' | 'updateRow'>>;
-  let authSpy: jest.Mocked<Pick<AuthService, 'getUser'>>;
+  let spectator: SpectatorService<CategoryService>;
+  const createService = createServiceFactory({
+    service: CategoryService,
+    mocks: [SheetsApiService, AuthService],
+  });
 
   const MOCK_USER = { sub: 'usr_001', email: 'user@test.com', name: 'Test' };
 
@@ -25,35 +26,17 @@ describe('CategoryService', () => {
   ];
 
   beforeEach(() => {
-    sheetsApiSpy = {
-      getRange:  jest.fn(),
-      appendRow: jest.fn(),
-      updateRow: jest.fn(),
-    };
-    authSpy = { getUser: jest.fn() };
-
-    authSpy.getUser.mockReturnValue(MOCK_USER);
-    sheetsApiSpy.getRange.mockReturnValue(
+    spectator = createService();
+    spectator.inject(AuthService).getUser.mockReturnValue(MOCK_USER);
+    spectator.inject(SheetsApiService).getRange.mockReturnValue(
       of({ range: 'CATEGORIES!A:J', majorDimension: 'ROWS' as const, values: SHEETS_ROWS }),
     );
-    sheetsApiSpy.updateRow.mockReturnValue(of(undefined));
-
-    TestBed.configureTestingModule({
-      providers: [
-        CategoryService,
-        { provide: SheetsApiService, useValue: sheetsApiSpy },
-        { provide: AuthService,      useValue: authSpy },
-      ],
-    });
-
-    service = TestBed.inject(CategoryService);
+    spectator.inject(SheetsApiService).updateRow.mockReturnValue(of(undefined));
   });
 
   // REQ-05 sc1 — loadCategories() devuelve todas las categorías de la hoja con rowMap correcto
-  // Nota: el servicio no filtra por userId (la hoja pertenece al usuario autenticado);
-  // el filtrado por workspace/userId se hace en la capa de estado (state).
   it('loadCategories_shouldReturnAllCategories_withCorrectRowMap', async () => {
-    const { categories, rowMap } = await firstValueFrom(service.loadCategories());
+    const { categories, rowMap } = await firstValueFrom(spectator.service.loadCategories());
 
     // Todas las filas con id válido deben ser devueltas (3 filas de datos)
     expect(categories.length).toBe(3);
@@ -65,13 +48,13 @@ describe('CategoryService', () => {
   it('softDeleteCategory_shouldCallUpdateRow_withIsActiveFalse', async () => {
     const targetRow = 2;
     const existingRow = [...SHEETS_ROWS[1]];
-    sheetsApiSpy.getRange.mockReturnValue(
+    spectator.inject(SheetsApiService).getRange.mockReturnValue(
       of({ range: `CATEGORIES!A${targetRow}:J${targetRow}`, majorDimension: 'ROWS' as const, values: [existingRow] }),
     );
 
-    await firstValueFrom(service.softDeleteCategory(MOCK_CATEGORIES[0].categoryId, targetRow));
+    await firstValueFrom(spectator.service.softDeleteCategory(MOCK_CATEGORIES[0].categoryId, targetRow));
 
-    const lastCall = sheetsApiSpy.updateRow.mock.calls[sheetsApiSpy.updateRow.mock.calls.length - 1];
+    const lastCall = spectator.inject(SheetsApiService).updateRow.mock.calls[spectator.inject(SheetsApiService).updateRow.mock.calls.length - 1];
     const [range, rows] = lastCall;
     expect(range).toContain(`A${targetRow}`);
     expect(rows[0][8]).toBe(false); // col I (index 8) = is_active

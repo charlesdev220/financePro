@@ -21,11 +21,34 @@ const config: Config = {
     '^ionicons/(.*)$':  '<rootDir>/src/__mocks__/ionicons-stub.js',
   },
   coverageDirectory: 'coverage',
+  coverageReporters: ['text', 'lcov'],
   collectCoverageFrom: [
     'src/app/**/*.ts',
     '!src/app/**/*.spec.ts',
     '!src/app/**/*.module.ts',
   ],
+  coverageThreshold: {
+    global: {
+      statements: 50,
+      branches: 50,
+    },
+    './src/app/core/services/': {
+      statements: 80,
+      branches: 80,
+    },
+    './src/app/core/state/': {
+      statements: 80,
+      branches: 75,
+    },
+    './src/app/features/**/services/': {
+      statements: 70,
+      branches: 70,
+    },
+    './src/app/shared/': {
+      statements: 60,
+      branches: 60,
+    },
+  },
 };
 
 export default config;

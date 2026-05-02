@@ -92,12 +92,6 @@ export const environment = {
 ```bash
 npm install
 npm start
-
-npx ng test --watch=false --browsers=ChromeHeadless 2>&1 | tail -30
-# → http://localhost:8100
-npm test
-
-npx jest
 ```
 
 ## Seguridad y PII
@@ -110,6 +104,16 @@ Los campos sensibles del usuario (`email`, `display_name`) se cifran con **AES-G
 npm test
 
 cd frontend && npm test -- --no-watch --browsers=ChromeHeadless
+
+
+npx ng test --watch=false --browsers=ChromeHeadless 2>&1 | tail -30
+# → http://localhost:8100
+npm test
+
+npx jest --coverage --testPathPattern="core/services|core/state|features.*services"
+
+npx jest --coverage
+
 ```
 
 ## CI/CD

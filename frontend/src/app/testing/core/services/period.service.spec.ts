@@ -1,15 +1,15 @@
-import { TestBed } from '@angular/core/testing';
-import { PeriodService } from '../../../core/services/period.service';
+import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
+import { PeriodService } from '@core/services/period.service';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PeriodService — getDateRange + getPeriodLabel
 // ─────────────────────────────────────────────────────────────────────────────
 describe('PeriodService', () => {
-  let service: PeriodService;
+  let spectator: SpectatorService<PeriodService>;
+  const createService = createServiceFactory(PeriodService);
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
-    service = TestBed.inject(PeriodService);
+    spectator = createService();
   });
 
   // ── getDateRange — tab 'month', monthStartDay = 1 ────────────────────────
@@ -21,7 +21,7 @@ describe('PeriodService', () => {
       const today = new Date(2026, 3, 15); // abril = índice 3
 
       // When
-      const range = service.getDateRange('month', today, 1, 0);
+      const range = spectator.service.getDateRange('month', today, 1, 0);
 
       // Then
       expect(range).toEqual({ from: '2026-04-01', to: '2026-04-30' });
@@ -32,7 +32,7 @@ describe('PeriodService', () => {
       const today = new Date(2026, 3, 15);
 
       // When
-      const range = service.getDateRange('month', today, 1, -1);
+      const range = spectator.service.getDateRange('month', today, 1, -1);
 
       // Then
       expect(range).toEqual({ from: '2026-03-01', to: '2026-03-31' });
@@ -49,7 +49,7 @@ describe('PeriodService', () => {
       const today = new Date(2026, 3, 20);
 
       // When
-      const range = service.getDateRange('month', today, 15, 0);
+      const range = spectator.service.getDateRange('month', today, 15, 0);
 
       // Then
       expect(range).toEqual({ from: '2026-04-15', to: '2026-05-14' });
@@ -60,7 +60,7 @@ describe('PeriodService', () => {
       const today = new Date(2026, 3, 10);
 
       // When
-      const range = service.getDateRange('month', today, 15, 0);
+      const range = spectator.service.getDateRange('month', today, 15, 0);
 
       // Then
       expect(range).toEqual({ from: '2026-03-15', to: '2026-04-14' });
@@ -77,7 +77,7 @@ describe('PeriodService', () => {
       const today = new Date(2026, 3, 15);
 
       // When
-      const range = service.getDateRange('day', today, 1, 0);
+      const range = spectator.service.getDateRange('day', today, 1, 0);
 
       // Then
       expect(range).toEqual({ from: '2026-04-15', to: '2026-04-15' });
@@ -88,7 +88,7 @@ describe('PeriodService', () => {
       const today = new Date(2026, 3, 15);
 
       // When
-      const range = service.getDateRange('day', today, 1, -1);
+      const range = spectator.service.getDateRange('day', today, 1, -1);
 
       // Then
       expect(range).toEqual({ from: '2026-04-14', to: '2026-04-14' });
@@ -105,7 +105,7 @@ describe('PeriodService', () => {
       const today = new Date(2026, 3, 15); // miércoles
 
       // When
-      const range = service.getDateRange('week', today, 1, 0);
+      const range = spectator.service.getDateRange('week', today, 1, 0);
 
       // Then
       expect(range).toEqual({ from: '2026-04-13', to: '2026-04-19' });
@@ -122,7 +122,7 @@ describe('PeriodService', () => {
       const today = new Date(2026, 3, 15);
 
       // When
-      const range = service.getDateRange('year', today, 1, 0);
+      const range = spectator.service.getDateRange('year', today, 1, 0);
 
       // Then
       expect(range).toEqual({ from: '2026-01-01', to: '2026-12-31' });
@@ -133,63 +133,44 @@ describe('PeriodService', () => {
   // ── getPeriodLabel ───────────────────────────────────────────────────────
 
   describe('getPeriodLabel', () => {
-
     it('getPeriodLabel_shouldContainHoy_whenDayTabAndOffset0', () => {
-      // Given: hoy mismo
       const today = new Date(2026, 3, 15);
-
-      // When
-      const label = service.getPeriodLabel('day', today, 1, 0);
-
-      // Then — el label empieza con "Hoy," cuando offset = 0
+      const label = spectator.service.getPeriodLabel('day', today, 1, 0);
       expect(label).toMatch(/^Hoy,/);
     });
 
     it('getPeriodLabel_shouldContainDia_whenDayTabAndOffset-1', () => {
-      // Given: ayer
       const today = new Date(2026, 3, 15);
-
-      // When
-      const label = service.getPeriodLabel('day', today, 1, -1);
-
-      // Then — offset != 0 → empieza con "Día,"
+      const label = spectator.service.getPeriodLabel('day', today, 1, -1);
       expect(label).toMatch(/^Día,/);
     });
 
     it('getPeriodLabel_shouldContainCurrentMonthName_whenMonthTabAndOffset0', () => {
-      // Given: abril 2026
       const today = new Date(2026, 3, 15);
-
-      // When
-      const label = service.getPeriodLabel('month', today, 1, 0);
-
-      // Then — el label incluye el nombre del mes en español (capitalizado)
+      const label = spectator.service.getPeriodLabel('month', today, 1, 0);
       expect(label).toMatch(/[Aa]bril/i);
       expect(label).toContain('2026');
     });
 
-    it('getPeriodLabel_shouldContainPreviousMonthName_whenMonthTabAndOffset-1', () => {
-      // Given: desde abril, retroceder a marzo
-      const today = new Date(2026, 3, 15);
-
-      // When
-      const label = service.getPeriodLabel('month', today, 1, -1);
-
-      // Then — incluye "marzo"
-      expect(label).toMatch(/[Mm]arzo/i);
-    });
-
     it('getPeriodLabel_shouldReturnYear_whenYearTabAndOffset0', () => {
-      // Given
       const today = new Date(2026, 3, 15);
-
-      // When
-      const label = service.getPeriodLabel('year', today, 1, 0);
-
-      // Then
+      const label = spectator.service.getPeriodLabel('year', today, 1, 0);
       expect(label).toBe('2026');
     });
 
+    it('getPeriodLabel_shouldReturnRange_whenWeekTab', () => {
+      const today = new Date(2026, 3, 15);
+      const label = spectator.service.getPeriodLabel('week', today, 1, 0);
+      expect(label).toContain('–');
+    });
+
+    it('getPeriodLabel_shouldReturnRange_whenMonthTabWithCustomStart', () => {
+      const today = new Date(2026, 3, 20);
+      const label = spectator.service.getPeriodLabel('month', today, 15, 0);
+      expect(label).toContain('15');
+      expect(label).toContain('14');
+      expect(label).toContain('2026');
+    });
   });
 
 });

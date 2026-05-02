@@ -1,21 +1,16 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
 import { Chart } from 'chart.js';
 import { ChartPieComponent } from '../../../../shared/components/chart-pie/chart-pie.component';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ChartPieComponent — ciclo de vida y manejo del canvas
-// ─────────────────────────────────────────────────────────────────────────────
 describe('ChartPieComponent', () => {
-  let component: ChartPieComponent;
-  let fixture: ComponentFixture<ChartPieComponent>;
+  let spectator: Spectator<ChartPieComponent>;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [ChartPieComponent],
-    }).compileComponents();
+  const createComponent = createComponentFactory({
+    component: ChartPieComponent,
+  });
 
-    fixture = TestBed.createComponent(ChartPieComponent);
-    component = fixture.componentInstance;
+  beforeEach(() => {
+    spectator = createComponent();
   });
 
   afterEach(() => {
@@ -24,53 +19,50 @@ describe('ChartPieComponent', () => {
   });
 
   it('should create', () => {
-    fixture.detectChanges();
-    expect(component).toBeTruthy();
+    expect(spectator.component).toBeTruthy();
   });
 
   // REQ-05 sc3: ngOnDestroy llama chart.destroy() para liberar la instancia Chart.js
   it('calls chart.destroy() on ngOnDestroy when chart exists', () => {
     jest.useFakeTimers();
 
-    fixture.componentRef.setInput('data', {
+    spectator.setInput('data', {
       labels: ['A', 'B'],
       datasets: [{ data: [10, 20] }],
     });
-    fixture.detectChanges(); // ngAfterViewInit → effect → setTimeout(100)
+    // effect → setTimeout(100)
     jest.runAllTimers();     // avanza el timeout → createChart() ejecuta
 
-    const destroySpy = jest.spyOn(component['chart'] as Chart, 'destroy');
+    const destroySpy = jest.spyOn((spectator.component as any).chart as Chart, 'destroy');
 
-    component.ngOnDestroy();
+    spectator.component.ngOnDestroy();
 
     expect(destroySpy).toHaveBeenCalled();
   });
 
   // REQ-05 sc3 edge: ngOnDestroy no lanza cuando chart es null
   it('does not throw on ngOnDestroy when chart is null', () => {
-    fixture.detectChanges(); // data null → chart permanece null
-
-    expect(() => component.ngOnDestroy()).not.toThrow();
+    // data null → chart permanece null
+    expect(() => spectator.component.ngOnDestroy()).not.toThrow();
   });
 
   // efecto destruye y re-crea el chart cuando data cambia
   it('destroys and re-creates chart when data input changes', () => {
     jest.useFakeTimers();
 
-    fixture.componentRef.setInput('data', {
+    spectator.setInput('data', {
       labels: ['X'],
       datasets: [{ data: [100] }],
     });
-    fixture.detectChanges();
     jest.runAllTimers(); // primer chart creado
 
-    const destroySpy = jest.spyOn(component['chart'] as Chart, 'destroy');
+    const destroySpy = jest.spyOn((spectator.component as any).chart as Chart, 'destroy');
 
-    fixture.componentRef.setInput('data', {
+    spectator.setInput('data', {
       labels: ['Y', 'Z'],
       datasets: [{ data: [50, 50] }],
     });
-    fixture.detectChanges(); // effect: destroy → setTimeout para el nuevo chart
+    // effect: destroy → setTimeout para el nuevo chart
 
     expect(destroySpy).toHaveBeenCalled();
   });

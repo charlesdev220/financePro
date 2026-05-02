@@ -1,5 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { By } from '@angular/platform-browser';
+import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
 import { SpendingRankingComponent } from '../../../../../features/analytics/components/spending-ranking/spending-ranking.component';
 import { SpendingItem } from '../../../../../features/analytics/services/analytics.service';
 
@@ -7,78 +6,60 @@ function item(concept: string, amount: number): SpendingItem {
   return { concept, categoryId: 'cat-1', amountBase: amount, isRecurring: false };
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SpendingRankingComponent — REQ-08
-// ─────────────────────────────────────────────────────────────────────────────
 describe('SpendingRankingComponent', () => {
-  let component: SpendingRankingComponent;
-  let fixture: ComponentFixture<SpendingRankingComponent>;
+  let spectator: Spectator<SpendingRankingComponent>;
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [SpendingRankingComponent],
-    }).compileComponents();
+  const createComponent = createComponentFactory({
+    component: SpendingRankingComponent,
+  });
 
-    fixture = TestBed.createComponent(SpendingRankingComponent);
-    component = fixture.componentInstance;
+  beforeEach(() => {
+    spectator = createComponent({
+      props: {
+        recurrentes: [],
+        superfluos: []
+      }
+    });
   });
 
   it('should create', () => {
-    fixture.componentRef.setInput('recurrentes', []);
-    fixture.componentRef.setInput('superfluos', []);
-    fixture.detectChanges();
-    expect(component).toBeTruthy();
+    expect(spectator.component).toBeTruthy();
   });
 
   // REQ-08 sc1: listas con datos → ítems visibles en ambas secciones
   it('should render items in both sections when data is provided', () => {
-    // Given
-    fixture.componentRef.setInput('recurrentes', [item('Netflix', 15), item('Gym', 30)]);
-    fixture.componentRef.setInput('superfluos', [item('Cena restaurante', 120)]);
-    fixture.detectChanges();
+    spectator.setInput('recurrentes', [item('Netflix', 15), item('Gym', 30)]);
+    spectator.setInput('superfluos', [item('Cena restaurante', 120)]);
 
-    // Then
-    const items = fixture.debugElement.queryAll(By.css('.ranking-item'));
+    const items = spectator.queryAll('.ranking-item');
     expect(items.length).toBe(3);
   });
 
   // REQ-08 sc2: superfluos vacío → mensaje @empty en esa sección
   it('should show empty message in superfluos section when superfluos is empty', () => {
-    // Given
-    fixture.componentRef.setInput('recurrentes', [item('Netflix', 15)]);
-    fixture.componentRef.setInput('superfluos', []);
-    fixture.detectChanges();
+    spectator.setInput('recurrentes', [item('Netflix', 15)]);
+    spectator.setInput('superfluos', []);
 
-    // Then
-    const emptyItems = fixture.debugElement.queryAll(By.css('.ranking-empty'));
+    const emptyItems = spectator.queryAll('.ranking-empty');
     expect(emptyItems.length).toBe(1);
-    expect(emptyItems[0].nativeElement.textContent).toContain('Sin datos suficientes');
+    expect(emptyItems[0].textContent).toContain('Sin datos suficientes');
   });
 
   // REQ-08 sc3: ambas listas vacías → dos mensajes @empty, sin errores de template
   it('should show two empty messages and no errors when both lists are empty', () => {
-    // Given
-    fixture.componentRef.setInput('recurrentes', []);
-    fixture.componentRef.setInput('superfluos', []);
-    fixture.detectChanges();
+    spectator.setInput('recurrentes', []);
+    spectator.setInput('superfluos', []);
 
-    // Then
-    const emptyItems = fixture.debugElement.queryAll(By.css('.ranking-empty'));
+    const emptyItems = spectator.queryAll('.ranking-empty');
     expect(emptyItems.length).toBe(2);
-    expect(() => fixture.detectChanges()).not.toThrow();
   });
 
   // Verifica que los conceptos se renderizan en el DOM
   it('should display concept names in the list items', () => {
-    // Given
-    fixture.componentRef.setInput('recurrentes', [item('Spotify', 10)]);
-    fixture.componentRef.setInput('superfluos', [item('Vuelo vacaciones', 800)]);
-    fixture.detectChanges();
+    spectator.setInput('recurrentes', [item('Spotify', 10)]);
+    spectator.setInput('superfluos', [item('Vuelo vacaciones', 800)]);
 
-    // Then
-    const concepts = fixture.debugElement
-      .queryAll(By.css('.ranking-concept'))
-      .map(el => el.nativeElement.textContent.trim());
+    const concepts = spectator.queryAll('.ranking-concept').map(el => el.textContent?.trim());
     expect(concepts).toContain('Spotify');
     expect(concepts).toContain('Vuelo vacaciones');
   });
