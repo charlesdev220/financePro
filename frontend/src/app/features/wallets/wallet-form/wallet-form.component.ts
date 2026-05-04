@@ -11,10 +11,11 @@ import { chevronDownOutline } from 'ionicons/icons';
 import { WalletsStateService } from '@core/state/wallets.state';
 import { WorkspacesStateService } from '@core/state/workspaces.state';
 import { IWallet } from '@models/wallet.model';
+import { APP_COLORS } from '@core/constants/colors.constants';
+import { COLOR_OPTIONS_WALLET } from '@core/constants/list-colors.constants';
+import { ICON_OPTIONS_WALLET } from '@core/constants/list-icons.constants';
 
 const SUPPORTED_CURRENCIES = ['EUR', 'USD', 'GBP', 'ARS', 'BRL', 'MXN', 'CLP', 'COP'];
-const ICON_OPTIONS = ['💳','🏦','💰','💵','🏧','👝','💼','🏠','🚗','✈️','💎','🪙'];
-const COLOR_OPTIONS = ['#4CAF50','#2196F3','#9C27B0','#FF9800','#F44336','#009688','#FF5722','#607D8B'];
 
 @Component({
   selector: 'app-wallet-form',
@@ -41,15 +42,15 @@ export class WalletFormComponent implements OnInit {
   /** @see wallet — misma excepción. */
   @Input() rowNumber?: number;
 
-  private readonly fb               = inject(FormBuilder);
-  private readonly walletsState     = inject(WalletsStateService);
-  private readonly workspacesState  = inject(WorkspacesStateService);
-  private readonly modalCtrl        = inject(ModalController);
+  private readonly fb = inject(FormBuilder);
+  private readonly walletsState = inject(WalletsStateService);
+  private readonly workspacesState = inject(WorkspacesStateService);
+  private readonly modalCtrl = inject(ModalController);
 
   form!: FormGroup;
   readonly currencies = SUPPORTED_CURRENCIES;
-  readonly icons      = ICON_OPTIONS;
-  readonly colors     = COLOR_OPTIONS;
+  readonly icons = ICON_OPTIONS_WALLET;
+  readonly colors = COLOR_OPTIONS_WALLET;
 
   /** Controla la visibilidad del grid de iconos de cartera. */
   readonly showIconPicker = signal(false);
@@ -70,10 +71,10 @@ export class WalletFormComponent implements OnInit {
   ngOnInit(): void {
     const w = this.wallet;
     this.form = this.fb.group({
-      name:      [w?.name ?? '', [Validators.required, Validators.minLength(1)]],
-      currency:  [w?.currency ?? 'EUR', Validators.required],
-      icon:      [w?.icon ?? '💳', Validators.required],
-      color:     [w?.color ?? '#4CAF50', Validators.required],
+      name: [w?.name ?? '', [Validators.required, Validators.minLength(1)]],
+      currency: [w?.currency ?? 'EUR', Validators.required],
+      icon: [w?.icon ?? '💳', Validators.required],
+      color: [w?.color ?? APP_COLORS.GREEN_BASE, Validators.required],
       isDefault: [w?.isDefault ?? false],
     });
   }
@@ -117,22 +118,22 @@ export class WalletFormComponent implements OnInit {
   async save(): Promise<void> {
     if (this.form.invalid) return;
     const value = this.form.getRawValue();
-    const now   = new Date().toISOString();
+    const now = new Date().toISOString();
 
     if (this.wallet && this.rowNumber) {
       this.walletsState.update({ ...this.wallet, ...value }, this.rowNumber);
     } else {
       const newWallet: IWallet = {
-        walletId:    crypto.randomUUID(),
-        userId:      this.userId!,
-        name:        value.name.trim(),
-        currency:    value.currency,
-        balance:     0,
-        color:       value.color,
-        icon:        value.icon,
-        isDefault:   value.isDefault,
+        walletId: crypto.randomUUID(),
+        userId: this.userId!,
+        name: value.name.trim(),
+        currency: value.currency,
+        balance: 0,
+        color: value.color,
+        icon: value.icon,
+        isDefault: value.isDefault,
         workspaceId: this.workspacesState.activeWorkspaceId(),
-        createdAt:   now,
+        createdAt: now,
       };
       this.walletsState.add(newWallet);
     }

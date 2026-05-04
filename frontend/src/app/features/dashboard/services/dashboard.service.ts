@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { ITransaction } from '@models/transaction.model';
 import { ICategory } from '@models/category.model';
 import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
+import { APP_COLORS } from '@core/constants/colors.constants';
 
 export interface DashboardSummary {
   totalIncome: number;
@@ -79,7 +80,7 @@ export class DashboardService {
           categoryId,
           name: cat?.name ?? categoryId,
           icon: cat?.icon ?? '💰',
-          color: cat?.color ?? '#9E9E9E',
+          color: cat?.color ?? APP_COLORS.GRAY,
           amount,
           type,
         };
@@ -90,7 +91,7 @@ export class DashboardService {
           categoryId: `others-${idSuffix}`,
           name: 'Otros',
           icon: '💰',
-          color: '#9E9E9E',
+          color: APP_COLORS.GRAY,
           amount: rest.reduce((sum, [, a]) => sum + a, 0),
           type,
         });
@@ -98,11 +99,11 @@ export class DashboardService {
       return result;
     };
 
-    const incomeTxs  = periodTxs.filter(t => t.type === TRANSACTION_TYPES.INCOME);
+    const incomeTxs = periodTxs.filter(t => t.type === TRANSACTION_TYPES.INCOME);
     const expenseTxs = periodTxs.filter(t => t.type === TRANSACTION_TYPES.EXPENSE);
 
     return [
-      ...buildGroup(incomeTxs,  TRANSACTION_TYPES.INCOME,  'income'),
+      ...buildGroup(incomeTxs, TRANSACTION_TYPES.INCOME, 'income'),
       ...buildGroup(expenseTxs, TRANSACTION_TYPES.EXPENSE, 'expense'),
     ];
   }

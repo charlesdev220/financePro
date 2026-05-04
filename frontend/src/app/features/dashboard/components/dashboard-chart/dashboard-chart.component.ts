@@ -5,6 +5,7 @@ import { CategoryBreakdown } from '@features/dashboard/services/dashboard.servic
 import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 import { IBudget } from '@models/budget.model';
+import { APP_COLORS } from '@core/constants/colors.constants';
 
 @Component({
   selector: 'app-dashboard-chart',
@@ -31,7 +32,7 @@ export class DashboardChartComponent {
     const b = this.breakdown();
     if (!b?.length) return null;
     return {
-      labels:   b.map(item => item.icon),
+      labels: b.map(item => item.icon),
       datasets: [{ data: b.map(item => item.amount), backgroundColor: b.map(item => item.color) }],
     };
   });
@@ -40,7 +41,7 @@ export class DashboardChartComponent {
   readonly breakdownWithPct = computed(() => {
     const b = this.breakdown();
     const safeAmount = (n: number) => (isNaN(n) || !isFinite(n) ? 0 : n);
-    const totalIncome  = b.filter(i => i.type === TRANSACTION_TYPES.INCOME) .reduce((s, i) => s + safeAmount(i.amount), 0);
+    const totalIncome = b.filter(i => i.type === TRANSACTION_TYPES.INCOME).reduce((s, i) => s + safeAmount(i.amount), 0);
     const totalExpense = b.filter(i => i.type === TRANSACTION_TYPES.EXPENSE).reduce((s, i) => s + safeAmount(i.amount), 0);
     return b.map(item => {
       const amount = safeAmount(item.amount);
@@ -69,10 +70,10 @@ export class DashboardChartComponent {
       .map(item => {
         const b = budgetMap.get(item.categoryId);
         const budgetAmount = (b && b.budgetAmount > 0) ? b.budgetAmount : this.defaultBudget();
-        const spentAmount  = (b && b.budgetAmount > 0) ? b.spentAmount  : item.amount;
+        const spentAmount = (b && b.budgetAmount > 0) ? b.spentAmount : item.amount;
         const raw = (spentAmount / budgetAmount) * 100;
         const pct = isNaN(raw) || !isFinite(raw) ? 0 : Math.min(100, Math.round(raw));
-        const color = pct >= 80 ? '#E57373' : item.color;
+        const color = pct >= 80 ? APP_COLORS.RED : item.color;
         // showBudgetLabel: true siempre — todas las categorías de gasto muestran consumo vs presupuesto
         return { ...item, budgetMeta: { pct, color, hasBudget: !!(b && b.budgetAmount > 0), showBudgetLabel: true } };
       });

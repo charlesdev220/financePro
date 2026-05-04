@@ -9,7 +9,7 @@
   </ion-toolbar>
 </ion-header>
 
-<ion-content style="--background: #F9FAFB;">
+<ion-content style="--background: APP_COLORS.BLUE_LIGHT;">
   <div class="p-4">
 
     <!-- MODO TILES: grid 4-col con borde de color (categorías) -->
@@ -18,8 +18,8 @@
       @for (item of items; track item.value) {
       <button type="button" (click)="select(item.value)"
         class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 p-2 aspect-square transition-all active:scale-95"
-        [style.border-color]="item.color || '#E5E7EB'"
-        [style.background-color]="selectedValue === item.value ? (item.color || '#E5E7EB') + '33' : (item.color || '#E5E7EB') + '1a'"
+        [style.border-color]="item.color || 'var(--color-myfinance-gray-light)'"
+        [style.background-color]="selectedValue === item.value ? (item.color || 'var(--color-myfinance-gray-light)') + '33' : (item.color || 'var(--color-myfinance-gray-light)') + '1a'"
         [class.ring-2]="selectedValue === item.value" [class.ring-myfinance-green]="selectedValue === item.value">
         <span class="text-2xl leading-none">{{ item.icon }}</span>
         <span class="text-[10px] text-center text-myfinance-text-primary font-medium leading-tight line-clamp-2">{{

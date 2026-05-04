@@ -16,8 +16,8 @@ Leer **obligatoriamente** antes de escribir una línea:
 
 | Tipo de tarea | Agente responsable |
 |---|---|
-| Componentes, pages, NgRx (actions/reducer/effects/selectors) | `ionic-angular-architect` → implementa con `develop-expert` |
-| Cambios de esquema Sheets, modelos TypeScript en `models/` | `google-sheets-architect` |
+| Componentes, pages, NgRx (actions/reducer/effects/selectors) | `develop-expert` |
+| Cambios de esquema Sheets, modelos TypeScript en `models/` | `develop-expert` |
 | Tests unitarios (Karma/Jasmine) o E2E (Playwright) | `qa-automation` |
 | Builds, CI/CD, variables de entorno | `devops-cloud` |
 | Tareas de 1 archivo o configuración simple | orchestrator inline |

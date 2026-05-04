@@ -94,13 +94,10 @@ src/app/
 ```
 Prompt
   └── CLAUDE.md                    ← QUÉ construir y por qué (este archivo, actúa como orchestrator)
-        ├── ionic-angular-architect   ← implementa frontend (UI, componentes, páginas, store)
-        │     ├── lee: typescript · angular · html · ionic · ngrx · tailwind · ux-ui
-        │     └── delega implementación atómica → develop-expert
-        ├── google-sheets-architect   ← mantiene el esquema de datos y los modelos
-        │     └── lee: sheets-api · typescript
-        ├── qa-automation             ← escribe y ejecuta tests contra spec.md
-        │     └── lee: angular · ngrx · typescript + spec.md del cambio activo
+        ├── develop-expert            ← implementa todo el código de producción (componentes, pages, NgRx, modelos, Sheets)
+        │     └── lee: typescript · angular · html · ionic · ngrx · tailwind · ux-ui · sheets-api
+        ├── qa-automation             ← escribe y ejecuta tests (Karma/Jasmine + Playwright E2E)
+        │     └── lee: angular · ngrx · typescript + verify.md del cambio activo
         ├── playwright-inspector      ← inspección visual/funcional en navegador real → bug-report.md
         │     └── lee: ux-ui · ionic · tailwind · HISTORIAL_IMPLEMENTACION
         └── devops-cloud              ← builds, CI/CD, secrets
@@ -109,13 +106,12 @@ Prompt
 
 **Qué lee cada agente — referencia rápida:**
 
-| Agente | Archivos de reglas obligatorios |
-|--------|--------------------------------|
-| `ionic-angular-architect` | `typescript` · `angular` · `html` · `ionic` · `ngrx` · `tailwind` · `ux-ui` |
-| `google-sheets-architect` | `sheets-api` · `typescript` |
-| `qa-automation` | `angular` · `ngrx` · `typescript` · `spec.md` del cambio activo |
-| `playwright-inspector` | `ux-ui` · `ionic` · `tailwind` · `HISTORIAL_IMPLEMENTACION.md` |
-| `devops-cloud` | `CLAUDE.md` (sección Stack) |
+| Agente | Responsabilidad | Archivos de reglas obligatorios |
+|--------|----------------|---------------------------------|
+| `develop-expert` | Todo el código de producción | `typescript` · `angular` · `html` · `ionic` · `ngrx` · `tailwind` · `ux-ui` · `sheets-api` |
+| `qa-automation` | Tests unitarios y E2E | `angular` · `ngrx` · `typescript` · `verify.md` del cambio activo |
+| `playwright-inspector` | Inspección visual en browser | `ux-ui` · `ionic` · `tailwind` · `HISTORIAL_IMPLEMENTACION.md` |
+| `devops-cloud` | Builds, CI/CD, secrets | `CLAUDE.md` (sección Stack) |
 
 **Regla de cadena:** Ningún agente escribe código sin haber leído el archivo de reglas de su capa. Si un requerimiento contradice una regla → señalar el conflicto antes de proceder.
 
@@ -180,6 +176,19 @@ Antes de ejecutar algo, preguntate: **¿esto infla mi contexto sin necesidad?**
 | Sheets API + Seguridad | `.claude/rules/sheets-api.md` | Esquema, `SheetsApiService`, ETag, cifrado PII, lógica de negocio |
 | Estilos / Tailwind | `.claude/rules/tailwind.md` | Tailwind vs variables Ionic, responsive, SCSS excepciones |
 | UX / UI | `.claude/rules/ux-ui.md` | Usabilidad, datos por defecto, selects, contraste, navegación entre pantallas, onboarding |
+| Estilos / Tematización | — | `variables.scss`, `colors.constants.ts`, `tailwind.config.js` |
+
+---
+
+## 🎨 Sistema de Diseño (Monefy Style)
+
+El diseño visual se centraliza en tres archivos clave que deben mantenerse sincronizados al añadir nuevos colores o estilos:
+
+- **`frontend/src/theme/variables.scss`**: Definición de tokens de color (CSS variables), overrides de Ionic y estilos globales (fuentes, animaciones). Es la fuente de verdad para el CSS.
+- **`frontend/src/app/core/constants/colors.constants.ts`**: Paleta de colores en TypeScript (`APP_COLORS`). Se usa para componentes dinámicos como gráficos (Chart.js), lógica de negocio y selectores de color.
+- **`frontend/tailwind.config.js`**: Configuración de utilidades Tailwind. Extiende la paleta con los colores de marca (`myfinance-*`) para uso directo en clases HTML.
+
+---
 
 ---
 

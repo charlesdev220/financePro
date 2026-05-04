@@ -4,6 +4,16 @@ Registro de lecciones técnicas extraídas de cada iteración del proyecto. Appe
 
 ---
 
+### Qué hemos aprendido en el desarrollo de esta iteración (Centralización del Sistema de Diseño):
+*Qué se aprendió:*
+- La arquitectura visual de la aplicación depende de la sincronización de tres archivos de naturaleza distinta: SCSS (variables de CSS/Ionic), TypeScript (constantes de color para lógica y gráficas) e incluso JavaScript (configuración de Tailwind).
+- Mover `tailwind.config.js` fuera de la raíz en un proyecto Angular estándar requiere configuraciones adicionales en PostCSS y el builder para no romper la detección automática de utilidades.
+- Es preferible mantener `tailwind.config.js` en la raíz por compatibilidad con herramientas de desarrollo (IntelliSense) y simplicidad del build, pero documentando su relación con los otros archivos de "tematización".
+*Por qué se aprendió:* Se evaluó la posibilidad de agrupar los archivos de configuración visual en una única carpeta para mejorar la organización. El análisis determinó que mantener la ubicación estándar pero con documentación centralizada es el equilibrio óptimo entre orden y estabilidad del build.
+*Dónde se aprendió:* Análisis de organización de archivos solicitado por el usuario; revisión de `angular.json`, `postcss.config.js` y dependencias de build.
+
+---
+
 ### Qué hemos aprendido en el desarrollo de esta iteración (Migración a Spectator + Jest):
 *Qué se aprendió:*
 - ADR-02: Los signals de Angular deben ser instanciados frescos en cada `beforeEach` al ser usados como dependencias mockeadas. Pasar el mismo signal desde `createServiceFactory` rompe el aislamiento entre tests porque todos comparten la misma instancia del signal.

@@ -12,7 +12,7 @@ Recibís: **$ARGUMENTS** (opcional: "list" para solo listar, "update" para regen
 | `sdd-propose` | Proponer diseño — pausa para aprobación |
 | `sdd-spec` | Escribir especificaciones BDD |
 | `sdd-design` | Diseño técnico y ADRs |
-| `sdd-tasks` | Mapa de tareas atómicas — pausa para aprobación |
+| `sdd-tasks` | Mapa de tareas atómicas — pausa para aprobación(ionic-angular-architect) |
 | `sdd-apply` | Implementar las tareas (con delegación de agentes) |
 | `sdd-verify` | Validar implementación contra specs (qa-automation) |
 | `sdd-archive` | Cerrar cambio y actualizar historial |

@@ -107,7 +107,8 @@
                 <ion-badge color="success">Principal</ion-badge>
                 }
                 <!-- WARN-05: color dinámico en badge → excepción válida por ser valor calculado -->
-                <ion-badge [style]="currency.source === 'api' ? '--background: #3F51B5;' : '--background: #FF9800;'"
+                <ion-badge
+                  [style]="currency.source === 'api' ? '--background: APP_COLORS.INDIGO;' : '--background: APP_COLORS.ANARANJADO;'"
                   style="font-size: 10px;">{{ currency.source === 'api' ? 'API' : 'Manual' }}</ion-badge>
               </div>
               <p class="text-xs text-myfinance-text-secondary mt-0.5">

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, forkJoin, map } from 'rxjs';
 import { SheetsApiService } from './sheets-api.service';
 import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
+import { APP_COLORS } from '@core/constants/colors.constants';
 
 /**
  * DataSeedService — Provee datos iniciales (Semillas) para nuevos usuarios.
@@ -19,13 +20,13 @@ export class DataSeedService {
     const now = new Date().toISOString();
 
     const defaultWallets = [
-      [crypto.randomUUID(), userId, 'Efectivo', 'EUR', 0, '#4CAF50', '💵', true, now],
-      [crypto.randomUUID(), userId, 'Banco Principal', 'EUR', 0, '#2196F3', '🏦', false, now],
+      [crypto.randomUUID(), userId, 'Efectivo', 'EUR', 0, APP_COLORS.GREEN_BASE, '💵', true, now],
+      [crypto.randomUUID(), userId, 'Banco Principal', 'EUR', 0, APP_COLORS.BLUE, '🏦', false, now],
     ];
 
     return forkJoin({
-      wallets:     this.sheetsApi.appendRow('WALLETS!A1', defaultWallets),
-      categories:  this.sheetsApi.appendRow('CATEGORIES!A1', this._buildDefaultCategories(userId, '')),
+      wallets: this.sheetsApi.appendRow('WALLETS!A1', defaultWallets),
+      categories: this.sheetsApi.appendRow('CATEGORIES!A1', this._buildDefaultCategories(userId, '')),
     }).pipe(map(() => true));
   }
 
@@ -44,17 +45,17 @@ export class DataSeedService {
     const now = new Date().toISOString();
     return [
       // Ingresos
-      [crypto.randomUUID(), userId, 'Sueldo',         '💰', '#4CAF50', TRANSACTION_TYPES.INCOME,  '', 'monthly', true, now, workspaceId],
-      [crypto.randomUUID(), userId, 'Ventas',          '📈', '#8BC34A', TRANSACTION_TYPES.INCOME,  '', 'monthly', true, now, workspaceId],
-      [crypto.randomUUID(), userId, 'Otros ingresos',  '💵', '#CDDC39', TRANSACTION_TYPES.INCOME,  '', 'monthly', true, now, workspaceId],
+      [crypto.randomUUID(), userId, 'Sueldo', '💰', APP_COLORS.GREEN_BASE, TRANSACTION_TYPES.INCOME, '', 'monthly', true, now, workspaceId],
+      [crypto.randomUUID(), userId, 'Ventas', '📈', APP_COLORS.LIMA, TRANSACTION_TYPES.INCOME, '', 'monthly', true, now, workspaceId],
+      [crypto.randomUUID(), userId, 'Otros ingresos', '💵', APP_COLORS.AMARILLO, TRANSACTION_TYPES.INCOME, '', 'monthly', true, now, workspaceId],
       // Gastos
-      [crypto.randomUUID(), userId, 'Alimentación',   '🛒', '#F44336', TRANSACTION_TYPES.EXPENSE, '', 'monthly', true, now, workspaceId],
-      [crypto.randomUUID(), userId, 'Transporte',     '🚌', '#FF9800', TRANSACTION_TYPES.EXPENSE, '', 'monthly', true, now, workspaceId],
-      [crypto.randomUUID(), userId, 'Vivienda',       '🏠', '#795548', TRANSACTION_TYPES.EXPENSE, '', 'monthly', true, now, workspaceId],
-      [crypto.randomUUID(), userId, 'Salud',          '⚕️', '#E91E63', TRANSACTION_TYPES.EXPENSE, '', 'monthly', true, now, workspaceId],
-      [crypto.randomUUID(), userId, 'Educación',      '🎓', '#9C27B0', TRANSACTION_TYPES.EXPENSE, '', 'monthly', true, now, workspaceId],
-      [crypto.randomUUID(), userId, 'Ocio',           '🎬', '#3F51B5', TRANSACTION_TYPES.EXPENSE, '', 'monthly', true, now, workspaceId],
-      [crypto.randomUUID(), userId, 'Otros gastos',   '🛍️', '#9E9E9E', TRANSACTION_TYPES.EXPENSE, '', 'monthly', true, now, workspaceId],
+      [crypto.randomUUID(), userId, 'Alimentación', '🛒', APP_COLORS.ROJO, TRANSACTION_TYPES.EXPENSE, '', 'monthly', true, now, workspaceId],
+      [crypto.randomUUID(), userId, 'Transporte', '🚌', APP_COLORS.ANARANJADO, TRANSACTION_TYPES.EXPENSE, '', 'monthly', true, now, workspaceId],
+      [crypto.randomUUID(), userId, 'Vivienda', '🏠', APP_COLORS.BROWN, TRANSACTION_TYPES.EXPENSE, '', 'monthly', true, now, workspaceId],
+      [crypto.randomUUID(), userId, 'Salud', '⚕️', APP_COLORS.PINK, TRANSACTION_TYPES.EXPENSE, '', 'monthly', true, now, workspaceId],
+      [crypto.randomUUID(), userId, 'Educación', '🎓', APP_COLORS.PURPLE, TRANSACTION_TYPES.EXPENSE, '', 'monthly', true, now, workspaceId],
+      [crypto.randomUUID(), userId, 'Ocio', '🎬', APP_COLORS.INDIGO, TRANSACTION_TYPES.EXPENSE, '', 'monthly', true, now, workspaceId],
+      [crypto.randomUUID(), userId, 'Otros gastos', '🛍️', APP_COLORS.GRAY, TRANSACTION_TYPES.EXPENSE, '', 'monthly', true, now, workspaceId],
     ];
   }
 }

@@ -24,16 +24,16 @@ import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
   imports: [
     IonContent, IonHeader, IonTitle, IonToolbar,
     IonBadge, IonSpinner,
-    IonFab, IonFabButton, IonIcon, IonButton,
+    IonIcon, IonButton,
     CurrencyFormatPipe,
   ],
 })
 export class WalletListPage implements OnInit {
-  private readonly walletsState    = inject(WalletsStateService);
-  private readonly txState         = inject(TransactionsStateService);
-  private readonly modalCtrl       = inject(ModalController);
-  private readonly toastCtrl       = inject(ToastController);
-  private readonly authService     = inject(AuthService);
+  private readonly walletsState = inject(WalletsStateService);
+  private readonly txState = inject(TransactionsStateService);
+  private readonly modalCtrl = inject(ModalController);
+  private readonly toastCtrl = inject(ToastController);
+  private readonly authService = inject(AuthService);
 
   /** Estado de carga de carteras para mostrar spinner mientras llegan del state service. */
   readonly loading = this.walletsState.loading;

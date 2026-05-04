@@ -34,6 +34,14 @@ Google Spreadsheet (ID en environment.ts — no expuesto en UI)
 No hay servidor Express. No hay Google Apps Script. 
 Toda la lógica de negocio reside en servicios Angular. El login es automático usando una cuenta de servicio.
 
+## Sistema de Diseño
+
+La aplicación utiliza un sistema de diseño personalizado inspirado en Monefy, centralizado en tres archivos principales:
+
+- **`frontend/src/theme/variables.scss`**: Tokens de color CSS, temas de Ionic y estilos globales.
+- **`frontend/src/app/core/constants/colors.constants.ts`**: Constantes de color para gráficas y lógica TypeScript.
+- **`frontend/tailwind.config.js`**: Configuración de clases de utilidad personalizadas de Tailwind. paleta de colores proyecto.
+
 ## Estructura
 
 ```

@@ -14,27 +14,9 @@ import { BudgetsStateService } from '@core/state/budgets.state';
 import { TransactionsStateService } from '@core/state/transactions.state';
 import { WorkspacesStateService } from '@core/state/workspaces.state';
 import { ICategory } from '@models/category.model';
-
-const ICON_OPTIONS = ['🏠', '🍔', '🚗', '✈️', '💊', '👕', '📱', '🎬', '📚', '💰', '🏋️', '🎵', '🐶', '💼', '🎮', '🏦', '💳', '🛒', '⚡', '🔧'];
-const COLOR_OPTIONS: { label: string; value: string }[] = [
-  { label: 'Rojo',       value: '#F44336' },
-  { label: 'Rosa',       value: '#E91E63' },
-  { label: 'Violeta',    value: '#9C27B0' },
-  { label: 'Púrpura',    value: '#673AB7' },
-  { label: 'Índigo',     value: '#3F51B5' },
-  { label: 'Azul',       value: '#2196F3' },
-  { label: 'Cian',       value: '#00BCD4' },
-  { label: 'Verde agua', value: '#009688' },
-  { label: 'Verde',      value: '#4CAF50' },
-  { label: 'Lima',       value: '#8BC34A' },
-  { label: 'Amarillo',   value: '#CDDC39' },
-  { label: 'Ámbar',      value: '#FFC107' },
-  { label: 'Naranja',    value: '#FF9800' },
-  { label: 'Coral',      value: '#FF5722' },
-  { label: 'Marrón',     value: '#795548' },
-  { label: 'Gris',       value: '#9E9E9E' },
-  { label: 'Pizarra',    value: '#607D8B' },
-];
+import { ICON_OPTIONS } from '@core/constants/list-icons.constants';
+import { COLOR_OPTIONS } from '@core/constants/list-colors.constants';
+import { APP_COLORS } from '@core/constants/colors.constants';
 
 @Component({
   selector: 'app-category-form',
@@ -61,14 +43,14 @@ export class CategoryFormComponent implements OnInit {
   /** @see category — misma excepción. */
   @Input() rowNumber?: number;
 
-  private readonly fb                  = inject(FormBuilder);
-  private readonly categoriesState     = inject(CategoriesStateService);
-  private readonly userSettingsState   = inject(UserSettingsStateService);
-  private readonly budgetsState        = inject(BudgetsStateService);
-  private readonly txState             = inject(TransactionsStateService);
-  private readonly workspacesState     = inject(WorkspacesStateService);
-  private readonly modalCtrl           = inject(ModalController);
-  private readonly alertCtrl           = inject(AlertController);
+  private readonly fb = inject(FormBuilder);
+  private readonly categoriesState = inject(CategoriesStateService);
+  private readonly userSettingsState = inject(UserSettingsStateService);
+  private readonly budgetsState = inject(BudgetsStateService);
+  private readonly txState = inject(TransactionsStateService);
+  private readonly workspacesState = inject(WorkspacesStateService);
+  private readonly modalCtrl = inject(ModalController);
+  private readonly alertCtrl = inject(AlertController);
 
   form!: FormGroup;
   readonly icons = signal<string[]>([...ICON_OPTIONS]);
@@ -86,8 +68,8 @@ export class CategoryFormComponent implements OnInit {
 
   readonly PERIOD_OPTIONS = [
     { value: 'monthly', label: 'Mensual' },
-    { value: 'weekly',  label: 'Semanal' },
-    { value: 'custom',  label: 'Personalizado' },
+    { value: 'weekly', label: 'Semanal' },
+    { value: 'custom', label: 'Personalizado' },
   ];
 
   /** True cuando se recibió una categoría existente, indicando modo edición. */
@@ -111,7 +93,7 @@ export class CategoryFormComponent implements OnInit {
     this.form = this.fb.group({
       name: [cat?.name ?? '', [Validators.required, Validators.minLength(1)]],
       icon: [cat?.icon ?? '📂', Validators.required],
-      color: [cat?.color ?? '#9E9E9E', Validators.required],
+      color: [cat?.color ?? APP_COLORS.GRAY, Validators.required],
       type: [cat?.type ?? 'expense', Validators.required],
       budgetAmount: [budgetDefault],
       budgetPeriod: [cat?.budgetPeriod ?? 'monthly'],
@@ -179,8 +161,8 @@ export class CategoryFormComponent implements OnInit {
 
     const duplicate = this.categoriesState.items().find(
       c => c.name.toLowerCase() === trimmedName &&
-           c.type === value.type &&
-           c.categoryId !== this.category?.categoryId,
+        c.type === value.type &&
+        c.categoryId !== this.category?.categoryId,
     );
 
     if (duplicate) {
@@ -215,16 +197,16 @@ export class CategoryFormComponent implements OnInit {
       const categoryId = crypto.randomUUID();
       const newCategory: ICategory = {
         categoryId,
-        userId:      this.userId!,
-        name:        value.name.trim(),
-        icon:        value.icon,
-        color:       value.color,
-        type:        value.type,
+        userId: this.userId!,
+        name: value.name.trim(),
+        icon: value.icon,
+        color: value.color,
+        type: value.type,
         budgetAmount,
         budgetPeriod: value.budgetPeriod,
-        isActive:    true,
+        isActive: true,
         workspaceId: this.workspacesState.activeWorkspaceId(),
-        createdAt:   now,
+        createdAt: now,
       };
       this.categoriesState.add(newCategory);
       if (isExpense && budgetAmount && budgetAmount > 0) {

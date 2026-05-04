@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { APP_COLORS } from '@core/constants/colors.constants';
 import { IBudget } from '@models/budget.model';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 
@@ -16,7 +17,7 @@ export class BudgetIndicatorComponent {
   /** Moneda del usuario para formatear los montos del presupuesto. Recibida del componente padre. */
   userCurrency = input<string>('EUR');
   /** Color hex de la categoría del presupuesto. Define el color de la barra cuando pct < 80%. */
-  catColor = input<string>('#5BAD8F');
+  catColor = input<string>(APP_COLORS.GREEN);
 
   /** Porcentaje de gasto sobre el presupuesto asignado, limitado a [0, 100]. */
   readonly pct = computed(() => {
@@ -27,5 +28,5 @@ export class BudgetIndicatorComponent {
   });
 
   /** Color de la barra: rojo si >= 80% (igual que dashboard), color de categoría si no. */
-  readonly barColor = computed(() => this.pct() >= 80 ? '#E57373' : this.catColor());
+  readonly barColor = computed(() => this.pct() >= 80 ? APP_COLORS.RED : this.catColor());
 }

@@ -26,6 +26,7 @@ import { PeriodSelectorComponent } from '@shared/components/period-selector/peri
 import { PeriodTab } from '@core/constants/period.constants';
 import { BudgetIndicatorComponent } from '@shared/components/budget-indicator/budget-indicator.component';
 import { BudgetFormComponent } from '@features/budgets/budget-form/budget-form.component';
+import { APP_COLORS } from '@core/constants/colors.constants';
 
 @Component({
   selector: 'app-budget-list',
@@ -49,20 +50,20 @@ import { BudgetFormComponent } from '@features/budgets/budget-form/budget-form.c
   ],
 })
 export class BudgetListPage implements OnInit {
-  private readonly budgetsState      = inject(BudgetsStateService);
-  private readonly categoriesState   = inject(CategoriesStateService);
-  private readonly currencyState     = inject(CurrencyStateService);
-  private readonly txState           = inject(TransactionsStateService);
-  private readonly modalCtrl         = inject(ModalController);
-  private readonly toastCtrl         = inject(ToastController);
+  private readonly budgetsState = inject(BudgetsStateService);
+  private readonly categoriesState = inject(CategoriesStateService);
+  private readonly currencyState = inject(CurrencyStateService);
+  private readonly txState = inject(TransactionsStateService);
+  private readonly modalCtrl = inject(ModalController);
+  private readonly toastCtrl = inject(ToastController);
 
-  readonly currentPeriod  = signal(new Date().toISOString().slice(0, 7));
+  readonly currentPeriod = signal(new Date().toISOString().slice(0, 7));
   /** Tab activo en el selector de período para la vista de presupuestos. */
   readonly activePeriodTab = signal<PeriodTab>('month');
 
   private readonly _allBudgets = this.budgetsState.items;
-  private readonly rowMap      = this.budgetsState.rowMap;
-  private readonly categories  = this.categoriesState.items;
+  private readonly rowMap = this.budgetsState.rowMap;
+  private readonly categories = this.categoriesState.items;
 
   /** Moneda base del usuario. Fallback 'EUR' antes de cargar. */
   readonly userBaseCurrency = computed(() => this.currencyState.baseCurrency() ?? 'EUR');
@@ -74,13 +75,13 @@ export class BudgetListPage implements OnInit {
    */
   readonly budgets = computed(() => {
     const period = this.currentPeriod();
-    const txs    = this.txState.items();
-    const cats   = this.categories();
+    const txs = this.txState.items();
+    const cats = this.categories();
 
     return this._allBudgets()
       .filter(b => b.period === period)
       .map(b => {
-        const cat         = cats.find(c => c.categoryId === b.categoryId);
+        const cat = cats.find(c => c.categoryId === b.categoryId);
         const spentAmount = txs
           .filter(t =>
             t.type === TRANSACTION_TYPES.EXPENSE &&
@@ -92,8 +93,8 @@ export class BudgetListPage implements OnInit {
         return {
           ...b,
           spentAmount,
-          categoryName:  cat?.name  ?? 'Sin categoría',
-          categoryColor: cat?.color ?? '#5BAD8F',
+          categoryName: cat?.name ?? 'Sin categoría',
+          categoryColor: cat?.color ?? APP_COLORS.GREEN,
         };
       });
   });

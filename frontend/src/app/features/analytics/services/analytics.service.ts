@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { ITransaction } from '@models/transaction.model';
 import { ICategory } from '@models/category.model';
 import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
+import { APP_COLORS } from '@core/constants/colors.constants';
 
 export interface MonthlyTotal {
   period: string; // YYYY-MM
@@ -99,7 +100,7 @@ export class AnalyticsService {
           categoryId,
           name:  cat?.name  ?? 'Otros',
           icon:  cat?.icon  ?? '💰',
-          color: cat?.color ?? '#9E9E9E',
+          color: cat?.color ?? APP_COLORS.GRAY,
           total,
         };
       })

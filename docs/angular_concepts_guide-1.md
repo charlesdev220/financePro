@@ -1434,3 +1434,46 @@ private _theme$ = new BehaviorSubject<'light' | 'dark'>('light');
 // ❌ Nunca BehaviorSubject para colecciones (transacciones, carteras)
 private _transactions$ = new BehaviorSubject<Transaction[]>([]);  // usar NgRx
 ```
+
+
+
+-----------------------
+Listed directory knowledge
+Viewed dashboard.page.ts:1-320
+Viewed category-spending-chart.component.ts:1-42
+
+En Angular, aunque técnicamente ambos son clases decoradas con `@Component`, la diferencia radica en su **responsabilidad** y **jerarquía** dentro de la arquitectura de tu proyecto (como en **FinancePro**).
+
+Aquí tienes el desglose de las diferencias principales:
+
+### 1. Component (Componente de Presentación)
+Es la unidad básica y reutilizable de la interfaz.
+- **Responsabilidad:** Se encarga de mostrar datos y emitir eventos. No suele saber "de dónde" vienen los datos.
+- **Entradas y Salidas:** Utiliza `@Input()` para recibir datos y `@Output()` para avisar de cambios.
+- **Ejemplo en tu código:** `CategorySpendingChartComponent`.
+    - Recibe los datos por `input<CategorySpendingItem[]>([]);` (línea 16).
+    - No inyecta servicios de estado globales (como `TransactionsStateService`), sino que se limita a pintar el gráfico con lo que le dan.
+- **Reutilización:** Se puede usar en muchas pantallas diferentes.
+
+### 2. Page (Componente Contenedor o Smart Component)
+Es un componente que representa una "pantalla" completa o una ruta de la aplicación.
+- **Responsabilidad:** Orquestar la lógica de la página. Se comunica con los servicios (API, Store/State) para obtener los datos y luego los reparte a los componentes hijos.
+- **Rutas:** Está vinculado directamente a una URL en el `app-routing.module.ts`.
+- **Ejemplo en tu código:** `DashboardPage`.
+    - Inyecta muchísimos servicios de estado (`TransactionsStateService`, `CategoriesStateService`, `AuthService`, etc. - líneas 84-103).
+    - Importa y gestiona otros componentes (como `DashboardChartComponent` o `TransactionFormComponent`).
+    - Maneja la navegación y ciclos de vida de Ionic/Angular (como `ionViewDidEnter` o `ngOnInit`).
+- **Reutilización:** No se suele reutilizar; es el "dueño" de una vista específica.
+
+### Resumen comparativo
+
+| Característica | Component (`.component.ts`) | Page (`.page.ts`) |
+| :--- | :--- | :--- |
+| **Nivel** | Bajo (átomo o molécula) | Alto (organismo o pantalla) |
+| **Datos** | Los recibe por `Input()` | Los pide a los `Services` |
+| **Lógica** | Mínima (formateo de UI) | Compleja (reglas de negocio, navegación) |
+| **Enrutado** | No (se inserta mediante selector) | Sí (asociado a una ruta URL) |
+| **Contexto** | Reutilizable en cualquier sitio | Específico de una funcionalidad (p.ej. Dashboard) |
+
+**En tu proyecto FinancePro:**
+Las **Pages** (como `dashboard.page.ts`) son los "cerebros" que cargan la información de las finanzas, mientras que los **Components** (como `category-spending-chart.component.ts`) son las herramientas visuales que el cerebro usa para mostrar esa información de forma bonita.

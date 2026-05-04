@@ -78,14 +78,14 @@ import { TRANSACTION_TYPES, TransactionType } from '@core/constants/transaction.
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DashboardPage implements OnInit {
-  private readonly alertCtrl         = inject(AlertController);
-  private readonly modalCtrl         = inject(ModalController);
-  private readonly toastCtrl         = inject(ToastController);
-  private readonly authService       = inject(AuthService);
-  private readonly dashboardService  = inject(DashboardService);
-  private readonly seedService       = inject(DataSeedService);
-  private readonly router            = inject(Router);
-  private readonly periodService     = inject(PeriodService);
+  private readonly alertCtrl = inject(AlertController);
+  private readonly modalCtrl = inject(ModalController);
+  private readonly toastCtrl = inject(ToastController);
+  private readonly authService = inject(AuthService);
+  private readonly dashboardService = inject(DashboardService);
+  private readonly seedService = inject(DataSeedService);
+  private readonly router = inject(Router);
+  private readonly periodService = inject(PeriodService);
 
   /** Transacciones del usuario sincronizadas desde el state service. */
   readonly txState = inject(TransactionsStateService);
@@ -171,7 +171,7 @@ export class DashboardPage implements OnInit {
    */
   readonly budgetsForPeriod = computed(() => {
     const range = this.dateRange();
-    const txs   = this.txState.items();
+    const txs = this.txState.items();
     const today = new Date().toISOString().slice(0, 10);
     return this.budgetsState.items()
       .filter(b => {
