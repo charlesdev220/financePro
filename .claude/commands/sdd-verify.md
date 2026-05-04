@@ -3,10 +3,14 @@
 Valida que la implementación cumple con las specs.
 Recibís: **$ARGUMENTS** (nombre del cambio).
 
-## Agente responsable
+## Agentes responsables
 
-**`qa-automation`** ejecuta esta fase. Lee `spec.md` y `tasks.md`, revisa el código implementado,
-corre los tests existentes, que la funcionalidad anterior se mantiene y emite el `verify-report.md`.
+Esta fase se divide entre dos agentes:
+
+- **`qa-automation`** — revisa el código implementado, corre los tests unitarios **Karma/Jasmine**, valida compliance arquitectónico contra `spec.md` y `tasks.md`.
+- **`playwright-inspector`** — corre los tests **E2E Playwright**, inspecciona visualmente el resultado en browser real e incluye el output en el reporte.
+
+Ambos emiten su resultado en `verify-report.md`. Si los tests E2E fallan, `playwright-inspector` los incluye bajo "Issues Encontrados".
 **Verifica si lo especificado en `explore.md` se cumple**
 
 ## Pre-requisitos

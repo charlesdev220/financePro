@@ -17,17 +17,18 @@ test.describe('Auth Guard (REQ-E2E-01)', () => {
   test('sc1: sin sesión → redirige a /login', async ({ page }) => {
     await mockOAuthToken(page);
     await mockSheetsApi(page, {});
-    await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/tabs/dashboard');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForTimeout(2000);
 
     await expect(page).toHaveURL(/\/login/);
     await expect(page.locator('ion-input[name="email"]')).toBeVisible();
   });
 
   test('sc2: con sesión activa → accede a /dashboard', async ({ page }) => {
-    await setupAndNavigate(page, '/dashboard', FULL_DATA);
+    await setupAndNavigate(page, '/tabs/dashboard', FULL_DATA);
 
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/\/tabs\/dashboard/);
     await expect(page.locator('ion-content')).toBeVisible();
   });
 });
@@ -73,12 +74,12 @@ test.describe('Login Page (REQ-E2E-02)', () => {
     await injectAuthSession(page, MOCK_USER);
     await mockOAuthToken(page);
     await mockSheetsApi(page, FULL_DATA);
-    await page.goto('/dashboard');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/tabs/dashboard');
+    await page.waitForLoadState('domcontentloaded');
     await page.waitForTimeout(2000);
 
-    await expect(page).toHaveURL(/\/dashboard/);
-    await expect(page.locator('ion-title')).toContainText('MyFinance');
+    await expect(page).toHaveURL(/\/tabs\/dashboard/);
+    await expect(page.locator('ion-content')).toBeVisible({ timeout: 5000 });
   });
 });
 

@@ -59,13 +59,14 @@ test.describe('AnalyticsPage E2E', () => {
     await setupAndNavigate(page, '/tabs/analytics', SIX_MONTHS_DATA);
 
     const periodSelector = page.locator('app-period-selector');
-    await expect(periodSelector).toBeVisible();
+    await expect(periodSelector).toBeVisible({ timeout: 8000 });
 
-    const prevButton = page.locator('app-period-selector ion-button').first();
+    // El period-selector usa buttons con clases Tailwind — no ion-button
+    const prevButton = page.locator('app-period-selector button').first();
     await prevButton.click();
     await page.waitForTimeout(500);
 
-    await expect(page.locator('app-analytics-chart')).toBeVisible();
+    await expect(page.locator('app-analytics-chart')).toBeVisible({ timeout: 8000 });
   });
 
   // REQ-11 sc4: con ≥3 meses → canvas de proyecciones visible
@@ -80,9 +81,10 @@ test.describe('AnalyticsPage E2E', () => {
   test('should show informative message when store has fewer than 3 months of data', async ({ page }) => {
     await setupAndNavigate(page, '/tabs/analytics', TWO_MONTHS_DATA);
 
-    const msg = page.locator('app-projections .no-data-msg');
+    // El template de projections usa un div.bg-gray-50, no clase .no-data-msg.
+    const msg = page.locator('app-projections div.bg-gray-50');
     await expect(msg).toBeVisible({ timeout: 8000 });
-    await expect(msg).toContainText('Se necesitan al menos 3 meses de datos para proyectar');
+    await expect(msg).toContainText('Necesitás al menos 3 meses de datos para ver la proyección');
 
     const canvas = page.locator('app-projections canvas');
     await expect(canvas).not.toBeVisible();
@@ -92,6 +94,7 @@ test.describe('AnalyticsPage E2E', () => {
   test('should show at least one item in recurrentes section', async ({ page }) => {
     await setupAndNavigate(page, '/tabs/analytics', SIX_MONTHS_DATA);
 
+    // El template usa li.ranking-item — selector correcto
     const rankingItems = page.locator('app-spending-ranking .ranking-item');
     await expect(rankingItems.first()).toBeVisible({ timeout: 8000 });
   });
@@ -116,6 +119,6 @@ test.describe('AnalyticsPage E2E', () => {
   test('should load /transactions list correctly', async ({ page }) => {
     await setupAndNavigate(page, '/tabs/transactions', SIX_MONTHS_DATA);
 
-    await expect(page.locator('ion-content')).toBeVisible();
+    await expect(page.locator('ion-content')).toBeVisible({ timeout: 8000 });
   });
 });

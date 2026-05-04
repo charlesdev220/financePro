@@ -12,7 +12,8 @@ test.describe('Wallet List — estado vacío (REQ-E2E-11)', () => {
   test('sc1: sin carteras → mensaje de estado vacío visible', async ({ page }) => {
     await setupAndNavigate(page, '/tabs/wallets', { ...BASE });
 
-    await expect(page.locator('text=No hay carteras creadas')).toBeVisible({ timeout: 8000 });
+    // El template usa texto "Todavía no tenés carteras." — no "No hay carteras creadas"
+    await expect(page.locator('text=Todavía no tenés carteras')).toBeVisible({ timeout: 8000 });
   });
 });
 
@@ -21,31 +22,31 @@ test.describe('Wallet List — estado vacío (REQ-E2E-11)', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 test.describe('Wallet List — con datos (REQ-E2E-12)', () => {
 
-  test('sc1: con carteras → ion-list visible con nombres', async ({ page }) => {
+  test('sc1: con carteras → cards de cartera visibles con nombres', async ({ page }) => {
     await setupAndNavigate(page, '/tabs/wallets', {
       ...BASE,
       wallets: buildMockWallets(),
       transactions: buildMockTransactions(3),
     });
 
-    await expect(page.locator('ion-list')).toBeVisible({ timeout: 8000 });
-    await expect(page.locator('ion-list ion-item').first()).toBeVisible();
+    // El template usa div.grid con cards, no ion-list con ion-item.
     // Nombre de la primera cartera mockeada: "Efectivo"
-    await expect(page.locator('text=Efectivo')).toBeVisible();
+    await expect(page.locator('text=Efectivo')).toBeVisible({ timeout: 8000 });
   });
 
-  test('sc2: balance formateado visible en ion-item', async ({ page }) => {
+  test('sc2: balance formateado visible en la card de cartera', async ({ page }) => {
     await setupAndNavigate(page, '/tabs/wallets', {
       ...BASE,
       wallets: buildMockWallets(),
       transactions: buildMockTransactions(3),
     });
 
-    // El balance se renderiza como número formateado (span con color success/danger)
-    const balanceEl = page.locator('ion-item span[style]').first();
+    // El balance se renderiza en un span con clases Tailwind dinámicas (text-myfinance-green/red),
+    // no con style inline. Verificamos que hay al menos un span de balance con número.
+    const balanceEl = page.locator('span.font-extrabold').first();
     await expect(balanceEl).toBeVisible({ timeout: 8000 });
     const text = await balanceEl.textContent();
-    // Debe contener algún número
-    expect(text).toMatch(/\d/);
+    // Debe contener algún número o símbolo de moneda
+    expect(text).toMatch(/[\d$€£]/);
   });
 });

@@ -4,6 +4,23 @@ Registro de lecciones técnicas extraídas de cada iteración del proyecto. Appe
 
 ---
 
+### Qué hemos aprendido en el desarrollo de esta iteración (E2E Playwright — Fase 6):
+*Qué se aprendió:* El formulario de transacción (`TransactionFormComponent`) no usa `ion-input` ni `ion-select` para sus campos — usa `input[type="number"]` nativo para el monto y botones tile custom para cartera/categoría. El modal de Ionic con `[isOpen]` y `ng-template` renderiza el contenido en Light DOM dentro del scope del `ion-modal`, por lo que `modal.locator(...)` es suficiente para interactuar con el formulario sin necesidad de `pierceDeep`.
+*Por qué se aprendió:* Los tests TRANSACCION-01/02 fallaban porque buscaban `ion-input, ion-select` dentro del modal — selectores que no existen en el template del formulario. Al leer el HTML real se descubrió que la UI usa un teclado numérico custom y tiles de selección.
+*Dónde se aprendió:* `src/app/features/transactions/transaction-form/transaction-form.component.html` + `src/app/testing/e2e/transactions.e2e.spec.ts` (TASK-08)
+
+### Qué hemos aprendido en el desarrollo de esta iteración (Drill-down Chart.js vs DOM):
+*Qué se aprendió:* No es posible hacer click en slices individuales de un `<canvas>` de Chart.js con Playwright de forma confiable. El drill-down interactivo requiere una leyenda DOM paralela (ion-item, div, etc.) con handler de click Angular — el canvas solo es visual.
+*Por qué se aprendió:* DRILLDOWN-01/02/03 se skipean porque la leyenda del doughnut es parte del canvas, sin elementos DOM accesibles para Playwright.
+*Dónde se aprendió:* `src/app/features/dashboard/dashboard.page.html` + `src/app/testing/e2e/dashboard.e2e.spec.ts` (TASK-09)
+
+### Qué hemos aprendido en el desarrollo de esta iteración (networkidle vs domcontentloaded en Playwright):
+*Qué se aprendió:* `waitForLoadState('networkidle')` nunca se estabiliza en apps Angular/Ionic con polling periódico de APIs externas (ExchangeRate-API, Google Sheets). El timeout de 30s se agota invariablemente. La estrategia correcta es `waitForLoadState('domcontentloaded')` + `waitForTimeout(3000)` para dar tiempo al store de hidratar.
+*Por qué se aprendió:* 12 de los 22 tests existentes fallaban por timeout de `networkidle` — el helper `setupAndNavigate` bloqueaba todos los tests que lo usaban.
+*Dónde se aprendió:* `src/app/testing/e2e/helpers/auth-helpers.ts` + análisis de los 22 fallos del primer run de Playwright.
+
+---
+
 ### Qué hemos aprendido en el desarrollo de esta iteración (Centralización del Sistema de Diseño):
 *Qué se aprendió:*
 - La arquitectura visual de la aplicación depende de la sincronización de tres archivos de naturaleza distinta: SCSS (variables de CSS/Ionic), TypeScript (constantes de color para lógica y gráficas) e incluso JavaScript (configuración de Tailwind).

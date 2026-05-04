@@ -81,6 +81,6 @@ export async function setupAndNavigate(
   await mockOAuthToken(page);
   await mockSheetsApi(page, data);
   await page.goto(path);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('domcontentloaded');
   await page.waitForTimeout(3000);
 }

@@ -1,0 +1,229 @@
+PASS src/app/testing/features/transactions/services/transaction.service.spec.ts (9.392 s)
+PASS src/app/testing/features/categories/services/category.service.spec.ts (9.416 s)
+PASS src/app/testing/features/budgets/services/budget.service.spec.ts (9.439 s)
+PASS src/app/testing/features/wallets/services/wallet.service.spec.ts (9.584 s)
+PASS src/app/testing/core/state/user-settings.state.spec.ts (9.556 s)
+PASS src/app/testing/features/transactions/services/concepts.service.spec.ts (9.438 s)
+PASS src/app/testing/features/analytics/services/analytics.service.spec.ts (9.673 s)
+PASS src/app/testing/features/dashboard/services/dashboard.service.spec.ts (9.679 s)
+PASS src/app/testing/core/state/transactions.state.spec.ts (9.742 s)
+PASS src/app/testing/core/services/crypto.service.spec.ts (9.824 s)
+PASS src/app/testing/core/services/auth.service.spec.ts (9.911 s)
+  ● Console
+
+    console.error
+      [AuthService] Error en registro: HttpErrorResponse {
+        headers: HttpHeaders {
+          headers: Map(0) {},
+          normalizedNames: Map(0) {},
+          lazyInit: undefined,
+          lazyUpdate: null
+        },
+        status: 0,
+        statusText: 'Unknown Error',
+        url: 'https://sheets.googleapis.com/v4/spreadsheets/1euG0ltec2DIX-dRTaB2Y9Lvs0Jk1FHgSDyKoeCKWRXs/values/USERS!A1:append?valueInputOption=USER_ENTERED',
+        ok: false,
+        type: undefined,
+        redirected: undefined,
+        name: 'HttpErrorResponse',
+        message: 'Http failure response for https://sheets.googleapis.com/v4/spreadsheets/1euG0ltec2DIX-dRTaB2Y9Lvs0Jk1FHgSDyKoeCKWRXs/values/USERS!A1:append?valueInputOption=USER_ENTERED: 0 ',
+        error: ProgressEvent { isTrusted: [Getter] }
+      }
+
+      105 |       return true;
+      106 |     } catch (error) {
+    > 107 |       console.error('[AuthService] Error en registro:', error);
+          |               ^
+      108 |       return false;
+      109 |     }
+      110 |   }
+
+      at AuthService.error [as register] (src/app/core/services/auth.service.ts:107:15)
+      at src/app/testing/core/services/auth.service.spec.ts:244:14
+
+PASS src/app/testing/core/state/currency.state.spec.ts
+PASS src/app/testing/core/services/period.service.spec.ts
+PASS src/app/testing/core/services/sheets-api.service.spec.ts
+PASS src/app/testing/core/services/currency-api.service.spec.ts
+  ● Console
+
+    console.warn
+      [CurrencyApiService] Error al obtener tasa, usando fallback 1:1 HttpErrorResponse {
+        headers: HttpHeaders {
+          headers: Map(0) {},
+          normalizedNames: Map(0) {},
+          lazyInit: undefined,
+          lazyUpdate: null
+        },
+        status: 0,
+        statusText: 'Unknown Error',
+        url: 'https://v6.exchangerate-api.com/v6/AIzaSyBZXg7MacUZvE_oJrEzyvV7RrRL6T1hV7Y/pair/USD/EUR',
+        ok: false,
+        type: undefined,
+        redirected: undefined,
+        name: 'HttpErrorResponse',
+        message: 'Http failure response for https://v6.exchangerate-api.com/v6/AIzaSyBZXg7MacUZvE_oJrEzyvV7RrRL6T1hV7Y/pair/USD/EUR: 0 ',
+        error: ProgressEvent { isTrusted: [Getter] }
+      }
+
+      48 |         }),
+      49 |         catchError(err => {
+    > 50 |           console.warn('[CurrencyApiService] Error al obtener tasa, usando fallback 1:1', err);
+         |                   ^
+      51 |           return of(1);
+      52 |         }),
+      53 |       );
+
+      at warn (src/app/core/services/currency-api.service.ts:50:19)
+      at node_modules/rxjs/src/internal/operators/catchError.ts:115:35
+      at OperatorSubscriber._this._error (node_modules/rxjs/src/internal/operators/OperatorSubscriber.ts:79:13)
+      at OperatorSubscriber.Object.<anonymous>.Subscriber.error (node_modules/rxjs/src/internal/Subscriber.ts:86:12)
+      at OperatorSubscriber.Object.<anonymous>.Subscriber._error (node_modules/rxjs/src/internal/Subscriber.ts:118:24)
+      at OperatorSubscriber.Object.<anonymous>.Subscriber.error (node_modules/rxjs/src/internal/Subscriber.ts:86:12)
+      at OperatorSubscriber.Object.<anonymous>.Subscriber._error (node_modules/rxjs/src/internal/Subscriber.ts:118:24)
+      at OperatorSubscriber.Object.<anonymous>.Subscriber.error (node_modules/rxjs/src/internal/Subscriber.ts:86:12)
+      at OperatorSubscriber.Object.<anonymous>.Subscriber._error (node_modules/rxjs/src/internal/Subscriber.ts:118:24)
+      at OperatorSubscriber.Object.<anonymous>.Subscriber.error (node_modules/rxjs/src/internal/Subscriber.ts:86:12)
+      at OperatorSubscriber.Object.<anonymous>.Subscriber._error (node_modules/rxjs/src/internal/Subscriber.ts:118:24)
+      at OperatorSubscriber.Object.<anonymous>.Subscriber.error (node_modules/rxjs/src/internal/Subscriber.ts:86:12)
+      at TestRequest.error (node_modules/@angular/common/fesm2022/http/testing.mjs:90:23)
+      at src/app/testing/core/services/currency-api.service.spec.ts:40:9
+      at _ZoneDelegate.invoke (node_modules/zone.js/bundles/zone.umd.js:410:32)
+      at ProxyZoneSpec.Object.<anonymous>.ProxyZoneSpec.onInvoke (node_modules/zone.js/bundles/zone-testing.umd.js:2219:43)
+      at _ZoneDelegate.invoke (node_modules/zone.js/bundles/zone.umd.js:409:38)
+      at ZoneImpl.run (node_modules/zone.js/bundles/zone.umd.js:145:47)
+      at Object.wrappedFunc (node_modules/zone.js/bundles/zone-testing.umd.js:449:38)
+
+PASS src/app/testing/core/state/workspaces.state.spec.ts
+PASS src/app/testing/core/state/budgets.state.spec.ts
+-----------------------------------------------------------|---------|----------|---------|---------|---------------------------------------
+File                                                       | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                     
+-----------------------------------------------------------|---------|----------|---------|---------|---------------------------------------
+All files                                                  |   29.36 |     28.8 |    26.3 |   29.55 |                                       
+ app                                                       |       0 |      100 |       0 |       0 |                                       
+  app.component.ts                                         |       0 |      100 |     100 |       0 | 1-11                                  
+  app.config.ts                                            |       0 |      100 |       0 |       0 | 1-13                                  
+  app.routes.ts                                            |       0 |      100 |       0 |       0 | 3-24                                  
+ app/core/constants                                        |      60 |      100 |     100 |      60 |                                       
+  budget.constants.ts                                      |       0 |      100 |     100 |       0 | 1                                     
+  period.constants.ts                                      |       0 |      100 |     100 |       0 | 3                                     
+  transaction.constants.ts                                 |     100 |      100 |     100 |     100 |                                       
+  workspace.constants.ts                                   |     100 |      100 |     100 |     100 |                                       
+ app/core/services                                         |   78.29 |    69.64 |   78.18 |   79.21 |                                       
+  auth.service.ts                                          |   71.42 |    59.09 |   68.75 |   71.91 | 48-51,154-155,185-230,235             
+  crypto.service.ts                                        |   94.73 |       60 |     100 |     100 | 67-70                                 
+  currency-api.service.ts                                  |   85.18 |    57.14 |      80 |   86.95 | 58-60                                 
+  data-seed.service.ts                                     |       0 |      100 |       0 |       0 | 1-45                                  
+  period.service.ts                                        |   85.89 |    81.25 |     100 |   85.52 | 82-86,95-100                          
+  sheets-api.service.ts                                    |     100 |      100 |     100 |     100 |                                       
+ app/core/state                                            |   58.49 |     45.6 |   44.72 |   60.79 |                                       
+  budgets.state.ts                                         |   56.47 |    31.57 |   48.38 |    59.7 | 37,52-67,91-137,148                   
+  categories.state.ts                                      |       0 |        0 |       0 |       0 | 1-69                                  
+  currency.state.ts                                        |   62.16 |    32.05 |      50 |   65.65 | 79,111,123-174                        
+  transactions.state.ts                                    |      75 |     37.5 |   58.62 |   74.64 | 46-53,86-116,126-127                  
+  user-settings.state.ts                                   |   94.73 |    73.58 |      75 |   95.65 | 57,81,104                             
+  wallets.state.ts                                         |       0 |        0 |       0 |       0 | 1-68                                  
+  workspaces.state.ts                                      |   76.25 |     62.5 |   69.23 |   78.78 | 77-87,94-99                           
+ app/features/analytics                                    |       0 |        0 |       0 |       0 |                                       
+  analytics.page.ts                                        |       0 |        0 |       0 |       0 | 1-113                                 
+ app/features/analytics/components/analytics-chart         |       0 |        0 |       0 |       0 |                                       
+  analytics-chart.component.ts                             |       0 |        0 |       0 |       0 | 1-33                                  
+ app/features/analytics/components/category-spending-chart |       0 |        0 |       0 |       0 |                                       
+  category-spending-chart.component.ts                     |       0 |        0 |       0 |       0 | 1-39                                  
+ app/features/analytics/components/projections             |       0 |        0 |       0 |       0 |                                       
+  projections.component.ts                                 |       0 |        0 |       0 |       0 | 1-67                                  
+ app/features/analytics/components/spending-ranking        |       0 |      100 |       0 |       0 |                                       
+  spending-ranking.component.ts                            |       0 |      100 |       0 |       0 | 1-19                                  
+ app/features/analytics/services                           |   97.53 |    92.59 |   95.83 |   98.43 |                                       
+  analytics.service.ts                                     |   97.53 |    92.59 |   95.83 |   98.43 | 186                                   
+ app/features/budgets/budget-form                          |       0 |        0 |       0 |       0 |                                       
+  budget-form.component.ts                                 |       0 |        0 |       0 |       0 | 1-186                                 
+ app/features/budgets/budget-list                          |       0 |        0 |       0 |       0 |                                       
+  budget-list.page.ts                                      |       0 |        0 |       0 |       0 | 1-145                                 
+ app/features/budgets/services                             |   60.97 |    66.66 |   41.66 |   57.14 |                                       
+  budget.service.ts                                        |   60.97 |    66.66 |   41.66 |   57.14 | 31,75-103                             
+ app/features/categories/category-form                     |       0 |        0 |       0 |       0 |                                       
+  category-form.component.ts                               |       0 |        0 |       0 |       0 | 1-241                                 
+ app/features/categories/category-list                     |       0 |        0 |       0 |       0 |                                       
+  category-list.page.ts                                    |       0 |        0 |       0 |       0 | 1-183                                 
+ app/features/categories/services                          |   85.29 |    54.28 |      75 |   86.66 |                                       
+  category.service.ts                                      |   85.29 |    54.28 |      75 |   86.66 | 28,51,68-72                           
+ app/features/dashboard                                    |       0 |        0 |       0 |       0 |                                       
+  dashboard.page.ts                                        |       0 |        0 |       0 |       0 | 1-315                                 
+ app/features/dashboard/components/dashboard-chart         |       0 |        0 |       0 |       0 |                                       
+  dashboard-chart.component.ts                             |       0 |        0 |       0 |       0 | 1-77                                  
+ app/features/dashboard/components/dashboard-summary       |       0 |      100 |       0 |       0 |                                       
+  dashboard-summary.component.ts                           |       0 |      100 |       0 |       0 | 1-18                                  
+ app/features/dashboard/services                           |   97.87 |       80 |     100 |     100 |                                       
+  dashboard.service.ts                                     |   97.87 |       80 |     100 |     100 | 34,59,69,80-82                        
+ app/features/login                                        |       0 |        0 |       0 |       0 |                                       
+  login.page.ts                                            |       0 |        0 |       0 |       0 | 1-77                                  
+ app/features/more                                         |       0 |      100 |       0 |       0 |                                       
+  more.page.ts                                             |       0 |      100 |       0 |       0 | 1-23                                  
+ app/features/register                                     |       0 |        0 |       0 |       0 |                                       
+  register.page.ts                                         |       0 |        0 |       0 |       0 | 1-84                                  
+ app/features/settings                                     |       0 |        0 |       0 |       0 |                                       
+  settings.page.ts                                         |       0 |        0 |       0 |       0 | 1-136                                 
+ app/features/settings/currency-settings                   |       0 |        0 |       0 |       0 |                                       
+  currency-settings.page.ts                                |       0 |        0 |       0 |       0 | 1-204                                 
+ app/features/tabs                                         |       0 |        0 |       0 |       0 |                                       
+  tabs.page.ts                                             |       0 |        0 |       0 |       0 | 1-33                                  
+  tabs.routes.ts                                           |       0 |      100 |       0 |       0 | 3-65                                  
+ app/features/transactions/services                        |   73.17 |    56.14 |   71.87 |   72.38 |                                       
+  concepts.service.ts                                      |   97.82 |    70.58 |     100 |   97.29 | 91                                    
+  transaction.service.ts                                   |   58.44 |       50 |   52.63 |   58.82 | 76-92,121-132,177-178,180,189-197,202 
+ app/features/transactions/transaction-form                |       0 |        0 |       0 |       0 |                                       
+  transaction-form.component.ts                            |       0 |        0 |       0 |       0 | 1-501                                 
+ app/features/transactions/transaction-list                |       0 |        0 |       0 |       0 |                                       
+  transaction-list.page.ts                                 |       0 |        0 |       0 |       0 | 1-325                                 
+ app/features/wallets/services                             |   87.09 |    63.15 |   72.72 |   85.71 |                                       
+  wallet.service.ts                                        |   87.09 |    63.15 |   72.72 |   85.71 | 27,50,69-73                           
+ app/features/wallets/wallet-form                          |       0 |        0 |       0 |       0 |                                       
+  wallet-form.component.ts                                 |       0 |        0 |       0 |       0 | 1-143                                 
+ app/features/wallets/wallet-list                          |       0 |        0 |       0 |       0 |                                       
+  wallet-list.page.ts                                      |       0 |        0 |       0 |       0 | 1-98                                  
+ app/features/workspaces/services                          |      30 |        0 |       0 |   25.92 |                                       
+  workspace.service.ts                                     |      30 |        0 |       0 |   25.92 | 11,23,36-70                           
+ app/features/workspaces/workspace-form                    |       0 |        0 |       0 |       0 |                                       
+  workspace-form.component.ts                              |       0 |        0 |       0 |       0 | 1-94                                  
+ app/shared/components/autocomplete-input                  |       0 |        0 |       0 |       0 |                                       
+  autocomplete-input.component.ts                          |       0 |        0 |       0 |       0 | 1-64                                  
+ app/shared/components/budget-indicator                    |       0 |        0 |       0 |       0 |                                       
+  budget-indicator.component.ts                            |       0 |        0 |       0 |       0 | 1-30                                  
+ app/shared/components/chart-bar                           |       0 |        0 |       0 |       0 |                                       
+  chart-bar.component.ts                                   |       0 |        0 |       0 |       0 | 1-83                                  
+ app/shared/components/chart-pie                           |       0 |        0 |       0 |       0 |                                       
+  chart-pie.component.ts                                   |       0 |        0 |       0 |       0 | 1-77                                  
+ app/shared/components/option-picker                       |       0 |      100 |       0 |       0 |                                       
+  option-picker.component.ts                               |       0 |      100 |       0 |       0 | 1-55                                  
+ app/shared/components/period-selector                     |       0 |      100 |       0 |       0 |                                       
+  period-selector.component.ts                             |       0 |      100 |       0 |       0 | 1-22                                  
+ app/shared/components/share-header                        |       0 |      100 |       0 |       0 |                                       
+  share-header.component.ts                                |       0 |      100 |       0 |       0 | 1-58                                  
+ app/shared/components/workspace-selector                  |       0 |      100 |       0 |       0 |                                       
+  workspace-selector.component.ts                          |       0 |      100 |       0 |       0 | 1-26                                  
+ app/shared/pipes                                          |       0 |        0 |       0 |       0 |                                       
+  currency-format.pipe.ts                                  |       0 |        0 |       0 |       0 | 1-11                                  
+  relative-date.pipe.ts                                    |       0 |        0 |       0 |       0 | 1-29                                  
+ app/testing                                               |   63.63 |      100 |     100 |   63.63 |                                       
+  fixtures.ts                                              |     100 |      100 |     100 |     100 |                                       
+  ionic-mocks.ts                                           |       0 |      100 |     100 |       0 | 7-23                                  
+ app/testing/e2e/helpers                                   |       0 |        0 |       0 |       0 |                                       
+  auth-helpers.ts                                          |       0 |        0 |       0 |       0 | 3-85                                  
+  mock-data.ts                                             |       0 |        0 |       0 |       0 | 1-114                                 
+-----------------------------------------------------------|---------|----------|---------|---------|---------------------------------------
+Jest: "global" coverage threshold for statements (50%) not met: 16.69%
+Jest: "global" coverage threshold for branches (50%) not met: 23.63%
+Jest: "./src/app/core/services/" coverage threshold for statements (80%) not met: 78.29%
+Jest: "./src/app/core/services/" coverage threshold for branches (80%) not met: 69.64%
+Jest: "./src/app/core/state/" coverage threshold for statements (80%) not met: 58.49%
+Jest: "./src/app/core/state/" coverage threshold for branches (75%) not met: 45.6%
+Jest: Coverage data for ./src/app/features/**/services/ was not found.
+Jest: "./src/app/shared/" coverage threshold for statements (60%) not met: 0%
+Jest: "./src/app/shared/" coverage threshold for branches (60%) not met: 0%
+
+Test Suites: 17 passed, 17 total
+Tests:       164 passed, 164 total
+Snapshots:   0 total
+Time:        21.599 s
+Ran all test suites matching /core\/services|core\/state|features.*services/i.

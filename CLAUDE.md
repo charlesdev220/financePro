@@ -96,9 +96,9 @@ Prompt
   └── CLAUDE.md                    ← QUÉ construir y por qué (este archivo, actúa como orchestrator)
         ├── develop-expert            ← implementa todo el código de producción (componentes, pages, NgRx, modelos, Sheets)
         │     └── lee: typescript · angular · html · ionic · ngrx · tailwind · ux-ui · sheets-api
-        ├── qa-automation             ← escribe y ejecuta tests (Karma/Jasmine + Playwright E2E)
+        ├── qa-automation             ← escribe y ejecuta tests unitarios (Karma/Jasmine)
         │     └── lee: angular · ngrx · typescript + verify.md del cambio activo
-        ├── playwright-inspector      ← inspección visual/funcional en navegador real → bug-report.md
+        ├── playwright-inspector      ← escribe, ejecuta y valida tests E2E Playwright + inspección visual → bug-report.md
         │     └── lee: ux-ui · ionic · tailwind · HISTORIAL_IMPLEMENTACION
         └── devops-cloud              ← builds, CI/CD, secrets
               └── lee: CLAUDE.md (sección Stack)
@@ -109,8 +109,8 @@ Prompt
 | Agente | Responsabilidad | Archivos de reglas obligatorios |
 |--------|----------------|---------------------------------|
 | `develop-expert` | Todo el código de producción | `typescript` · `angular` · `html` · `ionic` · `ngrx` · `tailwind` · `ux-ui` · `sheets-api` |
-| `qa-automation` | Tests unitarios y E2E | `angular` · `ngrx` · `typescript` · `verify.md` del cambio activo |
-| `playwright-inspector` | Inspección visual en browser | `ux-ui` · `ionic` · `tailwind` · `HISTORIAL_IMPLEMENTACION.md` |
+| `qa-automation` | Tests unitarios Karma/Jasmine | `angular` · `ngrx` · `typescript` · `verify.md` del cambio activo |
+| `playwright-inspector` | Tests E2E Playwright + inspección visual en browser | `ux-ui` · `ionic` · `tailwind` · `HISTORIAL_IMPLEMENTACION.md` |
 | `devops-cloud` | Builds, CI/CD, secrets | `CLAUDE.md` (sección Stack) |
 
 **Regla de cadena:** Ningún agente escribe código sin haber leído el archivo de reglas de su capa. Si un requerimiento contradice una regla → señalar el conflicto antes de proceder.

@@ -4,6 +4,18 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (E2E Playwright — Fase 6):
+*Fase actual:* Fase 6: Suite E2E Playwright — verificación y nuevos flujos críticos
+*Estado actual:* Completado
+- ✔️ **Suite existente verificada:** specs reparados (selectores, timeouts, copy) — 0 fallos
+- ✔️ **Flujo añadir transacción:** scenarios TRANSACCION-01/02/03 en verde; TRANSACCION-04 skip documentado (blocker: timing ion-select en modal)
+- ✔️ **Flujo drill-down:** DRILLDOWN-01/02/03 skip documentado (blocker: leyenda Chart.js no es DOM); DRILLDOWN-04 alternativo via queryParam en verde
+- ✔️ **Scripts npm:** test:e2e, test:e2e:ui, test:e2e:report agregados en frontend/package.json
+*Deuda técnica documentada:* TRANSACCION-04 y DRILLDOWN-01/02/03 pendientes de habilitar cuando el arquitecto implemente (1) data-testid en TransactionFormComponent y (2) leyenda DOM en dashboard-chart.component. Además EXCEEDED-BANNER-01/02 pendientes de .exceeded-banner en dashboard.page.html.
+*Próximos pasos:* sdd-archive para cerrar el cambio; en la siguiente iteración del arquitecto, revisar los skips para convertirlos en tests activos.
+
+---
+
 ### Qué hemos completado hasta ahora (Migración a Spectator + Jest):
 *Fase actual:* Fase apply: Migración completa de 38 suites a @ngneat/spectator/jest
 *Estado actual:* Completado
