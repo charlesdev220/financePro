@@ -1,4 +1,4 @@
-import { IBudget } from '../../../models/budget.model';
+import { IBudget } from '@models/budget.model';
 import { MOCK_WORKSPACE_ID_A } from '../../fixtures';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -18,16 +18,16 @@ function filterBudgetsForPeriod(budgets: IBudget[], period: string): IBudget[] {
 }
 
 const BASE_BUDGET: IBudget = {
-  budgetId:     'bgt-test',
-  userId:       'usr_001',
-  categoryId:   'cat-001',
-  period:       '2026-04',
-  spentAmount:  0,
+  budgetId: 'bgt-test',
+  userId: 'usr_001',
+  categoryId: 'cat-001',
+  period: '2026-04',
+  spentAmount: 0,
   budgetAmount: 500,
-  status:       'ok',
-  lastUpdated:  '2026-04-01T00:00:00Z',
-  workspaceId:  MOCK_WORKSPACE_ID_A,
-  mode:         'indefinite',
+  status: 'ok',
+  lastUpdated: '2026-04-01T00:00:00Z',
+  workspaceId: MOCK_WORKSPACE_ID_A,
+  mode: 'indefinite',
 };
 
 describe('budgetsForPeriod filter logic — REQ-13', () => {
@@ -64,7 +64,7 @@ describe('budgetsForPeriod filter logic — REQ-13', () => {
   it('includes_budget_with_mode_period_when_today_is_within_range', () => {
     const today = new Date().toISOString().slice(0, 10);
     const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
-    const tomorrow  = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
     const budget: IBudget = { ...BASE_BUDGET, mode: 'period', startDate: yesterday, endDate: tomorrow };
 
     const result = filterBudgetsForPeriod([budget], PERIOD);
@@ -78,7 +78,7 @@ describe('budgetsForPeriod filter logic — REQ-13', () => {
       ...BASE_BUDGET,
       mode: 'period',
       startDate: '2020-01-01',
-      endDate:   '2020-12-31',
+      endDate: '2020-12-31',
     };
 
     const result = filterBudgetsForPeriod([budget], PERIOD);
@@ -97,9 +97,9 @@ describe('budgetsForPeriod filter logic — REQ-13', () => {
 
   // REQ-13 sc7 — mezcla de modos → solo los válidos aparecen
   it('correctly_filters_mixed_mode_budgets', () => {
-    const today     = new Date().toISOString().slice(0, 10);
+    const today = new Date().toISOString().slice(0, 10);
     const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
-    const tomorrow  = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
+    const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10);
 
     const budgets: IBudget[] = [
       { ...BASE_BUDGET, budgetId: 'b1', mode: 'indefinite', period: PERIOD },

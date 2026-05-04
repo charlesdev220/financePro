@@ -6,10 +6,11 @@
         <ion-icon [name]="viewMode() === 'list' ? 'pricetags-outline' : 'list-outline'" slot="icon-only"></ion-icon>
       </ion-button>
       @if (activeFilters()) {
-        <ion-button (click)="clearFilters()" fill="clear" style="text-transform: none;" class="text-xs font-bold text-white/80">
-          <ion-icon name="close-circle-outline" slot="start"></ion-icon>
-          Limpiar
-        </ion-button>
+      <ion-button (click)="clearFilters()" fill="clear" style="text-transform: none;"
+        class="text-xs font-bold text-white/80">
+        <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+        Limpiar
+      </ion-button>
       }
     </ion-buttons>
   </ion-toolbar>
@@ -19,31 +20,34 @@
   <!-- Filtros Rápidos (Monefy Style) -->
   <div class="bg-[var(--color-primary)] pb-4 rounded-b-[40px] shadow-lg">
     <div class="flex gap-2 p-4 overflow-x-auto no-scrollbar max-w-screen-xl mx-auto">
-      <div class="bg-white/20 backdrop-blur-md px-5 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform cursor-pointer"
-           [class.bg-white/40]="openFilter() === 'wallet'"
-           (click)="toggleFilter('wallet')">
+      <div
+        class="bg-white/20 backdrop-blur-md px-5 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform cursor-pointer"
+        [class.bg-white/40]="openFilter() === 'wallet'" (click)="toggleFilter('wallet')">
         <ion-icon name="wallet-outline" class="text-sm"></ion-icon>
         <span class="text-sm font-bold">{{ filterWalletLabel() }}</span>
         @if (filterWallet()) {
-          <ion-icon name="close-circle-outline" class="text-sm ml-1" (click)="clearWalletFilter(); $event.stopPropagation()"></ion-icon>
+        <ion-icon name="close-circle-outline" class="text-sm ml-1"
+          (click)="clearWalletFilter(); $event.stopPropagation()"></ion-icon>
         }
       </div>
-      <div class="bg-white/20 backdrop-blur-md px-5 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform cursor-pointer"
-           [class.bg-white/40]="openFilter() === 'category'"
-           (click)="toggleFilter('category')">
+      <div
+        class="bg-white/20 backdrop-blur-md px-5 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform cursor-pointer"
+        [class.bg-white/40]="openFilter() === 'category'" (click)="toggleFilter('category')">
         <ion-icon name="sparkles-outline" class="text-sm"></ion-icon>
         <span class="text-sm font-bold">{{ filterCategoryLabel() }}</span>
         @if (filterCategory()) {
-          <ion-icon name="close-circle-outline" class="text-sm ml-1" (click)="clearCategoryFilter(); $event.stopPropagation()"></ion-icon>
+        <ion-icon name="close-circle-outline" class="text-sm ml-1"
+          (click)="clearCategoryFilter(); $event.stopPropagation()"></ion-icon>
         }
       </div>
-      <div class="bg-white/20 backdrop-blur-md px-5 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform cursor-pointer"
-           [class.bg-white/40]="openFilter() === 'period'"
-           (click)="toggleFilter('period')">
+      <div
+        class="bg-white/20 backdrop-blur-md px-5 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform cursor-pointer"
+        [class.bg-white/40]="openFilter() === 'period'" (click)="toggleFilter('period')">
         <ion-icon name="calendar-outline" class="text-sm"></ion-icon>
         <span class="text-sm font-bold">{{ filterPeriodLabel() }}</span>
         @if (filterDateFrom() || filterDateTo()) {
-          <ion-icon name="close-circle-outline" class="text-sm ml-1" (click)="clearPeriodFilter(); $event.stopPropagation()"></ion-icon>
+        <ion-icon name="close-circle-outline" class="text-sm ml-1"
+          (click)="clearPeriodFilter(); $event.stopPropagation()"></ion-icon>
         }
       </div>
     </div>
@@ -51,197 +55,197 @@
 
   <!-- Panel inline: Cartera -->
   @if (openFilter() === 'wallet') {
-    <div class="bg-white mx-4 mt-2 rounded-2xl shadow-md p-4 border border-gray-100 z-10 relative">
-      <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">Filtrar por Cartera</h4>
-      <div class="grid grid-cols-2 gap-2">
-        <button (click)="setWalletFilter('')"
-                class="p-3 rounded-xl border-2 transition-all text-sm font-bold flex items-center gap-2"
-                [class]="!filterWallet() ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)]' : 'border-gray-100 text-gray-500'">
-          Todas
-        </button>
-        @for (w of wallets(); track w.walletId) {
-          <button (click)="setWalletFilter(w.walletId)"
-                  class="p-3 rounded-xl border-2 transition-all text-sm font-bold flex items-center gap-2 truncate"
-                  [class]="filterWallet() === w.walletId ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)]' : 'border-gray-100 text-gray-500'">
-            {{ w.name }}
-          </button>
-        }
-      </div>
+  <div class="bg-white mx-4 mt-2 rounded-2xl shadow-md p-4 border border-gray-100 z-10 relative">
+    <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">Filtrar por Cartera</h4>
+    <div class="grid grid-cols-2 gap-2">
+      <button (click)="setWalletFilter('')"
+        class="p-3 rounded-xl border-2 transition-all text-sm font-bold flex items-center gap-2"
+        [class]="!filterWallet() ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)]' : 'border-gray-100 text-gray-500'">
+        Todas
+      </button>
+      @for (w of wallets(); track w.walletId) {
+      <button (click)="setWalletFilter(w.walletId)"
+        class="p-3 rounded-xl border-2 transition-all text-sm font-bold flex items-center gap-2 truncate"
+        [class]="filterWallet() === w.walletId ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/5 text-[var(--color-primary)]' : 'border-gray-100 text-gray-500'">
+        {{ w.name }}
+      </button>
+      }
     </div>
+  </div>
   }
 
   <!-- Panel inline: Categoría -->
   @if (openFilter() === 'category') {
-    <div class="bg-white mx-4 mt-2 rounded-2xl shadow-md p-3 border border-gray-100 z-10 relative max-h-72 overflow-y-auto">
-      <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">Filtrar por Categoría</h4>
-      <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-        <div class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2 bg-white"
-             style="height: 72px; border-color: var(--color-gray-200)"
-             [class.ring-2]="!filterCategory()"
-             [class.ring-monefy-green]="!filterCategory()"
-             (click)="onCategoryFilterSelect('')">
-          <span style="font-size: 24px; line-height: 1;">🗂️</span>
-          <span class="text-[10px] text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">Todas</span>
-        </div>
-        @for (c of categories(); track c.categoryId) {
-          <div class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2"
-               style="height: 72px;"
-               [style.border-color]="c.color"
-               [style.background-color]="filterCategory() === c.categoryId ? c.color + '33' : c.color + '1a'"
-               (click)="onCategoryFilterSelect(c.categoryId)">
-            <span style="font-size: 24px; line-height: 1;">{{ c.icon }}</span>
-            <span class="text-[10px] text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ c.name }}</span>
-          </div>
-        }
+  <div
+    class="bg-white mx-4 mt-2 rounded-2xl shadow-md p-3 border border-gray-100 z-10 relative max-h-72 overflow-y-auto">
+    <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">Filtrar por Categoría</h4>
+    <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+      <div class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2 bg-white"
+        style="height: 72px; border-color: var(--color-gray-200)" [class.ring-2]="!filterCategory()"
+        [class.ring-myfinance-green]="!filterCategory()" (click)="onCategoryFilterSelect('')">
+        <span style="font-size: 24px; line-height: 1;">🗂️</span>
+        <span
+          class="text-[10px] text-center text-myfinance-text-primary font-medium leading-tight line-clamp-2">Todas</span>
       </div>
+      @for (c of categories(); track c.categoryId) {
+      <div class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2"
+        style="height: 72px;" [style.border-color]="c.color"
+        [style.background-color]="filterCategory() === c.categoryId ? c.color + '33' : c.color + '1a'"
+        (click)="onCategoryFilterSelect(c.categoryId)">
+        <span style="font-size: 24px; line-height: 1;">{{ c.icon }}</span>
+        <span class="text-[10px] text-center text-myfinance-text-primary font-medium leading-tight line-clamp-2">{{
+          c.name }}</span>
+      </div>
+      }
     </div>
+  </div>
   }
 
   <!-- Panel inline: Período (rango Desde/Hasta) -->
   @if (openFilter() === 'period') {
-    <div class="bg-white mx-4 mt-2 rounded-2xl shadow-md p-4 border border-gray-100 z-10 relative">
-      <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">Filtrar por Período</h4>
-      @if (dateRangeInvalid()) {
-        <p class="text-xs text-red-500 mb-3 font-semibold">El rango es inválido: "Desde" debe ser anterior a "Hasta".</p>
-      }
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Desde</label>
-          <input type="date"
-                 [value]="filterDateFrom()"
-                 (change)="setDateFrom($event)"
-                 class="w-full text-sm font-semibold text-gray-800 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[var(--color-primary)]" />
-        </div>
-        <div>
-          <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Hasta</label>
-          <input type="date"
-                 [value]="filterDateTo()"
-                 (change)="setDateTo($event)"
-                 class="w-full text-sm font-semibold text-gray-800 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[var(--color-primary)]" />
-        </div>
+  <div class="bg-white mx-4 mt-2 rounded-2xl shadow-md p-4 border border-gray-100 z-10 relative">
+    <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-3">Filtrar por Período</h4>
+    @if (dateRangeInvalid()) {
+    <p class="text-xs text-red-500 mb-3 font-semibold">El rango es inválido: "Desde" debe ser anterior a "Hasta".</p>
+    }
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Desde</label>
+        <input type="date" [value]="filterDateFrom()" (change)="setDateFrom($event)"
+          class="w-full text-sm font-semibold text-gray-800 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[var(--color-primary)]" />
+      </div>
+      <div>
+        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">Hasta</label>
+        <input type="date" [value]="filterDateTo()" (change)="setDateTo($event)"
+          class="w-full text-sm font-semibold text-gray-800 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-[var(--color-primary)]" />
       </div>
     </div>
+  </div>
   }
 
   <!-- Vista por Categoría -->
   @if (viewMode() === 'category') {
-    <div class="px-4 pb-24 mt-4 max-w-screen-xl mx-auto">
-      @if (categoryTotals().length) {
-        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-          @for (cat of categoryTotals(); track cat.categoryId; let last = $last) {
-            <div class="flex items-center gap-3 px-4 py-3">
-              <div class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center text-xl shadow-inner border border-white flex-shrink-0">
-                {{ cat.categoryIcon }}
-              </div>
-              <span class="text-sm font-semibold text-monefy-text-primary flex-1 truncate">{{ cat.categoryName }}</span>
-              <span class="text-sm font-black" [class]="cat.total >= 0 ? 'text-monefy-green' : 'text-monefy-red'">
-                {{ cat.total >= 0 ? '+' : '' }}{{ cat.total | currencyFormat:userBaseCurrency() }}
-              </span>
-            </div>
-            @if (!last) {
-              <div class="mx-4 h-[1px] bg-gray-50"></div>
-            }
-          }
+  <div class="px-4 pb-24 mt-4 max-w-screen-xl mx-auto">
+    @if (categoryTotals().length) {
+    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+      @for (cat of categoryTotals(); track cat.categoryId; let last = $last) {
+      <div class="flex items-center gap-3 px-4 py-3">
+        <div
+          class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center text-xl shadow-inner border border-white flex-shrink-0">
+          {{ cat.categoryIcon }}
         </div>
-      } @else {
-        <div class="flex flex-col items-center justify-center pt-20 gap-4 text-center">
-          <span class="text-4xl">🗂️</span>
-          <p class="text-sm text-gray-400">Sin transacciones para los filtros aplicados.</p>
-        </div>
+        <span class="text-sm font-semibold text-myfinance-text-primary flex-1 truncate">{{ cat.categoryName }}</span>
+        <span class="text-sm font-black" [class]="cat.total >= 0 ? 'text-myfinance-green' : 'text-myfinance-red'">
+          {{ cat.total >= 0 ? '+' : '' }}{{ cat.total | currencyFormat:userBaseCurrency() }}
+        </span>
+      </div>
+      @if (!last) {
+      <div class="mx-4 h-[1px] bg-gray-50"></div>
+      }
       }
     </div>
+    } @else {
+    <div class="flex flex-col items-center justify-center pt-20 gap-4 text-center">
+      <span class="text-4xl">🗂️</span>
+      <p class="text-sm text-gray-400">Sin transacciones para los filtros aplicados.</p>
+    </div>
+    }
+  </div>
   }
 
   <!-- Listado Agrupado -->
   @if (viewMode() === 'list') {
   <div class="px-4 pb-24 mt-4 max-w-screen-xl mx-auto">
     @if (hasTransactions()) {
-      <div class="space-y-6">
-        @for (group of groupedTransactions(); track group.date) {
-          <div class="space-y-3">
-            <div class="flex items-center justify-between px-2">
-              <div class="flex items-baseline gap-2">
-                <h4 class="text-sm font-black text-gray-800">{{ group.date | relativeDate }}</h4>
-                <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
-                  {{ group.transactions.length }} {{ group.transactions.length === 1 ? 'movimiento' : 'movimientos' }}
-                </span>
-              </div>
-              <div class="px-3 py-1 rounded-full text-[10px] font-black" [class]="group.totalDaily >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'">
-                {{ group.totalDaily >= 0 ? '+' : '' }}{{ group.totalDaily | currencyFormat:userBaseCurrency() }}
-              </div>
-            </div>
-
-            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-              @for (tx of group.transactions; track tx.txId; let last = $last) {
-                <ion-item-sliding>
-                  <ion-item lines="none" class="ion-no-padding px-4" (click)="openEditModal(tx)" style="--padding-start: 16px; --padding-end: 16px; --inner-padding-end: 0;">
-                    <div slot="start" class="flex flex-col items-center mr-4">
-                      <div class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center text-xl shadow-inner border border-white">
-                        {{ tx.categoryIcon }}
-                      </div>
-                    </div>
-                    <ion-label class="py-4">
-                      <div class="flex justify-between items-start mb-1">
-                        <h3 class="text-sm font-bold text-gray-900 m-0">{{ tx.concept || tx.categoryName }}</h3>
-                        <span class="text-sm font-black" [class]="tx.isEffectiveIncome ? 'text-[var(--color-income)]' : 'text-[var(--color-expense)]'">
-                          {{ tx.isEffectiveIncome ? '+' : '-' }}{{ tx.displayAmount | currencyFormat:tx.currency }}
-                        </span>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <span class="text-[10px] uppercase font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
-                          {{ tx.categoryName }}
-                        </span>
-                        <span class="text-[10px] font-bold text-gray-300">
-                          {{ getWalletName(tx.walletId) }}
-                        </span>
-                        @if (tx.timeLabel) {
-                          <span class="text-[10px] font-bold text-gray-300 ml-auto">{{ tx.timeLabel }}</span>
-                        }
-                      </div>
-                    </ion-label>
-                  </ion-item>
-
-                  <ion-item-options side="end">
-                    <ion-item-option color="danger" (click)="deleteTransaction(tx)" style="--border-radius: 0 24px 24px 0;">
-                      <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
-                    </ion-item-option>
-                  </ion-item-options>
-                </ion-item-sliding>
-                @if (!last) {
-                  <div class="mx-6 h-[1px] bg-gray-50"></div>
-                }
-              }
-            </div>
+    <div class="space-y-6">
+      @for (group of groupedTransactions(); track group.date) {
+      <div class="space-y-3">
+        <div class="flex items-center justify-between px-2">
+          <div class="flex items-baseline gap-2">
+            <h4 class="text-sm font-black text-gray-800">{{ group.date | relativeDate }}</h4>
+            <span class="text-[10px] uppercase font-bold text-gray-400 tracking-wider">
+              {{ group.transactions.length }} {{ group.transactions.length === 1 ? 'movimiento' : 'movimientos' }}
+            </span>
           </div>
-        }
-      </div>
-    } @else {
-      <div class="flex flex-col items-center justify-center pt-20 gap-6 text-center animate-fade-in">
-        <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center text-5xl">📭</div>
-        <div class="space-y-1">
-          <p class="text-lg font-black text-gray-800">No hay nada por aquí</p>
-          <p class="text-sm text-gray-400 px-10">No encontramos movimientos con los filtros actuales.</p>
+          <div class="px-3 py-1 rounded-full text-[10px] font-black"
+            [class]="group.totalDaily >= 0 ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'">
+            {{ group.totalDaily >= 0 ? '+' : '' }}{{ group.totalDaily | currencyFormat:userBaseCurrency() }}
+          </div>
         </div>
-        <ion-button (click)="openAddModal()" style="--border-radius: 20px; --padding-start: 32px; --padding-end: 32px; text-transform: none;" class="font-bold shadow-lg">
-          Empezar a sumar
-        </ion-button>
+
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          @for (tx of group.transactions; track tx.txId; let last = $last) {
+          <ion-item-sliding>
+            <ion-item lines="none" class="ion-no-padding px-4" (click)="openEditModal(tx)"
+              style="--padding-start: 16px; --padding-end: 16px; --inner-padding-end: 0;">
+              <div slot="start" class="flex flex-col items-center mr-4">
+                <div
+                  class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center text-xl shadow-inner border border-white">
+                  {{ tx.categoryIcon }}
+                </div>
+              </div>
+              <ion-label class="py-4">
+                <div class="flex justify-between items-start mb-1">
+                  <h3 class="text-sm font-bold text-gray-900 m-0">{{ tx.concept || tx.categoryName }}</h3>
+                  <span class="text-sm font-black"
+                    [class]="tx.isEffectiveIncome ? 'text-[var(--color-income)]' : 'text-[var(--color-expense)]'">
+                    {{ tx.isEffectiveIncome ? '+' : '-' }}{{ tx.displayAmount | currencyFormat:tx.currency }}
+                  </span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span
+                    class="text-[10px] uppercase font-bold text-gray-400 bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100">
+                    {{ tx.categoryName }}
+                  </span>
+                  <span class="text-[10px] font-bold text-gray-300">
+                    {{ getWalletName(tx.walletId) }}
+                  </span>
+                  @if (tx.timeLabel) {
+                  <span class="text-[10px] font-bold text-gray-300 ml-auto">{{ tx.timeLabel }}</span>
+                  }
+                </div>
+              </ion-label>
+            </ion-item>
+
+            <ion-item-options side="end">
+              <ion-item-option color="danger" (click)="deleteTransaction(tx)" style="--border-radius: 0 24px 24px 0;">
+                <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+              </ion-item-option>
+            </ion-item-options>
+          </ion-item-sliding>
+          @if (!last) {
+          <div class="mx-6 h-[1px] bg-gray-50"></div>
+          }
+          }
+        </div>
       </div>
+      }
+    </div>
+    } @else {
+    <div class="flex flex-col items-center justify-center pt-20 gap-6 text-center animate-fade-in">
+      <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center text-5xl">📭</div>
+      <div class="space-y-1">
+        <p class="text-lg font-black text-gray-800">No hay nada por aquí</p>
+        <p class="text-sm text-gray-400 px-10">No encontramos movimientos con los filtros actuales.</p>
+      </div>
+      <ion-button (click)="openAddModal()"
+        style="--border-radius: 20px; --padding-start: 32px; --padding-end: 32px; text-transform: none;"
+        class="font-bold shadow-lg">
+        Empezar a sumar
+      </ion-button>
+    </div>
     }
   </div>
   }
 
 </ion-content>
 
-<ion-modal [isOpen]="isModalOpen()" (didDismiss)="closeModal()" [backdropDismiss]="true"
-           class="transaction-modal" cssClass="transaction-modal-web">
+<ion-modal [isOpen]="isModalOpen()" (didDismiss)="closeModal()" [backdropDismiss]="true" class="transaction-modal"
+  cssClass="transaction-modal-web">
   <ng-template>
-    <app-transaction-form
-      class="ion-page"
-      [transaction]="selectedTransaction() ?? undefined"
-      [userId]="currentUserId()"
+    <app-transaction-form class="ion-page" [transaction]="selectedTransaction() ?? undefined" [userId]="currentUserId()"
       [userBaseCurrency]="userBaseCurrency()"
-      [rowNumber]="selectedTransaction() ? rowMap()[selectedTransaction()!.txId] : undefined"
-      (dismiss)="closeModal()">
+      [rowNumber]="selectedTransaction() ? rowMap()[selectedTransaction()!.txId] : undefined" (dismiss)="closeModal()">
     </app-transaction-form>
   </ng-template>
 </ion-modal>

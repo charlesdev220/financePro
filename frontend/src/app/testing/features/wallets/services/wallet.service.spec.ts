@@ -1,9 +1,9 @@
 import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
 import { of, firstValueFrom } from 'rxjs';
 
-import { WalletService } from '../../../../features/wallets/services/wallet.service';
-import { SheetsApiService } from '../../../../core/services/sheets-api.service';
-import { AuthService } from '../../../../core/services/auth.service';
+import { WalletService } from '@features/wallets/services/wallet.service';
+import { SheetsApiService } from '@core/services/sheets-api.service';
+import { AuthService } from '@core/services/auth.service';
 import { MOCK_WALLETS } from '../../../fixtures';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -20,9 +20,9 @@ describe('WalletService', () => {
 
   const SHEETS_ROWS = [
     ['wallet_id', 'user_id', 'name', 'currency', 'balance', 'color', 'icon', 'is_default', 'created_at'],
-    [MOCK_WALLETS[0].walletId, 'usr_001', 'Efectivo', 'EUR', '0', '#1976D2', '💵', 'true',  '2026-04-01T00:00:00.000Z'],
-    [MOCK_WALLETS[1].walletId, 'usr_001', 'BBVA',     'EUR', '0', '#D32F2F', '🏦', 'false', '2026-04-01T00:00:00.000Z'],
-    ['other-wal-001',          'other-user', 'Other', 'USD', '0', '#000000', '💳', 'false', '2026-04-01T00:00:00.000Z'],
+    [MOCK_WALLETS[0].walletId, 'usr_001', 'Efectivo', 'EUR', '0', '#1976D2', '💵', 'true', '2026-04-01T00:00:00.000Z'],
+    [MOCK_WALLETS[1].walletId, 'usr_001', 'BBVA', 'EUR', '0', '#D32F2F', '🏦', 'false', '2026-04-01T00:00:00.000Z'],
+    ['other-wal-001', 'other-user', 'Other', 'USD', '0', '#000000', '💳', 'false', '2026-04-01T00:00:00.000Z'],
   ];
 
   beforeEach(() => {

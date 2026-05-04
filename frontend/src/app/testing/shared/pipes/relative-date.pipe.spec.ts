@@ -1,4 +1,4 @@
-import { RelativeDatePipe } from '../../../shared/pipes/relative-date.pipe';
+import { RelativeDatePipe } from '@shared/pipes/relative-date.pipe';
 
 // toISOString() devuelve UTC — en timezones adelantados puede dar un día menos.
 // La pipe parsea fechas como hora local, así que el test debe usar fecha local.

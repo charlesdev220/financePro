@@ -13,7 +13,7 @@ El patrón más importante de la app. Las acciones principales van en una barra 
 
 ```html
 <!-- Barra de acciones fija -->
-<div class="fixed bottom-0 left-0 right-0 flex gap-3 px-4 pb-6 pt-3 bg-white/95 backdrop-blur-sm border-t border-monefy-border z-10">
+<div class="fixed bottom-0 left-0 right-0 flex gap-3 px-4 pb-6 pt-3 bg-white/95 backdrop-blur-sm border-t border-myfinance-border z-10">
   <ion-button expand="block" class="flex-1 font-semibold"
     style="--background: var(--color-red-400); --border-radius: 12px; text-transform: none;">
     <ion-icon name="remove-outline" slot="start"></ion-icon>
@@ -85,10 +85,10 @@ No uses `ion-button` para pickers. Usá `<button>` con Tailwind:
 <!-- Pill individual -->
 <button type="button"
   class="px-4 py-2 rounded-full text-sm font-bold border-2 transition-all"
-  [class.border-monefy-green]="selected === item"
-  [class.bg-monefy-mint]="selected === item"
+  [class.border-myfinance-green]="selected === item"
+  [class.bg-myfinance-mint]="selected === item"
   [class.border-gray-100]="selected !== item"
-  [class.text-monefy-text-secondary]="selected !== item"
+  [class.text-myfinance-text-secondary]="selected !== item"
   (click)="select(item)">
   {{ item }}
 </button>
@@ -154,9 +154,9 @@ No uses `ion-button` para pickers. Usá `<button>` con Tailwind:
             [class.bg-green-500]="tx.isEffectiveIncome"
             [class.bg-red-400]="!tx.isEffectiveIncome">
           </div>
-          <h3 class="text-sm font-bold text-monefy-text-primary">{{ tx.concept || 'Sin descripción' }}</h3>
+          <h3 class="text-sm font-bold text-myfinance-text-primary">{{ tx.concept || 'Sin descripción' }}</h3>
         </div>
-        <p class="text-[10px] uppercase tracking-wider font-bold text-monefy-text-secondary mt-0.5">
+        <p class="text-[10px] uppercase tracking-wider font-bold text-myfinance-text-secondary mt-0.5">
           {{ tx.categoryName }} • {{ tx.date | relativeDate }}
         </p>
       </ion-label>
@@ -164,8 +164,8 @@ No uses `ion-button` para pickers. Usá `<button>` con Tailwind:
       <!-- Monto -->
       <div slot="end" class="text-right">
         <span class="text-base font-extrabold"
-          [class.text-monefy-green]="tx.isEffectiveIncome"
-          [class.text-monefy-red]="!tx.isEffectiveIncome">
+          [class.text-myfinance-green]="tx.isEffectiveIncome"
+          [class.text-myfinance-red]="!tx.isEffectiveIncome">
           {{ tx.isEffectiveIncome ? '+' : '-' }}{{ tx.displayAmount | currencyFormat:tx.currency }}
         </span>
       </div>
@@ -204,20 +204,20 @@ No uses `ion-button` para pickers. Usá `<button>` con Tailwind:
 Las cards no usan `ion-card`. Usan divs con clases Tailwind:
 
 ```html
-<div class="bg-white rounded-2xl border border-monefy-border shadow-sm p-4 mb-3">
+<div class="bg-white rounded-2xl border border-myfinance-border shadow-sm p-4 mb-3">
   <div class="flex items-center justify-between">
     
     <!-- Izquierda: ícono + info -->
     <div class="flex items-center gap-3">
       <span class="text-3xl">{{ item.icon }}</span>
       <div>
-        <span class="font-semibold text-monefy-text-primary block">{{ item.name }}</span>
-        <span class="text-xs text-monefy-text-secondary">{{ item.subtitle }}</span>
+        <span class="font-semibold text-myfinance-text-primary block">{{ item.name }}</span>
+        <span class="text-xs text-myfinance-text-secondary">{{ item.subtitle }}</span>
       </div>
     </div>
 
     <!-- Derecha: valor -->
-    <span class="text-lg font-extrabold text-monefy-text-primary">
+    <span class="text-lg font-extrabold text-myfinance-text-primary">
       {{ item.value | currencyFormat }}
     </span>
 
@@ -227,7 +227,7 @@ Las cards no usan `ion-card`. Usan divs con clases Tailwind:
 
 **Reglas de cards:**
 - `rounded-2xl` — esquinas muy redondeadas
-- `border border-monefy-border` — borde sutil
+- `border border-myfinance-border` — borde sutil
 - `shadow-sm` — sombra mínima (no shadow-lg)
 - `bg-white` — fondo blanco siempre
 - `p-4` — padding estándar
@@ -301,7 +301,7 @@ Todos los íconos usan la variante `-outline`. Sin excepciones.
                    [style.background-color]="selectedCategoryId() === cat.categoryId ? cat.color + '33' : cat.color + '1a'"
                    (click)="onPickerCategorySelect(cat.categoryId)">
                 <span class="text-2xl leading-none">{{ cat.icon }}</span>
-                <span class="text-[10px] text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ cat.name }}</span>
+                <span class="text-[10px] text-center text-myfinance-text-primary font-medium leading-tight line-clamp-2">{{ cat.name }}</span>
               </div>
             }
           </div>
@@ -316,10 +316,10 @@ Todos los íconos usan la variante `-outline`. Sin excepciones.
           class="relative flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2 aspect-square min-h-[72px] transition-transform active:scale-95"
           [style.border-color]="cat.color" [style.background-color]="cat.color + '1a'" (click)="onTilePress(cat)">
           <span class="text-3xl leading-none">{{ cat.icon }}</span>
-          <span class="text-xs text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ cat.name }}</span>
+          <span class="text-xs text-center text-myfinance-text-primary font-medium leading-tight line-clamp-2">{{ cat.name }}</span>
           @if (selectionMode()) {
             <div class="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center border"
-                 [class]="selectedIds().has(cat.categoryId) ? 'bg-monefy-green border-monefy-green' : 'bg-white/80 border-gray-300'">
+                 [class]="selectedIds().has(cat.categoryId) ? 'bg-myfinance-green border-myfinance-green' : 'bg-white/80 border-gray-300'">
               @if (selectedIds().has(cat.categoryId)) {
                 <ion-icon name="checkmark-outline" class="text-white text-[10px]"></ion-icon>
               }
@@ -329,11 +329,11 @@ Todos los íconos usan la variante `-outline`. Sin excepciones.
             <div class="hidden md:flex absolute bottom-1 right-1 gap-0.5">
               <button type="button" class="p-1 rounded hover:bg-black/10"
                       (click)="openEditCategory(cat); $event.stopPropagation()">
-                <ion-icon name="pencil-outline" class="text-monefy-text-secondary text-xs"></ion-icon>
+                <ion-icon name="pencil-outline" class="text-myfinance-text-secondary text-xs"></ion-icon>
               </button>
               <button type="button" class="p-1 rounded hover:bg-black/10"
                       (click)="confirmDeleteCategory(cat); $event.stopPropagation()">
-                <ion-icon name="trash-outline" class="text-monefy-red text-xs"></ion-icon>
+                <ion-icon name="trash-outline" class="text-myfinance-red text-xs"></ion-icon>
               </button>
             </div>
           }
@@ -355,7 +355,7 @@ Todos los íconos usan la variante `-outline`. Sin excepciones.
 | `text-lg font-semibold` | Subtítulos, valores de cartera |
 | `text-base font-extrabold` | Monto en ítem de lista |
 | `text-sm font-bold` | Descripción en ítem de lista |
-| `text-xs text-monefy-text-secondary` | Metadata (fecha, categoría) |
+| `text-xs text-myfinance-text-secondary` | Metadata (fecha, categoría) |
 | `text-[10px] uppercase tracking-wider font-bold` | Labels de sección / etiquetas |
 | `text-[9px]` | Porcentajes de budget (muy pequeño) |
 
@@ -363,19 +363,19 @@ Todos los íconos usan la variante `-outline`. Sin excepciones.
 
 ```html
 <!-- Etiqueta + valor (patrón más común) -->
-<span class="text-[10px] uppercase font-bold text-monefy-text-secondary tracking-widest block">Ingresos</span>
-<span class="text-xl font-black text-monefy-text-primary">{{ income | currencyFormat }}</span>
+<span class="text-[10px] uppercase font-bold text-myfinance-text-secondary tracking-widest block">Ingresos</span>
+<span class="text-xl font-black text-myfinance-text-primary">{{ income | currencyFormat }}</span>
 
 <!-- Descripción de ítem -->
-<h3 class="text-sm font-bold text-monefy-text-primary m-0">{{ concept }}</h3>
-<p class="text-[10px] uppercase tracking-wider font-bold text-monefy-text-secondary mt-0.5">
+<h3 class="text-sm font-bold text-myfinance-text-primary m-0">{{ concept }}</h3>
+<p class="text-[10px] uppercase tracking-wider font-bold text-myfinance-text-secondary mt-0.5">
   {{ categoryName }} • {{ date | relativeDate }}
 </p>
 
 <!-- Monto en lista -->
 <span class="text-base font-extrabold"
-  [class.text-monefy-green]="isIncome"
-  [class.text-monefy-red]="!isIncome">
+  [class.text-myfinance-green]="isIncome"
+  [class.text-myfinance-red]="!isIncome">
   {{ isIncome ? '+' : '-' }}{{ amount | currencyFormat:currency }}
 </span>
 
@@ -387,11 +387,11 @@ Todos los íconos usan la variante `-outline`. Sin excepciones.
 
 ```html
 <!-- Texto principal -->
-class="text-monefy-text-primary"    <!-- #2D2D2D -->
+class="text-myfinance-text-primary"    <!-- #2D2D2D -->
 class="text-gray-900"               <!-- igual, alternativo -->
 
 <!-- Texto secundario -->
-class="text-monefy-text-secondary"  <!-- #8A9A90 -->
+class="text-myfinance-text-secondary"  <!-- #8A9A90 -->
 class="text-gray-500"               <!-- similar -->
 
 <!-- Texto muy sutil -->
@@ -420,8 +420,8 @@ La app usa tres tipos de gráficos, todos con Chart.js encapsulado en componente
 
   <!-- Leyenda superpuesta en el centro (custom, no la de Chart.js) -->
   <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-    <span class="text-xs uppercase font-bold text-monefy-text-secondary tracking-widest">Balance</span>
-    <span class="text-2xl font-black text-monefy-text-primary tracking-tighter">
+    <span class="text-xs uppercase font-bold text-myfinance-text-secondary tracking-widest">Balance</span>
+    <span class="text-2xl font-black text-myfinance-text-primary tracking-tighter">
       {{ balance() | currencyFormat:currency() }}
     </span>
   </div>
@@ -460,9 +460,9 @@ La app usa tres tipos de gráficos, todos con Chart.js encapsulado en componente
   <div class="px-4 py-4 space-y-3">
 
     <!-- Campo de texto -->
-    <div class="bg-white rounded-2xl border border-monefy-border overflow-hidden">
+    <div class="bg-white rounded-2xl border border-myfinance-border overflow-hidden">
       <ion-item lines="none" class="ion-no-padding">
-        <ion-label position="stacked" class="px-4 pt-2 text-[10px] uppercase font-bold text-monefy-text-secondary">
+        <ion-label position="stacked" class="px-4 pt-2 text-[10px] uppercase font-bold text-myfinance-text-secondary">
           Nombre
         </ion-label>
         <ion-input class="px-4 text-sm font-semibold" placeholder="Ej: Cuenta corriente"
@@ -472,7 +472,7 @@ La app usa tres tipos de gráficos, todos con Chart.js encapsulado en componente
     </div>
 
     <!-- Campo numérico con numpad -->
-    <div class="bg-white rounded-2xl border border-monefy-border p-3">
+    <div class="bg-white rounded-2xl border border-myfinance-border p-3">
       <span class="text-[10px] uppercase font-bold text-gray-400 block">Monto</span>
       <span class="text-3xl font-black tracking-tight">
         {{ amount() | currencyFormat }}
@@ -507,10 +507,10 @@ La app usa tres tipos de gráficos, todos con Chart.js encapsulado en componente
 No se usa `ion-datetime`. Se usa `input[type=date]` dentro de una card custom:
 
 ```html
-<div class="bg-white rounded-2xl p-3 border border-monefy-border">
+<div class="bg-white rounded-2xl p-3 border border-myfinance-border">
   <span class="text-[10px] uppercase font-bold text-gray-400 block">Fecha</span>
   <input type="date" [(ngModel)]="date"
-    class="text-sm font-bold bg-transparent border-none p-0 w-full outline-none text-monefy-text-primary" />
+    class="text-sm font-bold bg-transparent border-none p-0 w-full outline-none text-myfinance-text-primary" />
 </div>
 ```
 
@@ -525,7 +525,7 @@ No se usa `ion-datetime`. Se usa `input[type=date]` dentro de una card custom:
          [style.background-color]="selected === cat.categoryId ? cat.color + '33' : cat.color + '1a'"
          (click)="selectCategory(cat.categoryId)">
       <span style="font-size: 24px; line-height: 1;">{{ cat.icon }}</span>
-      <span class="text-[10px] text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">
+      <span class="text-[10px] text-center text-myfinance-text-primary font-medium leading-tight line-clamp-2">
         {{ cat.name }}
       </span>
     </div>
@@ -540,11 +540,11 @@ No se usa `ion-datetime`. Se usa `input[type=date]` dentro de una card custom:
   @for (c of currencies; track c) {
     <button type="button"
       class="px-4 py-2 rounded-full text-sm font-bold border-2 transition-all"
-      [class.border-monefy-green]="selected === c"
-      [class.bg-monefy-mint]="selected === c"
-      [class.text-monefy-green]="selected === c"
+      [class.border-myfinance-green]="selected === c"
+      [class.bg-myfinance-mint]="selected === c"
+      [class.text-myfinance-green]="selected === c"
       [class.border-gray-100]="selected !== c"
-      [class.text-monefy-text-secondary]="selected !== c"
+      [class.text-myfinance-text-secondary]="selected !== c"
       (click)="select(c)">
       {{ c }}
     </button>
@@ -677,8 +677,8 @@ if (role === 'confirm') { /* usar data */ }
 ```html
 <div class="flex flex-col items-center justify-center pt-20 gap-4 text-center px-8">
   <ion-icon name="folder-open-outline" class="text-6xl text-gray-300"></ion-icon>
-  <h2 class="text-lg font-bold text-monefy-text-primary m-0">No hay resultados</h2>
-  <p class="text-sm text-monefy-text-secondary max-w-xs">
+  <h2 class="text-lg font-bold text-myfinance-text-primary m-0">No hay resultados</h2>
+  <p class="text-sm text-myfinance-text-secondary max-w-xs">
     Todavía no tenés {{ entityName }}. Creá uno para empezar.
   </p>
   <ion-button shape="round" (click)="openCreateModal()"
@@ -694,15 +694,15 @@ if (role === 'confirm') { /* usar data */ }
 ```html
 <div class="flex flex-col items-center justify-center px-10 py-12 text-center opacity-60">
   <ion-icon name="add-outline" class="text-5xl mb-3 text-gray-400"></ion-icon>
-  <p class="text-sm text-monefy-text-secondary">Todavía no registraste nada en este periodo.</p>
+  <p class="text-sm text-myfinance-text-secondary">Todavía no registraste nada en este periodo.</p>
 </div>
 ```
 
 **Reglas:**
 - Siempre incluir **CTA con botón** (no solo texto)
 - Ícono: `text-6xl text-gray-300` (grande, gris suave)
-- Títulos: `font-bold text-monefy-text-primary`
-- Descripción: `text-sm text-monefy-text-secondary max-w-xs`
+- Títulos: `font-bold text-myfinance-text-primary`
+- Descripción: `text-sm text-myfinance-text-secondary max-w-xs`
 
 ---
 
@@ -735,15 +735,15 @@ if (role === 'confirm') { /* usar data */ }
 ```javascript
 // tailwind.config.js
 colors: {
-  monefy: {
-    green:            '#5BAD8F',   // text-monefy-green
-    mint:             '#E8F5EE',   // bg-monefy-mint
-    red:              '#E57373',   // text-monefy-red
-    'green-dark':     '#3D9970',   // bg-monefy-green-dark
-    'green-light':    '#7CC4A4',   // text-monefy-green-light
-    border:           '#C8D8CE',   // border-monefy-border
-    'text-primary':   '#2D2D2D',   // text-monefy-text-primary
-    'text-secondary': '#8A9A90',   // text-monefy-text-secondary
+  myfinance: {
+    green:            '#5BAD8F',   // text-myfinance-green
+    mint:             '#E8F5EE',   // bg-myfinance-mint
+    red:              '#E57373',   // text-myfinance-red
+    'green-dark':     '#3D9970',   // bg-myfinance-green-dark
+    'green-light':    '#7CC4A4',   // text-myfinance-green-light
+    border:           '#C8D8CE',   // border-myfinance-border
+    'text-primary':   '#2D2D2D',   // text-myfinance-text-primary
+    'text-secondary': '#8A9A90',   // text-myfinance-text-secondary
   }
 }
 ```
@@ -752,12 +752,12 @@ colors: {
 
 | Contexto | Token |
 |----------|-------|
-| Ingreso / positivo | `text-monefy-green` |
-| Gasto / negativo | `text-monefy-red` |
-| Fondo de página | `bg-monefy-mint` o `style="--background: var(--color-green-50);"` |
-| Borde de card | `border-monefy-border` |
-| Texto principal | `text-monefy-text-primary` |
-| Texto secundario / metadata | `text-monefy-text-secondary` |
+| Ingreso / positivo | `text-myfinance-green` |
+| Gasto / negativo | `text-myfinance-red` |
+| Fondo de página | `bg-myfinance-mint` o `style="--background: var(--color-green-50);"` |
+| Borde de card | `border-myfinance-border` |
+| Texto principal | `text-myfinance-text-primary` |
+| Texto secundario / metadata | `text-myfinance-text-secondary` |
 | Toolbar / header | `color="primary"` (Ionic) |
 | Color de categoría dinámico | `[style.border-color]="cat.color"` |
 | Tinte de fondo dinámico | `[style.background-color]="cat.color + '1a'"` |
@@ -809,10 +809,10 @@ colors: {
   @for (tab of ['Día','Semana','Mes','Año']; track tab) {
     <button class="flex-1 py-2 text-sm transition-colors"
       [class.font-bold]="active === tab"
-      [class.text-monefy-green]="active === tab"
+      [class.text-myfinance-green]="active === tab"
       [class.border-b-2]="active === tab"
-      [class.border-monefy-green]="active === tab"
-      [class.text-monefy-text-secondary]="active !== tab"
+      [class.border-myfinance-green]="active === tab"
+      [class.text-myfinance-text-secondary]="active !== tab"
       (click)="setActive(tab)">
       {{ tab }}
     </button>
@@ -882,7 +882,7 @@ colors: {
 </ion-content>
 
 <!-- Barra de acciones fija -->
-<div class="fixed bottom-0 left-0 right-0 px-4 pb-6 pt-3 bg-white/95 backdrop-blur-sm border-t border-monefy-border z-10">
+<div class="fixed bottom-0 left-0 right-0 px-4 pb-6 pt-3 bg-white/95 backdrop-blur-sm border-t border-myfinance-border z-10">
   <ion-button expand="block" style="--background: var(--color-green-500); --border-radius: 12px; text-transform: none;">
     Acción principal
   </ion-button>
@@ -893,13 +893,13 @@ colors: {
 
 ```html
 <div class="grid grid-cols-2 gap-3 px-4 mt-4">
-  <div class="bg-white rounded-2xl p-3 border border-monefy-border">
-    <span class="text-[10px] uppercase font-bold text-monefy-text-secondary tracking-widest block">Ingresos</span>
-    <span class="text-xl font-black text-monefy-green">{{ income | currencyFormat }}</span>
+  <div class="bg-white rounded-2xl p-3 border border-myfinance-border">
+    <span class="text-[10px] uppercase font-bold text-myfinance-text-secondary tracking-widest block">Ingresos</span>
+    <span class="text-xl font-black text-myfinance-green">{{ income | currencyFormat }}</span>
   </div>
-  <div class="bg-white rounded-2xl p-3 border border-monefy-border">
-    <span class="text-[10px] uppercase font-bold text-monefy-text-secondary tracking-widest block">Gastos</span>
-    <span class="text-xl font-black text-monefy-red">{{ expense | currencyFormat }}</span>
+  <div class="bg-white rounded-2xl p-3 border border-myfinance-border">
+    <span class="text-[10px] uppercase font-bold text-myfinance-text-secondary tracking-widest block">Gastos</span>
+    <span class="text-xl font-black text-myfinance-red">{{ expense | currencyFormat }}</span>
   </div>
 </div>
 ```
@@ -908,7 +908,7 @@ colors: {
 
 ```html
 <div class="px-4 mt-6 mb-2">
-  <span class="text-[10px] uppercase font-bold text-monefy-text-secondary tracking-widest">
+  <span class="text-[10px] uppercase font-bold text-myfinance-text-secondary tracking-widest">
     Últimas transacciones
   </span>
 </div>
@@ -922,10 +922,10 @@ colors: {
 |---------|------------|
 | `text-transform: none` en ion-button | Dejar las mayúsculas de Ionic |
 | `rounded-2xl` en cards | `rounded-md` o `rounded-lg` |
-| `border border-monefy-border` en cards | `shadow-xl` en cards |
+| `border border-myfinance-border` en cards | `shadow-xl` en cards |
 | `shadow-sm` o sin sombra | `shadow-lg` en contenido |
 | Variables CSS para colores Ionic | Clases Tailwind en `ion-button`, `ion-card` |
-| `text-monefy-green` / `text-monefy-red` | `text-green-600` / `text-red-500` |
+| `text-myfinance-green` / `text-myfinance-red` | `text-green-600` / `text-red-500` |
 | Íconos `-outline` | Íconos sin `-outline` (rellenos) |
 | `font-extrabold` en montos | `font-medium` en montos |
 | `position="stacked"` en ion-label | Labels flotantes sobre input |

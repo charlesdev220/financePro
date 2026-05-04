@@ -4,12 +4,12 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
 
-import { WorkspaceFormComponent } from '../../../../features/workspaces/workspace-form/workspace-form.component';
-import { WorkspacesStateService } from '../../../../core/state/workspaces.state';
-import { CategoriesStateService } from '../../../../core/state/categories.state';
-import { DataSeedService } from '../../../../core/services/data-seed.service';
-import { AuthService } from '../../../../core/services/auth.service';
-import { WORKSPACE_DEFAULTS } from '../../../../core/constants/workspace.constants';
+import { WorkspaceFormComponent } from '@features/workspaces/workspace-form/workspace-form.component';
+import { WorkspacesStateService } from '@core/state/workspaces.state';
+import { CategoriesStateService } from '@core/state/categories.state';
+import { DataSeedService } from '@core/services/data-seed.service';
+import { AuthService } from '@core/services/auth.service';
+import { WORKSPACE_DEFAULTS } from '@core/constants/workspace.constants';
 import { MOCK_WORKSPACES } from '../../../fixtures';
 import { MODAL_CONTROLLER_MOCK, TOAST_CONTROLLER_MOCK } from '../../../ionic-mocks';
 

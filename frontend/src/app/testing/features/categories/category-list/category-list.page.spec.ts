@@ -1,31 +1,31 @@
 import { createComponentFactory, Spectator, mockProvider } from '@ngneat/spectator/jest';
 import { signal } from '@angular/core';
 import { ActionSheetController, AlertController, ModalController, ToastController } from '@ionic/angular/standalone';
-import { CategoryListPage } from '../../../../features/categories/category-list/category-list.page';
-import { CategoriesStateService } from '../../../../core/state/categories.state';
-import { AuthService } from '../../../../core/services/auth.service';
-import { ICategory } from '../../../../models/category.model';
+import { CategoryListPage } from '@features/categories/category-list/category-list.page';
+import { CategoriesStateService } from '@core/state/categories.state';
+import { AuthService } from '@core/services/auth.service';
+import { ICategory } from '@models/category.model';
 import { MODAL_CONTROLLER_MOCK, TOAST_CONTROLLER_MOCK, ALERT_CONTROLLER_MOCK } from '../../../ionic-mocks';
 
 function makeCategory(categoryId: string, type: 'income' | 'expense' = 'expense'): ICategory {
   return {
     categoryId,
-    userId:       'usr_001',
-    name:         `Cat ${categoryId}`,
+    userId: 'usr_001',
+    name: `Cat ${categoryId}`,
     type,
-    icon:         '📦',
-    color:        '#5BAD8F',
+    icon: '📦',
+    color: '#5BAD8F',
     budgetAmount: null,
     budgetPeriod: 'monthly',
-    isActive:     true,
-    workspaceId:  'ws_test',
-    createdAt:    '2026-01-01T00:00:00Z',
+    isActive: true,
+    workspaceId: 'ws_test',
+    createdAt: '2026-01-01T00:00:00Z',
   };
 }
 
 describe('CategoryListPage', () => {
   let spectator: Spectator<CategoryListPage>;
-  
+
   // Patrón ADR-02: Signals frescos por test
   let itemsSignal: ReturnType<typeof signal<ICategory[]>>;
   let loadingSignal: ReturnType<typeof signal<boolean>>;
@@ -116,7 +116,7 @@ describe('CategoryListPage', () => {
     const cat = makeCategory('cat-1');
     spectator.component.toggleSelectionMode();
     const toggleSpy = jest.spyOn(spectator.component, 'toggleSelection');
-    
+
     await spectator.component.onTilePress(cat);
 
     expect(toggleSpy).toHaveBeenCalledWith('cat-1');

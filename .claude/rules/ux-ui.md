@@ -295,14 +295,14 @@ Transacciones
 ```
 | Token | variable.scss | Clase Tailwind | Uso |
 |-------|-----|----------------|-----|
-| Verde primario | `--color-green-500` | `text-monefy-green` / `bg-monefy-green` | Ingresos, acciones primarias, FAB ingreso |
-| Rojo gasto | `--color-red-400` | `text-monefy-red` / `bg-monefy-red` | Gastos, alertas, FAB gasto |
-| Mint (fondo) | `--color-green-50` | `bg-monefy-mint` | Fondo de `ion-content` en todas las páginas |
-| Verde oscuro | `--color-green-700` | `text-monefy-green-dark` | Hover / pressed state del verde primario |
-| Verde claro | `--color-green-400` | `text-monefy-green-light` | Íconos secundarios, chips de filtro |
-| Borde | `--color-gray-200` | `border-monefy-border` | Cards, separadores, tiles de categoría |
-| Texto principal | `--color-gray-900` | `text-monefy-text-primary` | Nombres, valores importantes |
-| Texto secundario | `--color-gray-400` | `text-monefy-text-secondary` | Labels, metadatos, encabezados de sección |
+| Verde primario | `--color-green-500` | `text-myfinance-green` / `bg-myfinance-green` | Ingresos, acciones primarias, FAB ingreso |
+| Rojo gasto | `--color-red-400` | `text-myfinance-red` / `bg-myfinance-red` | Gastos, alertas, FAB gasto |
+| Mint (fondo) | `--color-green-50` | `bg-myfinance-mint` | Fondo de `ion-content` en todas las páginas |
+| Verde oscuro | `--color-green-700` | `text-myfinance-green-dark` | Hover / pressed state del verde primario |
+| Verde claro | `--color-green-400` | `text-myfinance-green-light` | Íconos secundarios, chips de filtro |
+| Borde | `--color-gray-200` | `border-myfinance-border` | Cards, separadores, tiles de categoría |
+| Texto principal | `--color-gray-900` | `text-myfinance-text-primary` | Nombres, valores importantes |
+| Texto secundario | `--color-gray-400` | `text-myfinance-text-secondary` | Labels, metadatos, encabezados de sección |
 
 ### Componentes clave
 
@@ -341,7 +341,7 @@ Transacciones
       (click)="onTilePress(cat)"
     >
       <span style="font-size: 28px; line-height: 1;">{{ cat.icon }}</span>
-      <span class="text-xs text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ cat.name }}</span>
+      <span class="text-xs text-center text-myfinance-text-primary font-medium leading-tight line-clamp-2">{{ cat.name }}</span>
     </div>
   }
 </div>
@@ -349,7 +349,7 @@ Transacciones
 Regla del tinte: `cat.color + '1a'` agrega el canal alpha al hex, produciendo 10% de opacidad sin conversión a RGB.
 
 **Period tabs** — Selector de período como fila de 4 tabs (Día / Semana / Mes / Año), sin chevrons:
-- Tab activo: `font-bold text-monefy-green border-b-2 border-monefy-green`
+- Tab activo: `font-bold text-myfinance-green border-b-2 border-myfinance-green`
 - Tab inactivo: `text-gray-400`
 - El componente `app-period-selector` usa `bg-white/90` de fondo para contrastar en pantallas verdes y mint.
 

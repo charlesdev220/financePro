@@ -2,7 +2,8 @@
   <ion-toolbar color="primary">
     <ion-title>Categorías</ion-title>
     <ion-buttons slot="end">
-      <ion-button (click)="toggleSelectionMode()" fill="clear" style="--color: white; text-transform: none;" class="font-semibold">
+      <ion-button (click)="toggleSelectionMode()" fill="clear" style="--color: white; text-transform: none;"
+        class="font-semibold">
         {{ selectionMode() ? 'Cancelar' : 'Seleccionar' }}
       </ion-button>
     </ion-buttons>
@@ -24,33 +25,34 @@
   <div class="max-w-screen-xl mx-auto" [class.pb-24]="selectionMode()">
     @if (expenseCategories().length > 0) {
     <div class="px-4 pt-4 pb-2">
-      <h2 class="text-sm font-semibold text-monefy-text-secondary tracking-wider mb-3">Gastos</h2>
+      <h2 class="text-sm font-semibold text-myfinance-text-secondary tracking-wider mb-3">Gastos</h2>
       <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
         @for (cat of expenseCategories(); track cat.categoryId) {
         <div
           class="relative flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2 aspect-square min-h-[72px] transition-transform active:scale-95"
           [style.border-color]="cat.color" [style.background-color]="cat.color + '1a'" (click)="onTilePress(cat)">
           <span class="text-3xl leading-none">{{ cat.icon }}</span>
-          <span class="text-xs text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ cat.name }}</span>
+          <span class="text-xs text-center text-myfinance-text-primary font-medium leading-tight line-clamp-2">{{
+            cat.name }}</span>
           @if (selectionMode()) {
-            <div class="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center border"
-                 [class]="selectedIds().has(cat.categoryId) ? 'bg-monefy-green border-monefy-green' : 'bg-white/80 border-gray-300'">
-              @if (selectedIds().has(cat.categoryId)) {
-                <ion-icon name="checkmark-outline" class="text-white text-[10px]"></ion-icon>
-              }
-            </div>
+          <div class="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center border"
+            [class]="selectedIds().has(cat.categoryId) ? 'bg-myfinance-green border-myfinance-green' : 'bg-white/80 border-gray-300'">
+            @if (selectedIds().has(cat.categoryId)) {
+            <ion-icon name="checkmark-outline" class="text-white text-[10px]"></ion-icon>
+            }
+          </div>
           }
           @if (!selectionMode()) {
-            <div class="hidden md:flex absolute bottom-1 right-1 gap-0.5">
-              <button type="button" class="p-1 rounded hover:bg-black/10"
-                      (click)="openEditCategory(cat); $event.stopPropagation()">
-                <ion-icon name="pencil-outline" class="text-monefy-text-secondary text-xs"></ion-icon>
-              </button>
-              <button type="button" class="p-1 rounded hover:bg-black/10"
-                      (click)="confirmDeleteCategory(cat); $event.stopPropagation()">
-                <ion-icon name="trash-outline" class="text-monefy-red text-xs"></ion-icon>
-              </button>
-            </div>
+          <div class="hidden md:flex absolute bottom-1 right-1 gap-0.5">
+            <button type="button" class="p-1 rounded hover:bg-black/10"
+              (click)="openEditCategory(cat); $event.stopPropagation()">
+              <ion-icon name="pencil-outline" class="text-myfinance-text-secondary text-xs"></ion-icon>
+            </button>
+            <button type="button" class="p-1 rounded hover:bg-black/10"
+              (click)="confirmDeleteCategory(cat); $event.stopPropagation()">
+              <ion-icon name="trash-outline" class="text-myfinance-red text-xs"></ion-icon>
+            </button>
+          </div>
           }
         </div>
         }
@@ -60,33 +62,34 @@
 
     @if (incomeCategories().length > 0) {
     <div class="px-4 pt-2 pb-4">
-      <h2 class="text-sm font-semibold text-monefy-text-secondary tracking-wider mb-3">Ingresos</h2>
+      <h2 class="text-sm font-semibold text-myfinance-text-secondary tracking-wider mb-3">Ingresos</h2>
       <div class="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
         @for (cat of incomeCategories(); track cat.categoryId) {
         <div
           class="relative flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2 aspect-square min-h-[72px] transition-transform active:scale-95"
           [style.border-color]="cat.color" [style.background-color]="cat.color + '1a'" (click)="onTilePress(cat)">
           <span class="text-3xl leading-none">{{ cat.icon }}</span>
-          <span class="text-xs text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ cat.name }}</span>
+          <span class="text-xs text-center text-myfinance-text-primary font-medium leading-tight line-clamp-2">{{
+            cat.name }}</span>
           @if (selectionMode()) {
-            <div class="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center border"
-                 [class]="selectedIds().has(cat.categoryId) ? 'bg-monefy-green border-monefy-green' : 'bg-white/80 border-gray-300'">
-              @if (selectedIds().has(cat.categoryId)) {
-                <ion-icon name="checkmark-outline" class="text-white text-[10px]"></ion-icon>
-              }
-            </div>
+          <div class="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center border"
+            [class]="selectedIds().has(cat.categoryId) ? 'bg-myfinance-green border-myfinance-green' : 'bg-white/80 border-gray-300'">
+            @if (selectedIds().has(cat.categoryId)) {
+            <ion-icon name="checkmark-outline" class="text-white text-[10px]"></ion-icon>
+            }
+          </div>
           }
           @if (!selectionMode()) {
-            <div class="hidden md:flex absolute bottom-1 right-1 gap-0.5">
-              <button type="button" class="p-1 rounded hover:bg-black/10"
-                      (click)="openEditCategory(cat); $event.stopPropagation()">
-                <ion-icon name="pencil-outline" class="text-monefy-text-secondary text-xs"></ion-icon>
-              </button>
-              <button type="button" class="p-1 rounded hover:bg-black/10"
-                      (click)="confirmDeleteCategory(cat); $event.stopPropagation()">
-                <ion-icon name="trash-outline" class="text-monefy-red text-xs"></ion-icon>
-              </button>
-            </div>
+          <div class="hidden md:flex absolute bottom-1 right-1 gap-0.5">
+            <button type="button" class="p-1 rounded hover:bg-black/10"
+              (click)="openEditCategory(cat); $event.stopPropagation()">
+              <ion-icon name="pencil-outline" class="text-myfinance-text-secondary text-xs"></ion-icon>
+            </button>
+            <button type="button" class="p-1 rounded hover:bg-black/10"
+              (click)="confirmDeleteCategory(cat); $event.stopPropagation()">
+              <ion-icon name="trash-outline" class="text-myfinance-red text-xs"></ion-icon>
+            </button>
+          </div>
           }
         </div>
         }
@@ -97,26 +100,23 @@
   }
 
   @if (!selectionMode()) {
-    <div class="fixed left-0 right-0 flex justify-center px-4"
-         style="bottom: calc(56px + 12px); padding-bottom: env(safe-area-inset-bottom);">
-      <ion-button (click)="openAddModal()"
-                  class="w-full max-w-sm"
-                  style="--background: var(--color-green-500); --border-radius: 12px; text-transform: none; font-weight: 600;">
-        + Agregar categoría
-      </ion-button>
-    </div>
+  <div class="fixed left-0 right-0 flex justify-center px-4"
+    style="bottom: calc(56px + 12px); padding-bottom: env(safe-area-inset-bottom);">
+    <ion-button (click)="openAddModal()" class="w-full max-w-sm"
+      style="--background: var(--color-green-500); --border-radius: 12px; text-transform: none; font-weight: 600;">
+      + Agregar categoría
+    </ion-button>
+  </div>
   }
 </ion-content>
 
 <!-- Barra de acciones para selección múltiple -->
 @if (selectionMode()) {
-  <div class="fixed left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 z-20"
-       style="bottom: 56px; padding-bottom: env(safe-area-inset-bottom);">
-    <ion-button expand="block" color="danger"
-                [disabled]="selectedCount() === 0"
-                (click)="confirmDeleteSelected()"
-                style="text-transform: none;">
-      Eliminar ({{ selectedCount() }})
-    </ion-button>
-  </div>
+<div class="fixed left-0 right-0 bg-white border-t border-gray-200 px-4 py-3 z-20"
+  style="bottom: 56px; padding-bottom: env(safe-area-inset-bottom);">
+  <ion-button expand="block" color="danger" [disabled]="selectedCount() === 0" (click)="confirmDeleteSelected()"
+    style="text-transform: none;">
+    Eliminar ({{ selectedCount() }})
+  </ion-button>
+</div>
 }

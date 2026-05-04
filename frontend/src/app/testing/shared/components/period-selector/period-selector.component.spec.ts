@@ -1,6 +1,6 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
-import { PeriodSelectorComponent } from '../../../../shared/components/period-selector/period-selector.component';
-import { PeriodTab } from '../../../../core/constants/period.constants';
+import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
+import { PeriodTab } from '@core/constants/period.constants';
 
 describe('PeriodSelectorComponent', () => {
   let spectator: Spectator<PeriodSelectorComponent>;

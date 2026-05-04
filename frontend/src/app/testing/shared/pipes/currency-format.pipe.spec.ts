@@ -1,4 +1,4 @@
-import { CurrencyFormatPipe } from '../../../shared/pipes/currency-format.pipe';
+import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 
 describe('CurrencyFormatPipe', () => {
   let pipe: CurrencyFormatPipe;

@@ -1,9 +1,9 @@
 import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
 import { of, firstValueFrom } from 'rxjs';
 
-import { CategoryService } from '../../../../features/categories/services/category.service';
-import { SheetsApiService } from '../../../../core/services/sheets-api.service';
-import { AuthService } from '../../../../core/services/auth.service';
+import { CategoryService } from '@features/categories/services/category.service';
+import { SheetsApiService } from '@core/services/sheets-api.service';
+import { AuthService } from '@core/services/auth.service';
 import { MOCK_CATEGORIES } from '../../../fixtures';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -22,7 +22,7 @@ describe('CategoryService', () => {
     ['category_id', 'user_id', 'name', 'icon', 'color', 'type', 'budget_amount', 'budget_period', 'is_active', 'created_at'],
     [MOCK_CATEGORIES[0].categoryId, 'usr_001', 'Food', '🛒', '#4CAF50', 'expense', '', 'monthly', 'true', '2026-04-01T00:00:00.000Z'],
     ['other-cat-001', 'other-user', 'Other', '🔧', '#FF0000', 'expense', '', 'monthly', 'true', '2026-04-01T00:00:00.000Z'],
-    ['inactive-cat',  'usr_001',   'Inactive', '🗑️', '#000000', 'expense', '', 'monthly', 'false', '2026-04-01T00:00:00.000Z'],
+    ['inactive-cat', 'usr_001', 'Inactive', '🗑️', '#000000', 'expense', '', 'monthly', 'false', '2026-04-01T00:00:00.000Z'],
   ];
 
   beforeEach(() => {

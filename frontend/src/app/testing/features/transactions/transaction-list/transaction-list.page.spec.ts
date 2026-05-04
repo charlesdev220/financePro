@@ -1,16 +1,16 @@
 import { createComponentFactory, Spectator, mockProvider } from '@ngneat/spectator/jest';
 import { signal } from '@angular/core';
 import { ModalController, ToastController } from '@ionic/angular/standalone';
-import { TransactionListPage } from '../../../../features/transactions/transaction-list/transaction-list.page';
-import { TransactionsStateService } from '../../../../core/state/transactions.state';
-import { WalletsStateService } from '../../../../core/state/wallets.state';
-import { CategoriesStateService } from '../../../../core/state/categories.state';
-import { CurrencyStateService } from '../../../../core/state/currency.state';
-import { AuthService } from '../../../../core/services/auth.service';
-import { ITransaction } from '../../../../models/transaction.model';
-import { IWallet } from '../../../../models/wallet.model';
-import { ICategory } from '../../../../models/category.model';
-import { ICurrency } from '../../../../models/currency.model';
+import { TransactionListPage } from '@features/transactions/transaction-list/transaction-list.page';
+import { TransactionsStateService } from '@core/state/transactions.state';
+import { WalletsStateService } from '@core/state/wallets.state';
+import { CategoriesStateService } from '@core/state/categories.state';
+import { CurrencyStateService } from '@core/state/currency.state';
+import { AuthService } from '@core/services/auth.service';
+import { ITransaction } from '@models/transaction.model';
+import { IWallet } from '@models/wallet.model';
+import { ICategory } from '@models/category.model';
+import { ICurrency } from '@models/currency.model';
 import { MODAL_CONTROLLER_MOCK, TOAST_CONTROLLER_MOCK } from '../../../ionic-mocks';
 
 function makeTx(
@@ -36,14 +36,14 @@ function makeTx(
     recurrenceRule: null,
     notes: null,
     workspaceId: 'ws_test',
-    createdAt:   `${date}T00:00:00Z`,
-    updatedAt:   `${date}T00:00:00Z`,
+    createdAt: `${date}T00:00:00Z`,
+    updatedAt: `${date}T00:00:00Z`,
   };
 }
 
 describe('TransactionListPage', () => {
   let spectator: Spectator<TransactionListPage>;
-  
+
   let txSignal: ReturnType<typeof signal<ITransaction[]>>;
 
   const createComponent = createComponentFactory({
@@ -64,7 +64,7 @@ describe('TransactionListPage', () => {
       }),
       mockProvider(CurrencyStateService, {
         items: signal<ICurrency[]>([]).asReadonly(),
-        baseCurrency: signal<string|null>('EUR').asReadonly(),
+        baseCurrency: signal<string | null>('EUR').asReadonly(),
       }),
     ]
   });
@@ -76,7 +76,7 @@ describe('TransactionListPage', () => {
       providers: [
         mockProvider(TransactionsStateService, {
           items: txSignal.asReadonly(),
-          error: signal<string|null>(null).asReadonly(),
+          error: signal<string | null>(null).asReadonly(),
           load: jest.fn(),
           add: jest.fn(),
           update: jest.fn(),

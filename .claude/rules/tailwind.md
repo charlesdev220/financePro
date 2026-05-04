@@ -116,10 +116,10 @@ Usarlos siempre por nombre — nunca por valor hex directo en el template.
 
 | ❌ Prohibido | ✅ Correcto |
 |---|---|
-| `text-[#5BAD8F]` | `text-monefy-green` |
-| `bg-[#E57373]` | `bg-monefy-red` |
-| `border-[#C8D8CE]` | `border-monefy-border` |
-| `style="background: linear-gradient(135deg, #5BAD8F, #3D9970)"` | `bg-gradient-to-br from-monefy-green to-monefy-green-dark` |
+| `text-[#5BAD8F]` | `text-myfinance-green` |
+| `bg-[#E57373]` | `bg-myfinance-red` |
+| `border-[#C8D8CE]` | `border-myfinance-border` |
+| `style="background: linear-gradient(135deg, #5BAD8F, #3D9970)"` | `bg-gradient-to-br from-myfinance-green to-myfinance-green-dark` |
 
 ```html
 <!-- ❌ hex arbitrario — rompe el sistema de tokens -->
@@ -127,8 +127,8 @@ Usarlos siempre por nombre — nunca por valor hex directo en el template.
 <div style="background: linear-gradient(135deg, #5BAD8F, #3D9970)">...</div>
 
 <!-- ✅ token nombrado — un solo cambio en tailwind.config.js actualiza todo -->
-<span class="text-monefy-green">Ingreso</span>
-<div class="bg-gradient-to-br from-monefy-green to-monefy-green-dark">...</div>
+<span class="text-myfinance-green">Ingreso</span>
+<div class="bg-gradient-to-br from-myfinance-green to-myfinance-green-dark">...</div>
 ```
 
 La única excepción es cuando el valor se calcula dinámicamente en TypeScript

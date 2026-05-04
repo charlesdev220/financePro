@@ -1,7 +1,7 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
 import { ChartDataset } from 'chart.js';
-import { AnalyticsChartComponent } from '../../../../../features/analytics/components/analytics-chart/analytics-chart.component';
-import { MonthlyTotal } from '../../../../../features/analytics/services/analytics.service';
+import { AnalyticsChartComponent } from '@features/analytics/components/analytics-chart/analytics-chart.component';
+import { MonthlyTotal } from '@features/analytics/services/analytics.service';
 
 describe('AnalyticsChartComponent', () => {
   let spectator: Spectator<AnalyticsChartComponent>;

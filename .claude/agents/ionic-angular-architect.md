@@ -96,7 +96,7 @@ orchestrator
                    [style.background-color]="selectedCategoryId() === cat.categoryId ? cat.color + '33' : cat.color + '1a'"
                    (click)="onPickerCategorySelect(cat.categoryId)">
                 <span class="text-2xl leading-none">{{ cat.icon }}</span>
-                <span class="text-[10px] text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ cat.name }}</span>
+                <span class="text-[10px] text-center text-myfinance-text-primary font-medium leading-tight line-clamp-2">{{ cat.name }}</span>
               </div>
             }
           </div>

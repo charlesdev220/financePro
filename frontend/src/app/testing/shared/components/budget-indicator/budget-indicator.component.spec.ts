@@ -1,6 +1,6 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
-import { BudgetIndicatorComponent } from '../../../../shared/components/budget-indicator/budget-indicator.component';
-import { IBudget } from '../../../../models/budget.model';
+import { BudgetIndicatorComponent } from '@shared/components/budget-indicator/budget-indicator.component';
+import { IBudget } from '@models/budget.model';
 
 describe('BudgetIndicatorComponent', () => {
   let spectator: Spectator<BudgetIndicatorComponent>;
@@ -16,16 +16,16 @@ describe('BudgetIndicatorComponent', () => {
     status: IBudget['status'],
   ): IBudget {
     return {
-      budgetId:    'b-test',
-      userId:      'u1',
-      categoryId:  'cat-1',
-      period:      '2026-04',
+      budgetId: 'b-test',
+      userId: 'u1',
+      categoryId: 'cat-1',
+      period: '2026-04',
       spentAmount,
       budgetAmount,
       status,
-      lastUpdated:  '2026-04-12T00:00:00Z',
-      workspaceId:  'ws_test',
-      mode:         'indefinite' as const,
+      lastUpdated: '2026-04-12T00:00:00Z',
+      workspaceId: 'ws_test',
+      mode: 'indefinite' as const,
     };
   }
 
@@ -50,7 +50,7 @@ describe('BudgetIndicatorComponent', () => {
     expect(spectator.component.barColor()).toBe(CAT_COLOR);
   });
 
-  // sc2: gasto al 86% (>= 80%) → barColor = rojo monefy
+  // sc2: gasto al 86% (>= 80%) → barColor = rojo myfinance
   it('barColor_shouldBeRed_whenPctIsOver80', () => {
     spectator.setInput('budget', buildBudget(430, 500, 'warning'));
 

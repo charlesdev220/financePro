@@ -2,10 +2,10 @@ import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
 import { of, firstValueFrom } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { calculateStatus, rowToBudget, BudgetService } from '../../../../features/budgets/services/budget.service';
-import { SheetsApiService } from '../../../../core/services/sheets-api.service';
-import { AuthService } from '../../../../core/services/auth.service';
-import { IBudget } from '../../../../models/budget.model';
+import { calculateStatus, rowToBudget, budgetToRow, BudgetService } from '@features/budgets/services/budget.service';
+import { SheetsApiService } from '@core/services/sheets-api.service';
+import { AuthService } from '@core/services/auth.service';
+import { IBudget } from '@models/budget.model';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // calculateStatus — función pura, no requiere DI
@@ -199,5 +199,94 @@ describe('BudgetService.loadBudgets', () => {
 
     expect(result.budgets).toEqual([]);
     expect(result.rowMap).toEqual({});
+  });
+
+  // sc3: hoja con filas de datos — filtra por userId y construye rowMap
+  it('loadBudgets_shouldReturnFilteredBudgets_andBuildRowMap', async () => {
+    spectator.inject(AuthService).getUser.mockReturnValue({ sub: 'usr_001', email: 'a@b.com', name: 'Test' });
+    spectator.inject(SheetsApiService).getRange.mockReturnValue(
+      of({
+        range: 'BUDGETS!A:L',
+        majorDimension: 'ROWS',
+        values: [
+          ['budget_id', 'user_id', 'category_id', 'period', 'budget_amount', 'spent_amount', 'status', 'last_updated', 'workspace_id', 'mode', 'start_date', 'end_date'],
+          ['bgt_001', 'usr_001', 'cat_food', '2026-04', '500', '200', 'ok', '2026-04-01T00:00:00Z', 'ws_001', 'indefinite', '', ''],
+          ['bgt_002', 'usr_other', 'cat_rent', '2026-04', '1000', '1000', 'exceeded', '2026-04-01T00:00:00Z', 'ws_001', 'indefinite', '', ''],
+        ],
+      }),
+    );
+
+    const result = await firstValueFrom(spectator.service.loadBudgets('ws_001'));
+
+    expect(result.budgets.length).toBe(1);
+    expect(result.budgets[0].budgetId).toBe('bgt_001');
+    expect(result.rowMap['bgt_001']).toBe(2);
+    expect(result.rowMap['bgt_002']).toBeUndefined();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BudgetService — saveBudget, updateBudget, deleteBudget
+// ─────────────────────────────────────────────────────────────────────────────
+describe('BudgetService — write operations', () => {
+  let spectator: SpectatorService<BudgetService>;
+  const createService = createServiceFactory({
+    service: BudgetService,
+    mocks: [SheetsApiService, AuthService],
+    providers: [
+      provideHttpClient(),
+      provideHttpClientTesting(),
+    ],
+  });
+
+  const mockBudget: IBudget = {
+    budgetId: 'bgt_001',
+    userId: 'usr_001',
+    categoryId: 'cat_food',
+    period: '2026-04',
+    budgetAmount: 500,
+    spentAmount: 200,
+    status: 'ok',
+    lastUpdated: '2026-04-01T00:00:00Z',
+    workspaceId: 'ws_001',
+    mode: 'indefinite',
+    startDate: undefined,
+    endDate: undefined,
+  };
+
+  beforeEach(() => {
+    spectator = createService();
+    spectator.inject(SheetsApiService).appendRow.mockReturnValue(of(undefined));
+    spectator.inject(SheetsApiService).updateRow.mockReturnValue(of(undefined));
+    spectator.inject(SheetsApiService).deleteRow.mockReturnValue(of(undefined));
+  });
+
+  // saveBudget — llama a appendRow con la fila correcta
+  it('saveBudget_shouldCallAppendRow_withBudgetRow', async () => {
+    await firstValueFrom(spectator.service.saveBudget(mockBudget));
+
+    expect(spectator.inject(SheetsApiService).appendRow).toHaveBeenCalledWith(
+      'BUDGETS!A1',
+      [budgetToRow(mockBudget)],
+    );
+  });
+
+  // updateBudget — llama a updateRow con el rango de fila correcto
+  it('updateBudget_shouldCallUpdateRow_withCorrectRange', async () => {
+    await firstValueFrom(spectator.service.updateBudget(mockBudget, 5));
+
+    expect(spectator.inject(SheetsApiService).updateRow).toHaveBeenCalledWith(
+      'BUDGETS!A5:L5',
+      [budgetToRow(mockBudget)],
+    );
+  });
+
+  // deleteBudget — llama a deleteRow con el rango de fila correcto
+  it('deleteBudget_shouldCallDeleteRow_withCorrectRange', async () => {
+    await firstValueFrom(spectator.service.deleteBudget(3));
+
+    expect(spectator.inject(SheetsApiService).deleteRow).toHaveBeenCalledWith(
+      'BUDGETS!A3:L3',
+    );
   });
 });

@@ -1,7 +1,7 @@
 import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
-import { DashboardService, DashboardSummary, CategoryBreakdown, DateRange } from '../../../../features/dashboard/services/dashboard.service';
-import { ITransaction } from '../../../../models/transaction.model';
-import { ICategory } from '../../../../models/category.model';
+import { DashboardService, DashboardSummary, CategoryBreakdown, DateRange } from '@features/dashboard/services/dashboard.service';
+import { ITransaction } from '@models/transaction.model';
+import { ICategory } from '@models/category.model';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers inline — sin dependencias externas
@@ -14,38 +14,38 @@ function tx(
   catId = 'cat-1',
 ): ITransaction {
   return {
-    txId:           id,
-    userId:         'u1',
-    walletId:       'w1',
-    categoryId:     catId,
+    txId: id,
+    userId: 'u1',
+    walletId: 'w1',
+    categoryId: catId,
     amount,
-    currency:       'EUR',
-    amountBase:     amount,
-    concept:        '',
+    currency: 'EUR',
+    amountBase: amount,
+    concept: '',
     date,
     type,
-    isRecurring:    false,
+    isRecurring: false,
     recurrenceRule: null,
-    notes:          null,
-    workspaceId:    'ws_test',
-    createdAt:      date + 'T00:00:00Z',
-    updatedAt:      date + 'T00:00:00Z',
+    notes: null,
+    workspaceId: 'ws_test',
+    createdAt: date + 'T00:00:00Z',
+    updatedAt: date + 'T00:00:00Z',
   };
 }
 
 function cat(id: string, name: string, color: string): ICategory {
   return {
-    categoryId:  id,
-    userId:      'u1',
+    categoryId: id,
+    userId: 'u1',
     name,
-    icon:        '📂',
+    icon: '📂',
     color,
-    type:        'expense',
+    type: 'expense',
     budgetAmount: null,
     budgetPeriod: 'monthly',
-    isActive:    true,
+    isActive: true,
     workspaceId: 'ws_test',
-    createdAt:   '2026-01-01T00:00:00Z',
+    createdAt: '2026-01-01T00:00:00Z',
   };
 }
 
@@ -128,11 +128,11 @@ describe('DashboardService', () => {
     it('calculateBreakdown_shouldReturnArrayWithoutOtros_whenSixOrFewerCategories', () => {
       const transactions: ITransaction[] = [
         tx('t1', 'expense', 100, '2026-04-01', 'cat-1'),
-        tx('t2', 'expense',  80, '2026-04-02', 'cat-2'),
-        tx('t3', 'expense',  60, '2026-04-03', 'cat-3'),
-        tx('t4', 'expense',  40, '2026-04-04', 'cat-4'),
-        tx('t5', 'expense',  20, '2026-04-05', 'cat-5'),
-        tx('t6', 'expense',  10, '2026-04-06', 'cat-6'),
+        tx('t2', 'expense', 80, '2026-04-02', 'cat-2'),
+        tx('t3', 'expense', 60, '2026-04-03', 'cat-3'),
+        tx('t4', 'expense', 40, '2026-04-04', 'cat-4'),
+        tx('t5', 'expense', 20, '2026-04-05', 'cat-5'),
+        tx('t6', 'expense', 10, '2026-04-06', 'cat-6'),
       ];
 
       const breakdown: CategoryBreakdown[] = spectator.service.calculateBreakdown(transactions, categories, APRIL);
@@ -150,7 +150,7 @@ describe('DashboardService', () => {
         tx('t4', 'expense', 140, '2026-04-04', 'cat-4'),
         tx('t5', 'expense', 120, '2026-04-05', 'cat-5'),
         tx('t6', 'expense', 100, '2026-04-06', 'cat-6'),
-        tx('t7', 'expense',  50, '2026-04-07', 'cat-7'), // va a "Otros"
+        tx('t7', 'expense', 50, '2026-04-07', 'cat-7'), // va a "Otros"
       ];
 
       const breakdown = spectator.service.calculateBreakdown(transactions, categories, APRIL);
@@ -179,8 +179,8 @@ describe('DashboardService', () => {
     // REQ-02 sc4: mix income + expense → ambos tipos en el resultado, income primero
     it('calculateBreakdown_shouldReturnBothTypes_whenMixedTransactions', () => {
       const transactions: ITransaction[] = [
-        tx('t1', 'income',  2500, '2026-04-01', 'cat-1'),
-        tx('t2', 'expense',  100, '2026-04-05', 'cat-2'),
+        tx('t1', 'income', 2500, '2026-04-01', 'cat-1'),
+        tx('t2', 'expense', 100, '2026-04-05', 'cat-2'),
       ];
 
       const breakdown = spectator.service.calculateBreakdown(transactions, categories, APRIL);
@@ -229,9 +229,9 @@ describe('DashboardService', () => {
     // REQ-06 sc2: menos de 5 → retorna todos
     it('getRecentTransactions_shouldReturnAll_whenFewerThanFiveTransactions', () => {
       const transactions: ITransaction[] = [
-        tx('t1', 'expense',  10, '2026-04-01'),
-        tx('t2', 'expense',  20, '2026-04-02'),
-        tx('t3', 'income',  500, '2026-04-03'),
+        tx('t1', 'expense', 10, '2026-04-01'),
+        tx('t2', 'expense', 20, '2026-04-02'),
+        tx('t3', 'income', 500, '2026-04-03'),
       ];
 
       const result = spectator.service.getRecentTransactions(transactions, APRIL);
@@ -263,7 +263,7 @@ describe('DashboardService', () => {
         recurrenceRule: null, notes: null, updatedAt: '',
       } as unknown as ITransaction;
 
-      const tMorning:   ITransaction = { ...base, txId: 'morning',   createdAt: '2026-04-27T09:00:00Z' };
+      const tMorning: ITransaction = { ...base, txId: 'morning', createdAt: '2026-04-27T09:00:00Z' };
       const tAfternoon: ITransaction = { ...base, txId: 'afternoon', createdAt: '2026-04-27T15:30:00Z' };
 
       const result = spectator.service.getRecentTransactions([tMorning, tAfternoon], APRIL);
@@ -281,7 +281,7 @@ describe('DashboardService', () => {
         notes: null, updatedAt: '', createdAt: '',
       } as unknown as ITransaction;
 
-      const tOld:    ITransaction = { ...base, txId: 'old',    date: '2026-04-10', createdAt: '' };
+      const tOld: ITransaction = { ...base, txId: 'old', date: '2026-04-10', createdAt: '' };
       const tRecent: ITransaction = { ...base, txId: 'recent', date: '2026-04-20', createdAt: '' };
 
       const result = spectator.service.getRecentTransactions([tOld, tRecent], APRIL);

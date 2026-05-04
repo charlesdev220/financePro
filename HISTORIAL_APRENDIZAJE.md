@@ -4,6 +4,19 @@ Registro de lecciones técnicas extraídas de cada iteración del proyecto. Appe
 
 ---
 
+### Qué hemos aprendido en el desarrollo de esta iteración (Migración a Spectator + Jest):
+*Qué se aprendió:*
+- ADR-02: Los signals de Angular deben ser instanciados frescos en cada `beforeEach` al ser usados como dependencias mockeadas. Pasar el mismo signal desde `createServiceFactory` rompe el aislamiento entre tests porque todos comparten la misma instancia del signal.
+- ADR-04: `ModalController.create()` retorna una cadena de promesas (`present`, `onWillDismiss`, `dismiss`). El mock debe replicar toda la cadena — un mock incompleto causa "Cannot read properties of undefined".
+- ADR-03: Los pipes puros sin `inject()` no necesitan `createPipeFactory` — `new MiPipe()` es el patrón más simple y correcto.
+- `HttpBackend` bypasa `HttpTestingController` — servicios que usan `HttpBackend` directamente (ej: OAuth2 en AuthService) no pueden ser interceptados via el testing controller; se deben espiar con `jest.spyOn` sobre el método del servicio.
+- El glob `./src/app/features/**/services/` en `coverageThreshold` de Jest no funciona — Jest no soporta doble glob en paths de umbrales. Se debe reemplazar por paths explícitos por feature.
+- Los umbrales de cobertura global incluyen TODOS los archivos de `collectCoverageFrom`, incluyendo pages y componentes sin tests. El valor real alcanzable con la suite actual es ~31% statements / ~30% branches a nivel global.
+*Por qué se aprendió:* Durante la migración de `auth.service.spec.ts` los tests fallaban porque el constructor disparaba una llamada HTTP real via `HttpBackend`. El glob de features fue descubierto cuando Jest reportó "Coverage data not found" a pesar de que los specs existían.
+*Dónde se aprendió:* `src/app/testing/core/services/auth.service.spec.ts`; `frontend/jest.config.ts`; análisis de los 28 fallos corregidos en esta iteración.
+
+---
+
 ### Qué hemos aprendido en el desarrollo de esta iteración (fase5-features — Jest migration + features):
 *Qué se aprendió:* 1) **ADR-02 — Filtrado por rango de fechas:** Reemplazar `period: string` por `range: { from; to }` en servicios de dashboard desacopla la lógica de UI (qué período mostrar) de la lógica de negocio (cómo filtrar). El `PeriodService` es el único lugar que sabe calcular los bordes del período — los servicios downstream solo filtran con `>=` y `<=`. 2) **ADR-04 — Output simplificado en PeriodSelector:** Emitir el `PeriodTab` directamente (en lugar de `{ from; to }`) mantiene el componente agnóstico al `monthStartDay` del usuario — ese cálculo pertenece al page, que tiene acceso al estado del usuario. 3) **Migración Jest incremental por lotes:** Hacer la migración Karma→Jest por lotes (core services → core state → shared components → feature services → feature components) permite detectar problemas de configuración temprano sin bloquear el avance. El `transformIgnorePatterns` de Ionic/Stencil es el punto más frágil — configurarlo bien en Phase 6 salva todos los lotes posteriores. 4) **`toISOString()` vs fecha local en tests:** `new Date().toISOString().split('T')[0]` devuelve la fecha en UTC. En timezones adelantados (UTC+N), si la hora local está en las primeras horas del día, la fecha UTC es el día anterior — causando off-by-one en cualquier test que compare fechas relativas ("Hoy", "Ayer", "Hace N días", "mes actual"). La solución correcta es siempre construir la cadena de fecha desde componentes locales: `getFullYear()`, `getMonth() + 1`, `getDate()`. 5) **`angular.json` builder para Jest:** `@angular-builders/jest:run` requiere que `angular.json` apunte al `jest.config.ts` correcto — sin esa config, `ng test` sigue corriendo Karma aunque Jest esté instalado.
 *Por qué se aprendió:* La Phase 11 reveló que `transaction.service.spec.ts` y `relative-date.pipe.spec.ts` fallaban intermitentemente según el timezone del runner — los tests usaban `toISOString()` para construir fechas locales, lo que es incorrecto. El fallo de "Hace 3 días" recibiendo "Hace 4 días" fue el síntoma que expuso el patrón subyacente.
@@ -130,7 +143,7 @@ Registro de lecciones técnicas extraídas de cada iteración del proyecto. Appe
 
 ---
 
-### Auditoría Monefy DS — monefy-ds-audit
+### Auditoría Monefy DS — myfinance-ds-audit
 
 *Qué se aprendió:* Los `input()` signals de Angular son incompatibles con `componentProps` de Ionic Modal — el Modal asigna las props directamente al componente como propiedades planas, sin pasar por el mecanismo de signals. La solución es `@Input()` decorador legacy en componentes que se abren exclusivamente como Ionic Modal.
 *Por qué se aprendió:* El crash `TypeError: this.budget is not a function` en `BudgetFormComponent` reveló que `componentProps: { budget }` de `ModalController.create()` hace `component.budget = value` pero no `component.budget.set(value)`.

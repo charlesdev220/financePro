@@ -12,113 +12,108 @@
 
 <ion-content class="ion-padding">
   @if (form) {
-    <form [formGroup]="form">
-      <ion-list>
+  <form [formGroup]="form">
+    <ion-list>
 
-        <!-- Categoría — accordion con grid de tiles -->
-        <ion-item lines="none" class="ion-no-padding mb-1">
-          <ion-label position="stacked" class="mb-2">Categoría *</ion-label>
-        </ion-item>
-        <button type="button"
-                class="w-full flex items-center justify-between bg-white rounded-2xl border-2 px-4 py-3 mb-1 transition-all"
-                [class]="form.get('categoryId')?.invalid && form.get('categoryId')?.touched ? 'border-red-400' : 'border-gray-200'"
-                (click)="onToggleCategoryPicker()">
-          <div class="flex items-center gap-3">
-            @if (selectedCategory()) {
-              <span class="text-xl">{{ selectedCategory()!.icon }}</span>
-              <span class="text-sm font-semibold text-gray-800">{{ selectedCategory()!.name }}</span>
-            } @else {
-              <span class="text-sm text-gray-400">Seleccioná una categoría</span>
-            }
-          </div>
-          <ion-icon [name]="showCategoryPicker() ? 'chevron-up-outline' : 'chevron-down-outline'" class="text-gray-400"></ion-icon>
-        </button>
-
-        @if (showCategoryPicker()) {
-          <div class="grid grid-cols-4 gap-2 mb-3 px-1">
-            @for (cat of expenseCategories(); track cat.categoryId) {
-              <div (click)="onSelectCategory(cat.categoryId)"
-                   class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2"
-                   style="height: 72px;"
-                   [style.border-color]="cat.color"
-                   [style.background-color]="cat.color + '1a'">
-                <span class="text-2xl leading-none">{{ cat.icon }}</span>
-                <span class="text-[10px] text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ cat.name }}</span>
-              </div>
-            }
-          </div>
-        }
-
-        @if (form.get('categoryId')?.invalid && form.get('categoryId')?.touched) {
-          <ion-note color="danger" class="ion-padding-horizontal block mb-2">
-            La categoría es obligatoria
-          </ion-note>
-        }
-
-        <!-- Período -->
-        <ion-item lines="none" class="ion-no-padding mb-1">
-          <ion-label position="stacked" class="mb-2">Período *</ion-label>
-        </ion-item>
-        <div class="px-1 mb-1">
-          <input type="month"
-                 formControlName="period"
-                 class="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-monefy-text-primary bg-white focus:outline-none focus:ring-2 focus:ring-monefy-green" />
+      <!-- Categoría — accordion con grid de tiles -->
+      <ion-item lines="none" class="ion-no-padding mb-1">
+        <ion-label position="stacked" class="mb-2">Categoría *</ion-label>
+      </ion-item>
+      <button type="button"
+        class="w-full flex items-center justify-between bg-white rounded-2xl border-2 px-4 py-3 mb-1 transition-all"
+        [class]="form.get('categoryId')?.invalid && form.get('categoryId')?.touched ? 'border-red-400' : 'border-gray-200'"
+        (click)="onToggleCategoryPicker()">
+        <div class="flex items-center gap-3">
+          @if (selectedCategory()) {
+          <span class="text-xl">{{ selectedCategory()!.icon }}</span>
+          <span class="text-sm font-semibold text-gray-800">{{ selectedCategory()!.name }}</span>
+          } @else {
+          <span class="text-sm text-gray-400">Seleccioná una categoría</span>
+          }
         </div>
-        @if (form.get('period')?.invalid && form.get('period')?.touched) {
-          <ion-note color="danger" class="ion-padding-horizontal">
-            El período es obligatorio
-          </ion-note>
+        <ion-icon [name]="showCategoryPicker() ? 'chevron-up-outline' : 'chevron-down-outline'"
+          class="text-gray-400"></ion-icon>
+      </button>
+
+      @if (showCategoryPicker()) {
+      <div class="grid grid-cols-4 gap-2 mb-3 px-1">
+        @for (cat of expenseCategories(); track cat.categoryId) {
+        <div (click)="onSelectCategory(cat.categoryId)"
+          class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2"
+          style="height: 72px;" [style.border-color]="cat.color" [style.background-color]="cat.color + '1a'">
+          <span class="text-2xl leading-none">{{ cat.icon }}</span>
+          <span class="text-[10px] text-center text-myfinance-text-primary font-medium leading-tight line-clamp-2">{{
+            cat.name }}</span>
+        </div>
         }
-
-        <!-- Modo de vigencia -->
-        <ion-item class="mt-4">
-          <ion-label position="stacked">Modo de vigencia</ion-label>
-          <ion-segment [value]="modeControl()" (ionChange)="onModeChange($event)" class="mt-2">
-            <ion-segment-button [value]="BUDGET_MODES.INDEFINITE">
-              <ion-label>Sin límite</ion-label>
-            </ion-segment-button>
-            <ion-segment-button [value]="BUDGET_MODES.PERIOD">
-              <ion-label>Por período</ion-label>
-            </ion-segment-button>
-            <ion-segment-button [value]="BUDGET_MODES.DISABLED">
-              <ion-label>Desactivar</ion-label>
-            </ion-segment-button>
-          </ion-segment>
-        </ion-item>
-
-        @if (modeControl() === BUDGET_MODES.PERIOD) {
-          <ion-item>
-            <ion-label position="stacked">Fecha inicio</ion-label>
-            <ion-input type="date" formControlName="startDate"></ion-input>
-          </ion-item>
-          <ion-item>
-            <ion-label position="stacked">Fecha fin</ion-label>
-            <ion-input type="date" formControlName="endDate"></ion-input>
-          </ion-item>
-        }
-
-        <!-- Monto de presupuesto -->
-        <ion-item>
-          <ion-label position="stacked">Monto del presupuesto *</ion-label>
-          <ion-input
-            type="number"
-            formControlName="budgetAmount"
-            placeholder="0.00"
-            min="1">
-          </ion-input>
-        </ion-item>
-        @if (form.get('budgetAmount')?.invalid && form.get('budgetAmount')?.touched) {
-          <ion-note color="danger" class="ion-padding-horizontal">
-            El monto es obligatorio y debe ser mayor a 0
-          </ion-note>
-        }
-      </ion-list>
-
-      <div class="ion-padding">
-        <ion-button expand="block" (click)="save()" [disabled]="form.invalid">
-          {{ isEditMode ? 'Actualizar' : 'Crear presupuesto' }}
-        </ion-button>
       </div>
-    </form>
+      }
+
+      @if (form.get('categoryId')?.invalid && form.get('categoryId')?.touched) {
+      <ion-note color="danger" class="ion-padding-horizontal block mb-2">
+        La categoría es obligatoria
+      </ion-note>
+      }
+
+      <!-- Período -->
+      <ion-item lines="none" class="ion-no-padding mb-1">
+        <ion-label position="stacked" class="mb-2">Período *</ion-label>
+      </ion-item>
+      <div class="px-1 mb-1">
+        <input type="month" formControlName="period"
+          class="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-myfinance-text-primary bg-white focus:outline-none focus:ring-2 focus:ring-myfinance-green" />
+      </div>
+      @if (form.get('period')?.invalid && form.get('period')?.touched) {
+      <ion-note color="danger" class="ion-padding-horizontal">
+        El período es obligatorio
+      </ion-note>
+      }
+
+      <!-- Modo de vigencia -->
+      <ion-item class="mt-4">
+        <ion-label position="stacked">Modo de vigencia</ion-label>
+        <ion-segment [value]="modeControl()" (ionChange)="onModeChange($event)" class="mt-2">
+          <ion-segment-button [value]="BUDGET_MODES.INDEFINITE">
+            <ion-label>Sin límite</ion-label>
+          </ion-segment-button>
+          <ion-segment-button [value]="BUDGET_MODES.PERIOD">
+            <ion-label>Por período</ion-label>
+          </ion-segment-button>
+          <ion-segment-button [value]="BUDGET_MODES.DISABLED">
+            <ion-label>Desactivar</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+      </ion-item>
+
+      @if (modeControl() === BUDGET_MODES.PERIOD) {
+      <ion-item>
+        <ion-label position="stacked">Fecha inicio</ion-label>
+        <ion-input type="date" formControlName="startDate"></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Fecha fin</ion-label>
+        <ion-input type="date" formControlName="endDate"></ion-input>
+      </ion-item>
+      }
+
+      <!-- Monto de presupuesto -->
+      <ion-item>
+        <ion-label position="stacked">Monto del presupuesto *</ion-label>
+        <ion-input type="number" formControlName="budgetAmount" placeholder="0.00" min="1">
+        </ion-input>
+      </ion-item>
+      @if (form.get('budgetAmount')?.invalid && form.get('budgetAmount')?.touched) {
+      <ion-note color="danger" class="ion-padding-horizontal">
+        El monto es obligatorio y debe ser mayor a 0
+      </ion-note>
+      }
+    </ion-list>
+
+    <div class="ion-padding">
+      <ion-button expand="block" (click)="save()" [disabled]="form.invalid">
+        {{ isEditMode ? 'Actualizar' : 'Crear presupuesto' }}
+      </ion-button>
+    </div>
+  </form>
   }
 </ion-content>

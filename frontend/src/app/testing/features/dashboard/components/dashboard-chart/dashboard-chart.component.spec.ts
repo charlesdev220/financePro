@@ -1,7 +1,7 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
-import { DashboardChartComponent } from '../../../../../features/dashboard/components/dashboard-chart/dashboard-chart.component';
-import { CategoryBreakdown } from '../../../../../features/dashboard/services/dashboard.service';
-import { IBudget } from '../../../../../models/budget.model';
+import { DashboardChartComponent } from '@features/dashboard/components/dashboard-chart/dashboard-chart.component';
+import { CategoryBreakdown } from '@features/dashboard/services/dashboard.service';
+import { IBudget } from '@models/budget.model';
 
 function makeBreakdown(overrides: Partial<CategoryBreakdown> = {}): CategoryBreakdown {
   return {
@@ -17,16 +17,16 @@ function makeBreakdown(overrides: Partial<CategoryBreakdown> = {}): CategoryBrea
 
 function makeBudget(overrides: Partial<IBudget> = {}): IBudget {
   return {
-    budgetId:     'bgt-1',
-    userId:       'usr_001',
-    categoryId:   'cat-1',
-    period:       '2026-04',
-    spentAmount:  120,
+    budgetId: 'bgt-1',
+    userId: 'usr_001',
+    categoryId: 'cat-1',
+    period: '2026-04',
+    spentAmount: 120,
     budgetAmount: 200,
-    status:       'ok',
-    lastUpdated:  '2026-04-27T00:00:00Z',
-    workspaceId:  'ws_test',
-    mode:         'indefinite',
+    status: 'ok',
+    lastUpdated: '2026-04-27T00:00:00Z',
+    workspaceId: 'ws_test',
+    mode: 'indefinite',
     ...overrides,
   };
 }

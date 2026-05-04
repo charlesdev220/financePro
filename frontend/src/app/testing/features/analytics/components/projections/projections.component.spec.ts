@@ -1,11 +1,11 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
-import { ProjectionsComponent } from '../../../../../features/analytics/components/projections/projections.component';
-import { MonthlyTotal } from '../../../../../features/analytics/services/analytics.service';
+import { ProjectionsComponent } from '@features/analytics/components/projections/projections.component';
+import { MonthlyTotal } from '@features/analytics/services/analytics.service';
 
 function buildMonthlyTotals(count: number): MonthlyTotal[] {
   return Array.from({ length: count }, (_, i) => ({
-    period:  `2026-${String(i + 1).padStart(2, '0')}`,
-    income:  1000 + i * 100,
+    period: `2026-${String(i + 1).padStart(2, '0')}`,
+    income: 1000 + i * 100,
     expense: 500 + i * 50,
   }));
 }
@@ -32,7 +32,7 @@ describe('ProjectionsComponent', () => {
 
     const canvas = spectator.query('app-chart-bar');
     expect(canvas).toBeNull();
-    
+
     const hostText = spectator.element.textContent;
     expect(hostText).toContain('3 meses');
   });
@@ -42,7 +42,7 @@ describe('ProjectionsComponent', () => {
     spectator.setInput('data', buildMonthlyTotals(3));
 
     const canvas = spectator.query('app-chart-bar');
-    const msg    = spectator.query('.no-data-msg');
+    const msg = spectator.query('.no-data-msg');
     expect(canvas).toBeTruthy();
     expect(msg).toBeNull();
   });

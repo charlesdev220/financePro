@@ -1,7 +1,7 @@
 import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
-import { AnalyticsService, MonthlyTotal, CategorySpendingItem } from '../../../../features/analytics/services/analytics.service';
-import { ITransaction } from '../../../../models/transaction.model';
-import { ICategory } from '../../../../models/category.model';
+import { AnalyticsService, MonthlyTotal, CategorySpendingItem } from '@features/analytics/services/analytics.service';
+import { ITransaction } from '@models/transaction.model';
+import { ICategory } from '@models/category.model';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers inline
@@ -54,12 +54,12 @@ describe('AnalyticsService', () => {
     // REQ-01 sc1: txs mixtas en 3 meses → totales correctos por mes
     it('getMonthlyTotals_shouldReturnCorrectTotals_whenMixedTxsInThreeMonths', () => {
       const txs: ITransaction[] = [
-        tx('t1', 'income',  1000, '2026-01-10'),
-        tx('t2', 'expense',  200, '2026-01-15'),
-        tx('t3', 'income',  1500, '2026-02-05'),
-        tx('t4', 'expense',  300, '2026-02-20'),
-        tx('t5', 'income',  2000, '2026-03-01'),
-        tx('t6', 'expense',  400, '2026-03-25'),
+        tx('t1', 'income', 1000, '2026-01-10'),
+        tx('t2', 'expense', 200, '2026-01-15'),
+        tx('t3', 'income', 1500, '2026-02-05'),
+        tx('t4', 'expense', 300, '2026-02-20'),
+        tx('t5', 'income', 2000, '2026-03-01'),
+        tx('t6', 'expense', 400, '2026-03-25'),
       ];
 
       const result = spectator.service.getMonthlyTotals(txs, 3);
@@ -116,7 +116,7 @@ describe('AnalyticsService', () => {
       const txs: ITransaction[] = [
         tx('t1', 'expense', 100, '2026-01-01', 'cat-1'),
         tx('t2', 'expense', 200, '2026-01-02', 'cat-2'),
-        tx('t3', 'expense',  50, '2026-01-03', 'cat-1'),
+        tx('t3', 'expense', 50, '2026-01-03', 'cat-1'),
       ];
 
       const result = spectator.service.getCategoryTotals(txs);
@@ -272,17 +272,17 @@ describe('AnalyticsService', () => {
     }
 
     const categories: ICategory[] = [
-      cat('cat-1', 'Comida',     '🍔', '#4CAF50'),
+      cat('cat-1', 'Comida', '🍔', '#4CAF50'),
       cat('cat-2', 'Transporte', '🚗', '#2196F3'),
-      cat('cat-3', 'Ocio',       '🎮', '#FF9800'),
+      cat('cat-3', 'Ocio', '🎮', '#FF9800'),
     ];
 
     // REQ-09 sc1: transacciones mixtas → solo EXPENSE acumuladas
     it('getCategorySpending_shouldIncludeOnlyExpenses_whenMixedTransactions', () => {
       const txs: ITransaction[] = [
-        tx('t1', 'income',  1000, '2026-04-01', 'cat-1'),
-        tx('t2', 'expense',  300, '2026-04-05', 'cat-2'),
-        tx('t3', 'expense',  150, '2026-04-10', 'cat-2'),
+        tx('t1', 'income', 1000, '2026-04-01', 'cat-1'),
+        tx('t2', 'expense', 300, '2026-04-05', 'cat-2'),
+        tx('t3', 'expense', 150, '2026-04-10', 'cat-2'),
       ];
 
       const result: CategorySpendingItem[] = spectator.service.getCategorySpending(txs, categories);

@@ -26,24 +26,25 @@
 
       <ion-item button (click)="toggleCurrencyPicker()" detail="false" lines="none">
         <ion-label>Divisa</ion-label>
-        <span slot="end" class="text-sm font-semibold text-monefy-text-secondary mr-1">{{ form.get('currency')?.value }}</span>
+        <span slot="end" class="text-sm font-semibold text-myfinance-text-secondary mr-1">{{ form.get('currency')?.value
+          }}</span>
         <ion-icon name="chevron-down-outline" slot="end" class="text-gray-400"
           [class.rotate-180]="showCurrencyPicker()"></ion-icon>
       </ion-item>
       @if (showCurrencyPicker()) {
-        <div class="flex flex-wrap gap-2 px-4 py-3 bg-gray-50">
-          @for (c of currencies; track c) {
-            <button type="button" (click)="onCurrencySelect(c)"
-              class="px-4 py-2 rounded-full text-sm font-semibold border-2 transition-all"
-              [class.bg-monefy-green]="form.get('currency')?.value === c"
-              [class.text-white]="form.get('currency')?.value === c"
-              [class.border-monefy-green]="form.get('currency')?.value === c"
-              [class.border-gray-200]="form.get('currency')?.value !== c"
-              [class.text-monefy-text-secondary]="form.get('currency')?.value !== c">
-              {{ c }}
-            </button>
-          }
-        </div>
+      <div class="flex flex-wrap gap-2 px-4 py-3 bg-gray-50">
+        @for (c of currencies; track c) {
+        <button type="button" (click)="onCurrencySelect(c)"
+          class="px-4 py-2 rounded-full text-sm font-semibold border-2 transition-all"
+          [class.bg-myfinance-green]="form.get('currency')?.value === c"
+          [class.text-white]="form.get('currency')?.value === c"
+          [class.border-myfinance-green]="form.get('currency')?.value === c"
+          [class.border-gray-200]="form.get('currency')?.value !== c"
+          [class.text-myfinance-text-secondary]="form.get('currency')?.value !== c">
+          {{ c }}
+        </button>
+        }
+      </div>
       }
 
     </ion-list>
@@ -61,28 +62,27 @@
         @for (icon of icons; track icon) {
         <button type="button" (click)="onIconSelect(icon)"
           class="text-2xl p-2 rounded-xl flex items-center justify-center transition-all active:scale-95"
-          [class.ring-2]="form.get('icon')?.value === icon" [class.ring-monefy-green]="form.get('icon')?.value === icon"
-          [class.bg-monefy-mint]="form.get('icon')?.value === icon">
+          [class.ring-2]="form.get('icon')?.value === icon"
+          [class.ring-myfinance-green]="form.get('icon')?.value === icon"
+          [class.bg-myfinance-mint]="form.get('icon')?.value === icon">
           {{ icon }}
         </button>
         }
         @if (!customIconMode()) {
-          <button type="button" (click)="customIconMode.set(true)"
-            class="text-xl p-2 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-300 text-gray-400 transition-all active:scale-95">
-            +
-          </button>
+        <button type="button" (click)="customIconMode.set(true)"
+          class="text-xl p-2 rounded-xl flex items-center justify-center border-2 border-dashed border-gray-300 text-gray-400 transition-all active:scale-95">
+          +
+        </button>
         } @else {
-          <div class="col-span-2 flex gap-2 items-center">
-            <input type="text" maxlength="2"
-                   class="w-14 text-center text-2xl border border-monefy-border rounded-lg p-1 focus:outline-none focus:ring-2 focus:ring-monefy-green"
-                   [value]="customIconValue()"
-                   (input)="onCustomIconInput($event)"
-                   placeholder="🎯"
-                   (keyup.enter)="onCustomIconConfirm()"
-                   (keyup.escape)="onCustomIconCancel()" />
-            <button type="button" (click)="onCustomIconConfirm()" class="text-monefy-green font-semibold text-sm">OK</button>
-            <button type="button" (click)="onCustomIconCancel()" class="text-monefy-text-secondary text-sm">✕</button>
-          </div>
+        <div class="col-span-2 flex gap-2 items-center">
+          <input type="text" maxlength="2"
+            class="w-14 text-center text-2xl border border-myfinance-border rounded-lg p-1 focus:outline-none focus:ring-2 focus:ring-myfinance-green"
+            [value]="customIconValue()" (input)="onCustomIconInput($event)" placeholder="🎯"
+            (keyup.enter)="onCustomIconConfirm()" (keyup.escape)="onCustomIconCancel()" />
+          <button type="button" (click)="onCustomIconConfirm()"
+            class="text-myfinance-green font-semibold text-sm">OK</button>
+          <button type="button" (click)="onCustomIconCancel()" class="text-myfinance-text-secondary text-sm">✕</button>
+        </div>
         }
       </div>
       }

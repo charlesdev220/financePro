@@ -1,6 +1,6 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
 import { Chart } from 'chart.js';
-import { ChartPieComponent } from '../../../../shared/components/chart-pie/chart-pie.component';
+import { ChartPieComponent } from '@shared/components/chart-pie/chart-pie.component';
 
 describe('ChartPieComponent', () => {
   let spectator: Spectator<ChartPieComponent>;

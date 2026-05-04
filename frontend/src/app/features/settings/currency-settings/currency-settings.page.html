@@ -13,7 +13,7 @@
     <!-- Buscador de nueva divisa -->
     <div class="mx-3 mb-4">
       <ion-item class="rounded-2xl" style="--background: white; --border-radius: 16px;">
-        <ion-icon name="add-outline" slot="start" class="text-monefy-green"></ion-icon>
+        <ion-icon name="add-outline" slot="start" class="text-myfinance-green"></ion-icon>
         <ion-input placeholder="Buscar divisa para agregar (ej: USD)" [value]="searchQuery()"
           (ionInput)="onSearchInput($event)" clearInput></ion-input>
       </ion-item>
@@ -22,13 +22,13 @@
       <div class="bg-white rounded-2xl mt-1 shadow-sm overflow-hidden">
         @for (iso of filteredIsoCurrencies; track iso.code) {
         <button
-          class="w-full flex items-center justify-between px-4 py-3 border-b border-gray-100 last:border-b-0 text-left hover:bg-monefy-mint active:bg-monefy-mint"
+          class="w-full flex items-center justify-between px-4 py-3 border-b border-gray-100 last:border-b-0 text-left hover:bg-myfinance-mint active:bg-myfinance-mint"
           (click)="onAddCurrency(iso.code, iso.name)">
           <div>
-            <span class="font-semibold text-monefy-text-primary">{{ iso.code }}</span>
-            <span class="text-sm text-monefy-text-secondary ml-2">{{ iso.name }}</span>
+            <span class="font-semibold text-myfinance-text-primary">{{ iso.code }}</span>
+            <span class="text-sm text-myfinance-text-secondary ml-2">{{ iso.name }}</span>
           </div>
-          <ion-icon name="add-outline" class="text-monefy-green"></ion-icon>
+          <ion-icon name="add-outline" class="text-myfinance-green"></ion-icon>
         </button>
         }
       </div>
@@ -38,13 +38,13 @@
     <!-- Selector de moneda base -->
     <div class="bg-white rounded-2xl mx-3 mb-4 shadow-sm overflow-hidden">
       <div class="px-4 pt-3 pb-1">
-        <p class="text-xs font-semibold text-monefy-text-secondary uppercase tracking-wide">Moneda base</p>
+        <p class="text-xs font-semibold text-myfinance-text-secondary uppercase tracking-wide">Moneda base</p>
       </div>
       <ion-item lines="none">
-        <ion-icon name="star-sharp" slot="start" class="text-monefy-green"></ion-icon>
+        <ion-icon name="star-sharp" slot="start" class="text-myfinance-green"></ion-icon>
         <ion-label>
-          <h3 class="font-semibold text-monefy-text-primary">{{ baseCurrency() ?? 'No configurada' }}</h3>
-          <p class="text-xs text-monefy-text-secondary">Todos los montos se convierten a esta moneda</p>
+          <h3 class="font-semibold text-myfinance-text-primary">{{ baseCurrency() ?? 'No configurada' }}</h3>
+          <p class="text-xs text-myfinance-text-secondary">Todos los montos se convierten a esta moneda</p>
         </ion-label>
         @if (loading()) {
         <ion-spinner slot="end" name="crescent" color="primary"></ion-spinner>
@@ -54,7 +54,7 @@
 
     <!-- Lista de divisas -->
     <div class="mx-3">
-      <p class="text-xs font-semibold text-monefy-text-secondary uppercase tracking-wide mb-2 px-1">Mis divisas</p>
+      <p class="text-xs font-semibold text-myfinance-text-secondary uppercase tracking-wide mb-2 px-1">Mis divisas</p>
 
       @if (loading() && currencies().length === 0) {
       <div class="flex justify-center py-12">
@@ -64,7 +64,8 @@
       <!-- WARN-02: empty state con CTA -->
       <div class="flex flex-col items-center justify-center py-16 gap-4 bg-white rounded-2xl shadow-sm">
         <ion-icon name="cash-outline" class="text-gray-300" style="font-size: 56px;"></ion-icon>
-        <p class="text-monefy-text-secondary text-center">Todavía no tenés divisas guardadas.<br>Empezá agregando una.
+        <p class="text-myfinance-text-secondary text-center">Todavía no tenés divisas guardadas.<br>Empezá agregando
+          una.
         </p>
         <ion-button fill="outline" color="primary" (click)="onFocusSearch()">
           Agregar divisa
@@ -79,12 +80,12 @@
           <!-- Modo edición inline -->
           <div class="px-4 py-3">
             <div class="flex items-center justify-between mb-2">
-              <span class="font-bold text-monefy-text-primary">{{ currency.currencyCode }}</span>
-              <span class="text-xs text-monefy-text-secondary">{{ currency.name }}</span>
+              <span class="font-bold text-myfinance-text-primary">{{ currency.currencyCode }}</span>
+              <span class="text-xs text-myfinance-text-secondary">{{ currency.name }}</span>
             </div>
             <div class="flex items-center gap-2">
               <ion-input type="number" [value]="editingRate()" (ionInput)="onRateInput($event)"
-                class="flex-1 bg-monefy-mint rounded-xl px-3" style="--padding-start: 12px;"
+                class="flex-1 bg-myfinance-mint rounded-xl px-3" style="--padding-start: 12px;"
                 placeholder="Tasa de cambio"></ion-input>
               <!-- WARN-01: disabled cuando tasa inválida -->
               <ion-button fill="clear" color="primary" [disabled]="editingRate() <= 0" (click)="onSaveEdit()">
@@ -100,7 +101,7 @@
           <div class="flex items-center gap-3 px-4 py-3">
             <div class="flex-1 min-w-0">
               <div class="flex items-center gap-2">
-                <span class="font-bold text-monefy-text-primary">{{ currency.currencyCode }}</span>
+                <span class="font-bold text-myfinance-text-primary">{{ currency.currencyCode }}</span>
                 @if (baseCurrency() === currency.currencyCode) {
                 <!-- WARN-03: "Principal" en lugar de "Base" -->
                 <ion-badge color="success">Principal</ion-badge>
@@ -109,7 +110,7 @@
                 <ion-badge [style]="currency.source === 'api' ? '--background: #3F51B5;' : '--background: #FF9800;'"
                   style="font-size: 10px;">{{ currency.source === 'api' ? 'API' : 'Manual' }}</ion-badge>
               </div>
-              <p class="text-xs text-monefy-text-secondary mt-0.5">
+              <p class="text-xs text-myfinance-text-secondary mt-0.5">
                 1 {{ currency.currencyCode }} = {{ currency.rateToBase | number:'1.4-4' }} {{ baseCurrency() }}
               </p>
               <p class="text-xs text-gray-400">
@@ -122,14 +123,14 @@
               <ion-spinner name="dots" color="primary" style="width: 20px; height: 20px;"></ion-spinner>
               } @else {
               <ion-button fill="clear" size="small" (click)="onRefresh(currency.currencyCode)">
-                <ion-icon slot="icon-only" name="refresh-outline" class="text-monefy-green"></ion-icon>
+                <ion-icon slot="icon-only" name="refresh-outline" class="text-myfinance-green"></ion-icon>
               </ion-button>
               <ion-button fill="clear" size="small" (click)="onStartEdit(currency)">
-                <ion-icon slot="icon-only" name="create-outline" class="text-monefy-text-secondary"></ion-icon>
+                <ion-icon slot="icon-only" name="create-outline" class="text-myfinance-text-secondary"></ion-icon>
               </ion-button>
               @if (baseCurrency() !== currency.currencyCode) {
               <ion-button fill="clear" size="small" (click)="onSetBase(currency.currencyCode)">
-                <ion-icon slot="icon-only" name="star-outline" class="text-monefy-text-secondary"></ion-icon>
+                <ion-icon slot="icon-only" name="star-outline" class="text-myfinance-text-secondary"></ion-icon>
               </ion-button>
               }
               }

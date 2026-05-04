@@ -13,28 +13,28 @@ import { AnalyticsService, MonthlyTotal } from '@features/analytics/services/ana
 export class ProjectionsComponent {
   private readonly analyticsService = inject(AnalyticsService);
 
-  data    = input<MonthlyTotal[]>([]);
+  data = input<MonthlyTotal[]>([]);
   horizon = input<3 | 6 | 12>(3);
 
   /** True cuando hay al menos 3 meses de datos para generar una regresión fiable. */
-  readonly hasEnoughData = computed(() => this.data().length >= 3);
+  readonly hasEnoughData = computed(() => this.data().length >= 3);/** ES UN IF*/
 
   /** Etiquetas del eje X: períodos históricos + períodos proyectados según el horizonte. */
   readonly labels = computed(() => {
     const historical = this.data().map(t => t.period);
-    const projected  = this.buildProjectedPeriods(this.data(), this.horizon());
+    const projected = this.buildProjectedPeriods(this.data(), this.horizon());
     return [...historical, ...projected];
   });
 
   /** Datasets para Chart.js: gasto histórico real + proyección lineal para el horizonte elegido. */
   readonly datasets = computed<ChartDataset[]>(() => {
-    const data    = this.data();
+    const data = this.data();
     const horizon = this.horizon();
-    const points  = data.map((t, i) => ({ x: i, y: t.expense }));
+    const points = data.map((t, i) => ({ x: i, y: t.expense }));
     const { slope, intercept } = this.analyticsService.linearRegression(points);
 
     const historicalExpense = data.map(t => t.expense);
-    const projectedExpense  = Array.from({ length: horizon }, (_, i) => {
+    const projectedExpense = Array.from({ length: horizon }, (_, i) => {
       const x = data.length + i;
       return Math.max(0, Math.round((slope * x + intercept) * 100) / 100);
     });

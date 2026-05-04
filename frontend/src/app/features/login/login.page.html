@@ -2,7 +2,7 @@
   <div class="w-full w-full mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-5 duration-700">
     <div class="text-center mb-12">
       <div
-        class="bg-gradient-to-br from-monefy-green to-monefy-green-dark w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+        class="bg-gradient-to-br from-myfinance-green to-myfinance-green-dark w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
         <ion-icon name="wallet-outline" class="text-3xl text-white"></ion-icon>
       </div>
       <h1 class="font-pacifico text-3xl text-gray-800 tracking-tight">
@@ -14,13 +14,13 @@
     <div class="bg-white/80 backdrop-blur-md border border-white/30 rounded-3xl p-6 shadow-sm">
       <form (ngSubmit)="handleLogin()">
         <ion-item lines="none" class="bg-white/5 rounded-xl px-4 py-1 mb-4 flex items-center">
-          <ion-icon name="mail-outline" slot="start" class="text-monefy-green mr-2"></ion-icon>
+          <ion-icon name="mail-outline" slot="start" class="text-myfinance-green mr-2"></ion-icon>
           <ion-input type="email" placeholder="Correo electrónico" [(ngModel)]="email" name="email" required
             class="text-white placeholder:text-slate-500"></ion-input>
         </ion-item>
 
         <ion-item lines="none" class="bg-white/5 rounded-xl px-4 py-1 mb-6 flex items-center">
-          <ion-icon name="lock-closed-outline" slot="start" class="text-monefy-green mr-2"></ion-icon>
+          <ion-icon name="lock-closed-outline" slot="start" class="text-myfinance-green mr-2"></ion-icon>
           <ion-input type="password" placeholder="Contraseña" [(ngModel)]="password" name="password" required
             class="text-white placeholder:text-slate-500"></ion-input>
         </ion-item>
@@ -39,7 +39,7 @@
     </div>
 
     <div class="text-center mt-8 text-slate-400 text-sm">
-      <p>¿No tienes cuenta? <span class="text-monefy-green font-semibold cursor-pointer"
+      <p>¿No tienes cuenta? <span class="text-myfinance-green font-semibold cursor-pointer"
           routerLink="/register">Regístrate</span></p>
     </div>
   </div>

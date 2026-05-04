@@ -37,11 +37,8 @@
       <span class="text-2xl font-bold opacity-80 mr-2">{{ selectedCurrency() }}</span>
       <span class="md:hidden text-6xl font-black tracking-tighter">{{ amountString() }}</span>
       <input type="number"
-             class="hidden md:block bg-transparent text-white font-black text-6xl tracking-tighter w-full text-center focus:outline-none"
-             [value]="amountString()"
-             (input)="onWebAmountInputNative($event)"
-             step="0.01"
-             placeholder="0" />
+        class="hidden md:block bg-transparent text-white font-black text-6xl tracking-tighter w-full text-center focus:outline-none"
+        [value]="amountString()" (input)="onWebAmountInputNative($event)" step="0.01" placeholder="0" />
     </div>
   </div>
 </ion-header>
@@ -94,7 +91,7 @@
             <input type="date" formControlName="date"
               class="text-sm font-bold bg-transparent border-none p-0 w-full outline-none" />
             @if (createdAtFormatted()) {
-              <span class="text-[10px] text-gray-400 block mt-0.5">Registrado: {{ createdAtFormatted() }}</span>
+            <span class="text-[10px] text-gray-400 block mt-0.5">Registrado: {{ createdAtFormatted() }}</span>
             }
           </div>
         </div>
@@ -115,60 +112,56 @@
 
       <!-- Accordeones inline web (≥768px) — se muestran debajo del grid de tiles -->
       @if (openPicker() === 'wallet') {
-        <div class="hidden md:block bg-white rounded-2xl border border-gray-100 shadow-sm mb-3 p-3">
-          <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Seleccioná una cartera</h4>
-          <div class="grid grid-cols-2 gap-2">
-            @for (w of wallets(); track w.walletId) {
-              <button type="button"
-                class="flex items-center gap-2 p-2 rounded-xl border-2 text-sm font-semibold transition-all text-left"
-                [class.border-monefy-green]="selectedWalletId() === w.walletId"
-                [class.bg-monefy-mint]="selectedWalletId() === w.walletId"
-                [class.border-gray-100]="selectedWalletId() !== w.walletId"
-                (click)="onPickerWalletSelect(w.walletId)">
-                <span class="text-xl">{{ w.icon }}</span>
-                <span class="truncate">{{ w.name }}</span>
-              </button>
-            }
-          </div>
+      <div class="hidden md:block bg-white rounded-2xl border border-gray-100 shadow-sm mb-3 p-3">
+        <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Seleccioná una cartera</h4>
+        <div class="grid grid-cols-2 gap-2">
+          @for (w of wallets(); track w.walletId) {
+          <button type="button"
+            class="flex items-center gap-2 p-2 rounded-xl border-2 text-sm font-semibold transition-all text-left"
+            [class.border-myfinance-green]="selectedWalletId() === w.walletId"
+            [class.bg-myfinance-mint]="selectedWalletId() === w.walletId"
+            [class.border-gray-100]="selectedWalletId() !== w.walletId" (click)="onPickerWalletSelect(w.walletId)">
+            <span class="text-xl">{{ w.icon }}</span>
+            <span class="truncate">{{ w.name }}</span>
+          </button>
+          }
         </div>
+      </div>
       }
 
       @if (openPicker() === 'category') {
-        <div class="hidden md:block bg-white rounded-2xl border border-gray-100 shadow-sm mb-3 p-3">
-          <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Seleccioná una categoría</h4>
-          <div class="grid grid-cols-4 md:grid-cols-6 gap-2">
-            @for (cat of filteredCategories(); track cat.categoryId) {
-              <div class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2"
-                   style="height: 72px;"
-                   [style.border-color]="cat.color"
-                   [style.background-color]="selectedCategoryId() === cat.categoryId ? cat.color + '33' : cat.color + '1a'"
-                   (click)="onPickerCategorySelect(cat.categoryId)">
-                <span class="text-2xl leading-none">{{ cat.icon }}</span>
-                <span class="text-[10px] text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ cat.name }}</span>
-              </div>
-            }
+      <div class="hidden md:block bg-white rounded-2xl border border-gray-100 shadow-sm mb-3 p-3">
+        <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Seleccioná una categoría</h4>
+        <div class="grid grid-cols-4 md:grid-cols-6 gap-2">
+          @for (cat of filteredCategories(); track cat.categoryId) {
+          <div class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 cursor-pointer p-2"
+            style="height: 72px;" [style.border-color]="cat.color"
+            [style.background-color]="selectedCategoryId() === cat.categoryId ? cat.color + '33' : cat.color + '1a'"
+            (click)="onPickerCategorySelect(cat.categoryId)">
+            <span class="text-2xl leading-none">{{ cat.icon }}</span>
+            <span class="text-[10px] text-center text-myfinance-text-primary font-medium leading-tight line-clamp-2">{{
+              cat.name }}</span>
           </div>
+          }
         </div>
+      </div>
       }
 
       @if (openPicker() === 'currency') {
-        <div class="hidden md:block bg-white rounded-2xl border border-gray-100 shadow-sm mb-3 p-3">
-          <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Seleccioná una divisa</h4>
-          <div class="flex flex-wrap gap-2">
-            @for (c of currencies; track c) {
-              <button type="button"
-                class="px-4 py-2 rounded-full text-sm font-bold border-2 transition-all"
-                [class.border-monefy-green]="selectedCurrency() === c"
-                [class.bg-monefy-mint]="selectedCurrency() === c"
-                [class.text-monefy-green]="selectedCurrency() === c"
-                [class.border-gray-200]="selectedCurrency() !== c"
-                [class.text-gray-600]="selectedCurrency() !== c"
-                (click)="onPickerCurrencySelect(c)">
-                {{ c }}
-              </button>
-            }
-          </div>
+      <div class="hidden md:block bg-white rounded-2xl border border-gray-100 shadow-sm mb-3 p-3">
+        <h4 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Seleccioná una divisa</h4>
+        <div class="flex flex-wrap gap-2">
+          @for (c of currencies; track c) {
+          <button type="button" class="px-4 py-2 rounded-full text-sm font-bold border-2 transition-all"
+            [class.border-myfinance-green]="selectedCurrency() === c"
+            [class.bg-myfinance-mint]="selectedCurrency() === c" [class.text-myfinance-green]="selectedCurrency() === c"
+            [class.border-gray-200]="selectedCurrency() !== c" [class.text-gray-600]="selectedCurrency() !== c"
+            (click)="onPickerCurrencySelect(c)">
+            {{ c }}
+          </button>
+          }
         </div>
+      </div>
       }
 
       <!-- Descripción y Notas -->
@@ -178,14 +171,14 @@
             labelPlacement="stacked" [autoGrow]="true" rows="1" class="text-sm font-semibold"></ion-textarea>
         </ion-item>
         @if (suggestions().length > 0) {
-          <div class="flex flex-wrap gap-2 px-4 py-2 border-t border-gray-50">
-            @for (s of suggestions(); track s) {
-              <button type="button" (click)="onSuggestionSelect(s)"
-                class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 active:bg-monefy-mint active:text-monefy-green transition-colors">
-                {{ s }}
-              </button>
-            }
-          </div>
+        <div class="flex flex-wrap gap-2 px-4 py-2 border-t border-gray-50">
+          @for (s of suggestions(); track s) {
+          <button type="button" (click)="onSuggestionSelect(s)"
+            class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600 active:bg-myfinance-mint active:text-myfinance-green transition-colors">
+            {{ s }}
+          </button>
+          }
+        </div>
         }
         <ion-item lines="none" class="ion-no-padding px-4">
           <ion-textarea formControlName="notes" placeholder="Notas adicionales..." label="Notas"
@@ -197,8 +190,8 @@
       <div
         class="bg-white rounded-2xl border border-gray-100 shadow-sm px-4 py-3 mb-3 flex items-center justify-between">
         <div>
-          <span class="text-sm font-semibold text-monefy-text-primary block">Recurrente</span>
-          <span class="text-[10px] text-monefy-text-secondary">Se repite automáticamente cada mes</span>
+          <span class="text-sm font-semibold text-myfinance-text-primary block">Recurrente</span>
+          <span class="text-[10px] text-myfinance-text-secondary">Se repite automáticamente cada mes</span>
         </div>
         <ion-toggle [checked]="form.get('isRecurring')?.value" (ionChange)="onRecurringToggle($event.detail.checked)"
           color="primary">
@@ -235,4 +228,3 @@
     </div>
   </div>
 </div>
-

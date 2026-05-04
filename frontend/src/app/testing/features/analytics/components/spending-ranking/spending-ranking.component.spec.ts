@@ -1,6 +1,6 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
-import { SpendingRankingComponent } from '../../../../../features/analytics/components/spending-ranking/spending-ranking.component';
-import { SpendingItem } from '../../../../../features/analytics/services/analytics.service';
+import { SpendingRankingComponent } from '@features/analytics/components/spending-ranking/spending-ranking.component';
+import { SpendingItem } from '@features/analytics/services/analytics.service';
 
 function item(concept: string, amount: number): SpendingItem {
   return { concept, categoryId: 'cat-1', amountBase: amount, isRecurring: false };

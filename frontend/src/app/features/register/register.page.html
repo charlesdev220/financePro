@@ -1,7 +1,8 @@
 <ion-content style="--background: var(--color-green-50);">
   <div class="max-w-[400px] w-full mx-auto px-6 py-12 animate-in fade-in slide-in-from-bottom-5 duration-700">
     <div class="mb-6">
-      <ion-button fill="clear" routerLink="/login" style="text-transform: none;" class="text-monefy-green text-sm p-0">
+      <ion-button fill="clear" routerLink="/login" style="text-transform: none;"
+        class="text-myfinance-green text-sm p-0">
         <ion-icon name="arrow-back-outline" slot="start" class="mr-1"></ion-icon>
         Volver
       </ion-button>
@@ -9,7 +10,7 @@
 
     <div class="text-center mb-8">
       <div
-        class="bg-gradient-to-br from-monefy-green to-monefy-green-dark w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+        class="bg-gradient-to-br from-myfinance-green to-myfinance-green-dark w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
         <ion-icon name="wallet-outline" class="text-3xl text-white"></ion-icon>
       </div>
       <h1 class="font-pacifico text-3xl text-gray-800 tracking-tight">
@@ -21,18 +22,18 @@
     <div class="bg-white/80 backdrop-blur-md border border-white/30 rounded-3xl p-6 shadow-sm">
       <form (ngSubmit)="handleRegister()">
         <ion-item lines="none" class="bg-white/5 rounded-xl px-4 py-1 mb-4">
-          <ion-icon name="person-outline" slot="start" class="text-monefy-green mr-2"></ion-icon>
+          <ion-icon name="person-outline" slot="start" class="text-myfinance-green mr-2"></ion-icon>
           <ion-input type="text" placeholder="Nombre completo" [(ngModel)]="name" name="name" required></ion-input>
         </ion-item>
 
         <ion-item lines="none" class="bg-white/5 rounded-xl px-4 py-1 mb-4">
-          <ion-icon name="mail-outline" slot="start" class="text-monefy-green mr-2"></ion-icon>
+          <ion-icon name="mail-outline" slot="start" class="text-myfinance-green mr-2"></ion-icon>
           <ion-input type="email" placeholder="Correo electrónico" [(ngModel)]="email" name="email"
             required></ion-input>
         </ion-item>
 
         <ion-item lines="none" class="bg-white/5 rounded-xl px-4 py-1 mb-6">
-          <ion-icon name="lock-closed-outline" slot="start" class="text-monefy-green mr-2"></ion-icon>
+          <ion-icon name="lock-closed-outline" slot="start" class="text-myfinance-green mr-2"></ion-icon>
           <ion-input type="password" placeholder="Contraseña" [(ngModel)]="password" name="password"
             required></ion-input>
         </ion-item>
@@ -45,7 +46,7 @@
     </div>
 
     <div class="text-center mt-8 text-gray-500 text-sm">
-      <p>¿Ya tenés cuenta? <span class="text-monefy-green font-semibold cursor-pointer" routerLink="/login">Iniciá
+      <p>¿Ya tenés cuenta? <span class="text-myfinance-green font-semibold cursor-pointer" routerLink="/login">Iniciá
           sesión</span></p>
     </div>
   </div>

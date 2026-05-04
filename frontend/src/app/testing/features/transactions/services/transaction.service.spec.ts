@@ -2,11 +2,11 @@ import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
 import { of } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { TransactionService, rowToTransaction, transactionToRow } from '../../../../features/transactions/services/transaction.service';
-import { CurrencyApiService } from '../../../../core/services/currency-api.service';
-import { SheetsApiService } from '../../../../core/services/sheets-api.service';
-import { AuthService } from '../../../../core/services/auth.service';
-import { ITransaction } from '../../../../models/transaction.model';
+import { TransactionService, rowToTransaction, transactionToRow } from '@features/transactions/services/transaction.service';
+import { CurrencyApiService } from '@core/services/currency-api.service';
+import { SheetsApiService } from '@core/services/sheets-api.service';
+import { AuthService } from '@core/services/auth.service';
+import { ITransaction } from '@models/transaction.model';
 
 // toISOString() da UTC — en timezones adelantados puede devolver el día anterior.
 // processRecurring parsea fechas como hora local, así que usamos fecha local.
@@ -15,22 +15,22 @@ function localDateStr(d: Date): string {
 }
 
 const mockTx = (overrides: Partial<ITransaction> = {}): ITransaction => ({
-  txId:           'tx-001',
-  userId:         'user-001',
-  walletId:       'wal-001',
-  categoryId:     'cat-001',
-  amount:         100,
-  currency:       'EUR',
-  amountBase:     100,
-  concept:        'Test',
-  date:           '2026-03-01',
-  type:           'expense',
-  isRecurring:    false,
+  txId: 'tx-001',
+  userId: 'user-001',
+  walletId: 'wal-001',
+  categoryId: 'cat-001',
+  amount: 100,
+  currency: 'EUR',
+  amountBase: 100,
+  concept: 'Test',
+  date: '2026-03-01',
+  type: 'expense',
+  isRecurring: false,
   recurrenceRule: null,
-  notes:          null,
-  workspaceId:    'ws_test',
-  createdAt:      '2026-03-01T10:00:00.000Z',
-  updatedAt:      '2026-03-01T10:00:00.000Z',
+  notes: null,
+  workspaceId: 'ws_test',
+  createdAt: '2026-03-01T10:00:00.000Z',
+  updatedAt: '2026-03-01T10:00:00.000Z',
   ...overrides,
 });
 
@@ -105,7 +105,7 @@ describe('TransactionService', () => {
     thisMonth.setDate(1);
     const thisMonthStr = localDateStr(thisMonth);
 
-    const original        = mockTx({ isRecurring: true, recurrenceRule: 'monthly', date: lastMonthStr });
+    const original = mockTx({ isRecurring: true, recurrenceRule: 'monthly', date: lastMonthStr });
     const alreadyGenerated = mockTx({ txId: 'tx-002', isRecurring: true, recurrenceRule: 'monthly', date: thisMonthStr });
     const result = spectator.service.processRecurring([original, alreadyGenerated]);
 

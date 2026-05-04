@@ -4,16 +4,16 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 import { ModalController } from '@ionic/angular/standalone';
-import { TransactionFormComponent } from '../../../../features/transactions/transaction-form/transaction-form.component';
-import { TransactionsStateService } from '../../../../core/state/transactions.state';
-import { WalletsStateService } from '../../../../core/state/wallets.state';
-import { CategoriesStateService } from '../../../../core/state/categories.state';
-import { BudgetsStateService } from '../../../../core/state/budgets.state';
-import { ConceptsService } from '../../../../features/transactions/services/concepts.service';
-import { IBudget } from '../../../../models/budget.model';
-import { ITransaction } from '../../../../models/transaction.model';
-import { IWallet } from '../../../../models/wallet.model';
-import { ICategory } from '../../../../models/category.model';
+import { TransactionFormComponent } from '@features/transactions/transaction-form/transaction-form.component';
+import { TransactionsStateService } from '@core/state/transactions.state';
+import { WalletsStateService } from '@core/state/wallets.state';
+import { CategoriesStateService } from '@core/state/categories.state';
+import { BudgetsStateService } from '@core/state/budgets.state';
+import { ConceptsService } from '@features/transactions/services/concepts.service';
+import { IBudget } from '@models/budget.model';
+import { ITransaction } from '@models/transaction.model';
+import { IWallet } from '@models/wallet.model';
+import { ICategory } from '@models/category.model';
 import { MODAL_CONTROLLER_MOCK } from '../../../ionic-mocks';
 
 function makeBudget(
@@ -24,43 +24,43 @@ function makeBudget(
   status: IBudget['status'],
 ): IBudget {
   return {
-    budgetId:    `b-${categoryId}`,
-    userId:      'usr_001',
+    budgetId: `b-${categoryId}`,
+    userId: 'usr_001',
     categoryId,
     period,
     budgetAmount,
     spentAmount,
     status,
-    lastUpdated:  '2026-04-12T00:00:00Z',
-    workspaceId:  'ws_test',
-    mode:         'indefinite' as const,
+    lastUpdated: '2026-04-12T00:00:00Z',
+    workspaceId: 'ws_test',
+    mode: 'indefinite' as const,
   };
 }
 
 function makeExpenseTx(amount: number, categoryId: string, date: string): ITransaction {
   return {
-    txId:           'tx-edit',
-    userId:         'usr_001',
-    walletId:       'w1',
+    txId: 'tx-edit',
+    userId: 'usr_001',
+    walletId: 'w1',
     categoryId,
     amount,
-    currency:       'EUR',
-    amountBase:     amount,
-    concept:        'edición',
+    currency: 'EUR',
+    amountBase: amount,
+    concept: 'edición',
     date,
-    type:           'expense',
-    isRecurring:    false,
+    type: 'expense',
+    isRecurring: false,
     recurrenceRule: null,
-    notes:          null,
-    workspaceId:    'ws_test',
-    createdAt:      `${date}T00:00:00Z`,
-    updatedAt:      `${date}T00:00:00Z`,
+    notes: null,
+    workspaceId: 'ws_test',
+    createdAt: `${date}T00:00:00Z`,
+    updatedAt: `${date}T00:00:00Z`,
   };
 }
 
 describe('TransactionFormComponent', () => {
   let spectator: Spectator<TransactionFormComponent>;
-  
+
   let budgetsSignal: ReturnType<typeof signal<IBudget[]>>;
   let txSignal: ReturnType<typeof signal<ITransaction[]>>;
 

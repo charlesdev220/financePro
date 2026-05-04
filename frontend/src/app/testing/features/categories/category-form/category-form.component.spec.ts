@@ -4,10 +4,10 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AlertController, ModalController } from '@ionic/angular/standalone';
 
-import { CategoryFormComponent } from '../../../../features/categories/category-form/category-form.component';
-import { CategoriesStateService } from '../../../../core/state/categories.state';
-import { UserSettingsStateService } from '../../../../core/state/user-settings.state';
-import { ICategory } from '../../../../models/category.model';
+import { CategoryFormComponent } from '@features/categories/category-form/category-form.component';
+import { CategoriesStateService } from '@core/state/categories.state';
+import { UserSettingsStateService } from '@core/state/user-settings.state';
+import { ICategory } from '@models/category.model';
 import { MODAL_CONTROLLER_MOCK, ALERT_CONTROLLER_MOCK } from '../../../ionic-mocks';
 
 describe('CategoryFormComponent', () => {

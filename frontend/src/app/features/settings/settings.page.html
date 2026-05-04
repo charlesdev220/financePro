@@ -21,7 +21,8 @@
       }
 
       <ion-list-header class="mt-4">
-        <ion-label class="font-semibold text-sm text-monefy-text-secondary uppercase tracking-wider">Período</ion-label>
+        <ion-label
+          class="font-semibold text-sm text-myfinance-text-secondary uppercase tracking-wider">Período</ion-label>
       </ion-list-header>
 
       <ion-item>
@@ -29,50 +30,49 @@
           Inicio del mes
           <ion-note>El período mensual comienza este día del mes</ion-note>
         </ion-label>
-        <ion-select
-          [value]="monthStartDay()"
-          (ionChange)="onMonthStartDayChange($event)"
+        <ion-select [value]="monthStartDay()" (ionChange)="onMonthStartDayChange($event)"
           placeholder="Seleccioná un día">
           @for (day of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28]; track day) {
-            <ion-select-option [value]="day">Día {{ day }}</ion-select-option>
+          <ion-select-option [value]="day">Día {{ day }}</ion-select-option>
           }
         </ion-select>
       </ion-item>
 
       <ion-list-header class="mt-4">
-        <ion-label class="font-semibold text-sm text-monefy-text-secondary uppercase tracking-wider">Espacios</ion-label>
+        <ion-label
+          class="font-semibold text-sm text-myfinance-text-secondary uppercase tracking-wider">Espacios</ion-label>
       </ion-list-header>
 
       @for (ws of workspacesState.items(); track ws.workspaceId) {
-        <ion-item>
-          <div slot="start" class="text-2xl">{{ ws.icon }}</div>
-          <ion-label class="min-w-0">
-            <h2 class="truncate">{{ ws.name }}</h2>
-            @if (ws.workspaceId === workspacesState.activeWorkspaceId()) {
-              <ion-note color="success" class="flex items-center gap-1">
-                <ion-icon name="checkmark-circle-outline"></ion-icon> Activo
-              </ion-note>
-            } @else if (ws.isDefault) {
-              <ion-note>Espacio principal</ion-note>
-            }
-          </ion-label>
-          @if (ws.workspaceId !== workspacesState.activeWorkspaceId()) {
-            <ion-button slot="end" fill="clear" size="small" color="success"
-              (click)="onActivateWorkspace(ws)" title="Activar">
-              <ion-icon slot="icon-only" name="checkmark-outline"></ion-icon>
-            </ion-button>
+      <ion-item>
+        <div slot="start" class="text-2xl">{{ ws.icon }}</div>
+        <ion-label class="min-w-0">
+          <h2 class="truncate">{{ ws.name }}</h2>
+          @if (ws.workspaceId === workspacesState.activeWorkspaceId()) {
+          <ion-note color="success" class="flex items-center gap-1">
+            <ion-icon name="checkmark-circle-outline"></ion-icon> Activo
+          </ion-note>
+          } @else if (ws.isDefault) {
+          <ion-note>Espacio principal</ion-note>
           }
-          <ion-button slot="end" fill="clear" size="small"
-            (click)="openWorkspaceForm(ws, workspacesState.rowMap()[ws.workspaceId])" title="Renombrar">
-            <ion-icon slot="icon-only" name="pencil-outline"></ion-icon>
-          </ion-button>
-          @if (!ws.isDefault) {
-            <ion-button slot="end" fill="clear" size="small" color="danger"
-              (click)="confirmDeleteWorkspace(ws, workspacesState.rowMap()[ws.workspaceId])" title="Eliminar">
-              <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
-            </ion-button>
-          }
-        </ion-item>
+        </ion-label>
+        @if (ws.workspaceId !== workspacesState.activeWorkspaceId()) {
+        <ion-button slot="end" fill="clear" size="small" color="success" (click)="onActivateWorkspace(ws)"
+          title="Activar">
+          <ion-icon slot="icon-only" name="checkmark-outline"></ion-icon>
+        </ion-button>
+        }
+        <ion-button slot="end" fill="clear" size="small"
+          (click)="openWorkspaceForm(ws, workspacesState.rowMap()[ws.workspaceId])" title="Renombrar">
+          <ion-icon slot="icon-only" name="pencil-outline"></ion-icon>
+        </ion-button>
+        @if (!ws.isDefault) {
+        <ion-button slot="end" fill="clear" size="small" color="danger"
+          (click)="confirmDeleteWorkspace(ws, workspacesState.rowMap()[ws.workspaceId])" title="Eliminar">
+          <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
+        </ion-button>
+        }
+      </ion-item>
       }
 
       <ion-item button (click)="openWorkspaceForm()">
@@ -90,12 +90,8 @@
           Presupuesto mensual por defecto
           <ion-note>Para nuevas categorías de gasto ({{ baseCurrency() ?? 'EUR' }})</ion-note>
         </ion-label>
-        <ion-input
-          type="number"
-          inputmode="decimal"
-          [value]="defaultBudget()"
-          (ionChange)="onDefaultBudgetChange($event)"
-          placeholder="200">
+        <ion-input type="number" inputmode="decimal" [value]="defaultBudget()"
+          (ionChange)="onDefaultBudgetChange($event)" placeholder="200">
         </ion-input>
       </ion-item>
 

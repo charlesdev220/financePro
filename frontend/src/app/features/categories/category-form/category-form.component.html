@@ -27,24 +27,18 @@
       <ion-item lines="none">
         <ion-label position="stacked" class="mb-2">Tipo</ion-label>
         <div class="flex gap-2 w-full py-2">
-          <button type="button"
-            class="flex-1 py-2 rounded-full font-semibold text-sm transition-colors border-2"
-            [class.bg-monefy-red]="selectedType() === 'expense'"
-            [class.text-white]="selectedType() === 'expense'"
-            [class.border-monefy-red]="selectedType() === 'expense'"
-            [class.border-monefy-border]="selectedType() !== 'expense'"
-            [class.text-monefy-text-secondary]="selectedType() !== 'expense'"
-            (click)="onTypeSelect('expense')">
+          <button type="button" class="flex-1 py-2 rounded-full font-semibold text-sm transition-colors border-2"
+            [class.bg-myfinance-red]="selectedType() === 'expense'" [class.text-white]="selectedType() === 'expense'"
+            [class.border-myfinance-red]="selectedType() === 'expense'"
+            [class.border-myfinance-border]="selectedType() !== 'expense'"
+            [class.text-myfinance-text-secondary]="selectedType() !== 'expense'" (click)="onTypeSelect('expense')">
             Gasto
           </button>
-          <button type="button"
-            class="flex-1 py-2 rounded-full font-semibold text-sm transition-colors border-2"
-            [class.bg-monefy-green]="selectedType() === 'income'"
-            [class.text-white]="selectedType() === 'income'"
-            [class.border-monefy-green]="selectedType() === 'income'"
-            [class.border-monefy-border]="selectedType() !== 'income'"
-            [class.text-monefy-text-secondary]="selectedType() !== 'income'"
-            (click)="onTypeSelect('income')">
+          <button type="button" class="flex-1 py-2 rounded-full font-semibold text-sm transition-colors border-2"
+            [class.bg-myfinance-green]="selectedType() === 'income'" [class.text-white]="selectedType() === 'income'"
+            [class.border-myfinance-green]="selectedType() === 'income'"
+            [class.border-myfinance-border]="selectedType() !== 'income'"
+            [class.text-myfinance-text-secondary]="selectedType() !== 'income'" (click)="onTypeSelect('income')">
             Ingreso
           </button>
         </div>
@@ -67,8 +61,8 @@
           <button type="button" (click)="onIconSelect(icon)"
             class="text-3xl p-2 rounded-2xl flex items-center justify-center transition-all active:scale-95"
             [class.border-2]="form.get('icon')?.value === icon"
-            [class.border-monefy-green]="form.get('icon')?.value === icon"
-            [class.bg-monefy-mint]="form.get('icon')?.value === icon" style="min-height: 56px;">
+            [class.border-myfinance-green]="form.get('icon')?.value === icon"
+            [class.bg-myfinance-mint]="form.get('icon')?.value === icon" style="min-height: 56px;">
             {{ icon }}
           </button>
           }
@@ -126,7 +120,7 @@
       <!-- Período como accordion inline -->
       <ion-item button (click)="showPeriodPicker.set(!showPeriodPicker())" detail="false" lines="none">
         <ion-label>Período del presupuesto</ion-label>
-        <span slot="end" class="text-sm text-monefy-text-secondary mr-1">
+        <span slot="end" class="text-sm text-myfinance-text-secondary mr-1">
           {{ periodLabel }}
         </span>
         <ion-icon name="chevron-down-outline" slot="end" class="text-gray-400"
@@ -136,11 +130,11 @@
       <div class="bg-white rounded-2xl mx-3 mb-3 shadow-sm overflow-hidden">
         @for (opt of PERIOD_OPTIONS; track opt.value; let last = $last) {
         <button type="button"
-          class="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-monefy-green"
+          class="w-full flex items-center justify-between px-4 py-3 text-sm font-semibold text-myfinance-green"
           [class.border-b]="!last" [class.border-gray-100]="!last" (click)="onPeriodSelect(opt.value)">
           <span>{{ opt.label }}</span>
           @if (form.get('budgetPeriod')?.value === opt.value) {
-          <ion-icon name="checkmark-outline" class="text-monefy-green"></ion-icon>
+          <ion-icon name="checkmark-outline" class="text-myfinance-green"></ion-icon>
           }
         </button>
         }

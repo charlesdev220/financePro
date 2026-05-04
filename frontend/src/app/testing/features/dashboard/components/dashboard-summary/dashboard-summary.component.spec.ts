@@ -1,6 +1,6 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
-import { DashboardSummaryComponent } from '../../../../../features/dashboard/components/dashboard-summary/dashboard-summary.component';
-import { DashboardSummary } from '../../../../../features/dashboard/services/dashboard.service';
+import { DashboardSummaryComponent } from '@features/dashboard/components/dashboard-summary/dashboard-summary.component';
+import { DashboardSummary } from '@features/dashboard/services/dashboard.service';
 
 describe('DashboardSummaryComponent', () => {
   let spectator: Spectator<DashboardSummaryComponent>;

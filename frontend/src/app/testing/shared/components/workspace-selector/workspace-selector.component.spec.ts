@@ -1,5 +1,5 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
-import { WorkspaceSelectorComponent } from '../../../../shared/components/workspace-selector/workspace-selector.component';
+import { WorkspaceSelectorComponent } from '@shared/components/workspace-selector/workspace-selector.component';
 import { MOCK_WORKSPACES, MOCK_WORKSPACE_ID_A, MOCK_WORKSPACE_ID_B } from '../../../fixtures';
 
 describe('WorkspaceSelectorComponent', () => {

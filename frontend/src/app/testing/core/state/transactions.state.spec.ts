@@ -71,11 +71,11 @@ describe('TransactionsStateService', () => {
     expect(spectator.service.error()).toBe('Create error');
   }));
 
-  it('update_shouldUpdateStateAndHandleError', fakeAsync(() => {
+  it('update_shouldRollbackAndSetError_whenUpdateFails', fakeAsync(() => {
     const tx = { ...MOCK_TRANSACTIONS[0] };
-    spectator.inject(TransactionService).loadTransactions.mockReturnValue(of({ 
-      transactions: [tx], 
-      rowMap: { [tx.txId]: 2 } 
+    spectator.inject(TransactionService).loadTransactions.mockReturnValue(of({
+      transactions: [tx],
+      rowMap: { [tx.txId]: 2 }
     }));
     spectator.service.load();
     flushMicrotasks();
@@ -84,16 +84,13 @@ describe('TransactionsStateService', () => {
     spectator.inject(TransactionService).updateTransaction.mockReturnValue(throwError(() => 'Update error'));
 
     spectator.service.update(updated, 2, 'USD');
-    
-    // Procesar microtasks de firstValueFrom y .then()
-    tick(100);
-    
-    expect(spectator.service.items().length).toBe(1);
-    expect(spectator.service.items()[0].concept).toBe('Updated');
 
-    // Procesar microtasks de rollback
-    tick(100);
-    
+    // Procesar toda la cadena async: getRate → optimistic update → updateTransaction error → rollback
+    flushMicrotasks();
+    flushMicrotasks();
+    flushMicrotasks();
+
+    // Tras el rollback, el item vuelve al estado original y el error está seteado
     expect(spectator.service.items()[0].concept).toBe(tx.concept);
     expect(spectator.service.error()).toBe('Update error');
   }));

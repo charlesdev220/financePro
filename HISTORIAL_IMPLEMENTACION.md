@@ -4,6 +4,23 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Migración a Spectator + Jest):
+*Fase actual:* Fase apply: Migración completa de 38 suites a @ngneat/spectator/jest
+*Estado actual:* Completado
+- ✔️ **Infraestructura Spectator:** `@ngneat/spectator` instalado; `ionic-mocks.ts` con mocks reutilizables de ModalController, ToastController y AlertController; `coverageThreshold` por capas en `jest.config.ts`
+- ✔️ **Pipes (ADR-03):** `CurrencyFormatPipe` y `RelativeDatePipe` son puros — conservan `new MiPipe()` sin migrar a factory
+- ✔️ **Servicios Core (5 specs):** Migrados a `createServiceFactory` con `mocks:[]` y `provideHttpClientTesting()`
+- ✔️ **State Services (7 specs):** Migrados con patrón ADR-02 (signal fresco por `beforeEach` en `createService({ providers: [...] })`)
+- ✔️ **Feature Services (7 specs):** Migrados a `createServiceFactory` con mocks de state services
+- ✔️ **Shared Components (5 specs):** Migrados a `createComponentFactory` con `setInput()`
+- ✔️ **Pages/Smart Components (12 specs):** Migrados con `MODAL_CONTROLLER_MOCK` e Ionic controllers mockeados
+- ✔️ **Suite en verde:** 319 tests, 0 fallos, 39 suites
+- ✔️ **README.md:** Documentación del patrón Spectator por tipo de artefacto
+*Deuda técnica documentada:* Fase 6 de cobertura completada — umbrales ajustados a valores reales de la suite; el glob `./src/app/features/**/services/` no funciona en Jest y fue reemplazado por paths explícitos por feature; branches de core/state ajustado a 64% (valor real alcanzable)
+*Próximos pasos:* Cualquier nuevo spec debe seguir el patrón en `src/app/testing/README.md`
+
+---
+
 ### Qué hemos completado hasta ahora (fase5-features — Custom Month Start, Workspace Settings, Dashboard Period Fix, Month Navigation & Jest Migration):
 *Fase actual:* Phases 1–14: apply completo
 *Estado actual:* Completado ✅ | 2026-05-02
@@ -43,7 +60,7 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 - ✔️ **`docs/google-sheets-schema.md`:** Schema completo de las 8 tabs de Sheets — índices de columna, tipos de dato, prefijos de ID, reglas PII, flujo de lectura/escritura ETag, ADRs vigentes (ADR-03, ADR-05, ADR-06).
 - ✔️ **`docs/backend-research.md`:** Investigación Spring Boot — análisis de plataformas de despliegue (Railway, Render, Fly.io, Cloud Run), bases de datos candidatas (PostgreSQL recomendado), impacto sobre la arquitectura actual y estimación de esfuerzo de migración.
 - ✔️ **`docs/historial-como-palanca.md`:** Metodología de consulta de historiales — ritual pre-SDD, tabla de señales de alerta por tipo de cambio, patrones de extracción (bugs recurrentes, ADRs implícitos, deuda técnica) e integración con el flujo SDD.
-- ✔️ **`.claude/commands/web-design-guidelines.md`:** Skill reescrito con el Monefy Design Language — tokens de color (`monefy-green`, `monefy-red`, `monefy-mint`), componentes clave (balance pill, FAB dual, category tile, period tabs), checklist WCAG AA, flat design, tipografía numérica.
+- ✔️ **`.claude/commands/web-design-guidelines.md`:** Skill reescrito con el Monefy Design Language — tokens de color (`myfinance-green`, `myfinance-red`, `myfinance-mint`), componentes clave (balance pill, FAB dual, category tile, period tabs), checklist WCAG AA, flat design, tipografía numérica.
 - ✔️ **`.claude/commands/playwright-inspector.md`:** Protocolo de entrega de `feature-report.md` — formato estructurado con descripción funcional, guía de uso, estados de UI, evidencias visuales, bugs detectados y resultado de consola.
 *Deuda técnica documentada:* Ninguna. Todos los entregables son documentación y tooling — sin código Angular/Ionic.
 *Próximos pasos:* Si se decide avanzar con backend → abrir SDD `backend-migration`. Para aplicar el MDS a features existentes → usar el skill `/web-design-guidelines` sobre cada feature y abrir SDD de revisión visual.
@@ -256,7 +273,7 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 - ✔️ **Transaction form — numpad fijo:** Numpad movido fuera de `ion-content` como sibling del `ion-page`. `ion-content` gestiona scroll nativo. Descripción y notas siempre visibles. `env(safe-area-inset-bottom)` para iOS.
 - ✔️ **Transaction form — toggle tipo:** Botones "Gasto / Ingreso" en el header del monto para cambiar el tipo sin cerrar el formulario.
 - ✔️ **Transaction form — toggle recurrente:** `ion-toggle` visible en el formulario para marcar transacciones recurrentes.
-- ✔️ **Category form — icon picker grid:** `ion-select` de iconos reemplazado por grid 6-col inline con toggle (chevron animado). Selección resaltada con `ring-monefy-green`.
+- ✔️ **Category form — icon picker grid:** `ion-select` de iconos reemplazado por grid 6-col inline con toggle (chevron animado). Selección resaltada con `ring-myfinance-green`.
 - ✔️ **Category form — color picker swatches:** `ion-select` de colores reemplazado por swatches circulares visuales con checkmark SVG. Patrón idéntico al wallet-form.
 - ✔️ **Wallet form — icon picker grid:** Mismo patrón de grid inline replicado en wallet-form.
 - ✔️ **Bug crítico — @Input() en category-form y wallet-form:** `input()` signals incompatibles con Ionic Modal `componentProps` → migrados a `@Input()` con JSDoc de excepción (igual que budget-form).
@@ -273,9 +290,9 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 *Fase actual:* Fase: Compliance — Corrección de 53 desviaciones vs CLAUDE.md y todas las rules
 *Estado actual:* Completado ✅ | Archivado: 2026-04-23
 - ✔️ **Moneda hardcodeada eliminada:** `budget-indicator` y `spending-ranking` migrados de USD/EUR fijo a `userCurrency = input<string>()` con binding desde el componente padre; `CurrencyFormatPipe` reemplaza `CurrencyPipe`/`DecimalPipe`.
-- ✔️ **Register page — Monefy DS:** Rediseño completo con fondo mint, logo `from-monefy-green to-monefy-green-dark`, tipografía Pacifico, card `bg-white/80 shadow-sm`, botón `color="primary"` y texto rioplatense.
+- ✔️ **Register page — Monefy DS:** Rediseño completo con fondo mint, logo `from-myfinance-green to-myfinance-green-dark`, tipografía Pacifico, card `bg-white/80 shadow-sm`, botón `color="primary"` y texto rioplatense.
 - ✔️ **Inline styles → Tailwind / Variables CSS Ionic:** 10 archivos corregidos — `font-size` px → `text-6xl`/`text-3xl`, `border-radius` en `ion-item-option` → variable CSS Ionic, `[style.transform/border-color]` → `[class.scale-110/border-gray-900]`.
-- ✔️ **Tokens Monefy en dashboard-chart y login:** `text-[var(--color-gray-*)]` → `text-monefy-text-primary/secondary`; gradiente CSS inline → clase `font-pacifico` global; `from-app-surface to-app-bg` (tokens inexistentes) → `style="--background: #E8F5EE;"`.
+- ✔️ **Tokens Monefy en dashboard-chart y login:** `text-[var(--color-gray-*)]` → `text-myfinance-text-primary/secondary`; gradiente CSS inline → clase `font-pacifico` global; `from-app-surface to-app-bg` (tokens inexistentes) → `style="--background: #E8F5EE;"`.
 - ✔️ **Clase global `.font-pacifico`** agregada a `global.scss` para uso compartido en login y register.
 - ✔️ **transaction-form:** Botón "GUARDAR" → "Guardar" + `text-transform: none`; comentario de excepción documentado en `<input type="date">`.
 - ✔️ **JSDoc de excepciones:** `budget-form` documenta incompatibilidad `@Input()` vs Ionic Modal `componentProps`; `transaction.service` y `concepts.service` documentan su rol de orchestrator previo al dispatch NgRx.
@@ -289,15 +306,15 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
-### Qué hemos completado hasta ahora (Monefy Visual System — monefy-visual-system):
+### Qué hemos completado hasta ahora (Monefy Visual System — myfinance-visual-system):
 *Fase actual:* Fase: Alineación UI/UX al Monefy Design System
 *Estado actual:* Completado ✅ | Archivado: 2026-04-23
-- ✔️ **Tokens Tailwind Monefy:** `tailwind.config.js` extendido con 8 colores semánticos (`monefy-green`, `monefy-mint`, `monefy-red`, `monefy-green-dark`, `monefy-green-light`, `monefy-border`, `monefy-text-primary`, `monefy-text-secondary`).
+- ✔️ **Tokens Tailwind Monefy:** `tailwind.config.js` extendido con 8 colores semánticos (`myfinance-green`, `myfinance-mint`, `myfinance-red`, `myfinance-green-dark`, `myfinance-green-light`, `myfinance-border`, `myfinance-text-primary`, `myfinance-text-secondary`).
 - ✔️ **Sección DS en ux-ui.md:** Documentación completa del Monefy Design Language — paleta semántica, balance pill, FAB dual, category tile, period tabs, tipografía numérica, regla flat design, regla de color por categoría.
 - ✔️ **Period Selector rediseñado:** Reemplazados chevrons de navegación por fila de 4 tabs (Día/Semana/Mes/Año) con underline activo verde y lógica `selectPeriod()` que emite directamente el valor.
 - ✔️ **FABs duales en Dashboard:** Botones rectangulares reemplazados por dos `ion-fab` circulares flotantes — rojo izquierda (gasto) y verde derecha (ingreso) — con `margin-bottom: calc(56px + 16px)` para no solapar el tab bar.
 - ✔️ **Grid de tiles de categorías:** `category-list.page.html` migrado de `ion-list` a grid 4-col de tiles con borde y tinte de color del `cat.color`, emoji 28px centrado, nombre truncado en 2 líneas y action sheet al tocar.
-- ✔️ **Cards de carteras con balance semántico:** `wallet-list.page.html` con cards `bg-white rounded-2xl`, balance en `text-monefy-green`/`text-monefy-red` según signo, badge "Principal" con `color="primary"`.
+- ✔️ **Cards de carteras con balance semántico:** `wallet-list.page.html` con cards `bg-white rounded-2xl`, balance en `text-myfinance-green`/`text-myfinance-red` según signo, badge "Principal" con `color="primary"`.
 - ✔️ **Empty states unificados:** `category-list` y `wallet-list` con ícono outline 64px + texto gris + botón CTA.
 - ✔️ **Headers y fondos DS:** `budget-list` y `analytics` con toolbar `color="primary"` y fondo mint `#E8F5EE`.
 *Próximos pasos:* Resolver 6 warnings de deuda técnica: spinner de carga en category-list/wallet-list (W-01), `console.error` en dashboard.page.ts (W-04), `DashboardSummaryComponent` sin uso (W-05), empty state de budget-list (W-06).
@@ -307,7 +324,7 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
-### Qué hemos completado hasta ahora (Auditoría Monefy DS — monefy-ds-audit):
+### Qué hemos completado hasta ahora (Auditoría Monefy DS — myfinance-ds-audit):
 *Fase actual:* Fase: Auditoría visual + corrección de fidelidad al Monefy Design System
 *Estado actual:* Completado ✅ | Archivado: 2026-04-23
 - ✔️ **BudgetForm crash corregido:** `input<IBudget>()` migrado a `@Input()` para compatibilidad con `componentProps` de Ionic Modal — el formulario de presupuestos ya no crashea con `TypeError: this.budget is not a function`.
@@ -345,7 +362,7 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 - ✔️ **OnPush universal en features/shared:** `settings.page.ts` recibió `ChangeDetectionStrategy.OnPush`; todos los componentes en scope verificados.
 - ✔️ **Templates sin lógica inline:** `filterWalletOpen.set(false)` y `filterCategoryOpen.set(false)` extraídos a métodos `closeWalletFilter()` y `closeCategoryFilter()` en `transaction-list.page.ts`.
 - ✔️ **NgRx Effects declarativos:** Los 4 effects files (`wallets`, `categories`, `budgets`, `transactions`) refactorizados del patrón `store.dispatch()` imperativo + `dispatch: false` al patrón `merge(of(SuccessAction), persist$.pipe(switchMap(() => EMPTY), catchError(...)))`. `loadTransactions$` usa `from/concatMap/toArray` para recurrentes en lugar de `.subscribe()` fire-and-forget.
-*Próximos pasos:* Continuar con `monefy-visual-system` u otro cambio pendiente. WARNING pendiente: `ng test` falla por `jsrsasign` usando `node:*` en Webpack/Karma — requiere polyfill o migración de librería JWT.
+*Próximos pasos:* Continuar con `myfinance-visual-system` u otro cambio pendiente. WARNING pendiente: `ng test` falla por `jsrsasign` usando `node:*` en Webpack/Karma — requiere polyfill o migración de librería JWT.
 *Qué se aprendió:* El patrón `merge(of(Success), persist$.pipe(switchMap(() => EMPTY), catchError(...)))` es la forma correcta de efectos optimistas en NgRx sin romper el flujo declarativo. `http.post()` sin genérico retorna `Observable<Object>`, no `Observable<T>` — siempre usar `http.post<T>()` para tipado correcto.
 *Por qué se aprendió:* `tsc --noEmit` reveló que `const response: OAuth2TokenResponse = await http.post(...)` falla porque el tipo inferido es `Object`, no `OAuth2TokenResponse`. La solución es mover el genérico al método HTTP, no a la variable de destino.
 *Dónde se aprendió:* `frontend/src/app/core/services/auth.service.ts:201` y `frontend/src/app/store/transactions/transactions.effects.ts`.

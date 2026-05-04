@@ -1,6 +1,6 @@
 import { createComponentFactory, Spectator } from '@ngneat/spectator/jest';
 import { Chart } from 'chart.js';
-import { ChartBarComponent } from '../../../../shared/components/chart-bar/chart-bar.component';
+import { ChartBarComponent } from '@shared/components/chart-bar/chart-bar.component';
 
 describe('ChartBarComponent', () => {
   let spectator: Spectator<ChartBarComponent>;

@@ -12,19 +12,17 @@
     @if (budgets().length > 0) {
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
       @for (budget of budgets(); track budget.budgetId) {
-      <div class="bg-white rounded-2xl border border-monefy-border overflow-hidden">
+      <div class="bg-white rounded-2xl border border-myfinance-border overflow-hidden">
         <ion-item-sliding style="width: 100%;">
 
           <ion-item (click)="openEditModal(budget)" button detail lines="none">
             <ion-label>
               <div class="flex items-center gap-2 mb-1">
-                <div class="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                  [style.backgroundColor]="budget.categoryColor"></div>
-                <p class="text-sm font-semibold text-monefy-text-primary m-0">{{ budget.categoryName }}</p>
+                <div class="w-2.5 h-2.5 rounded-full flex-shrink-0" [style.backgroundColor]="budget.categoryColor">
+                </div>
+                <p class="text-sm font-semibold text-myfinance-text-primary m-0">{{ budget.categoryName }}</p>
               </div>
-              <app-budget-indicator
-                [budget]="budget"
-                [userCurrency]="userBaseCurrency()"
+              <app-budget-indicator [budget]="budget" [userCurrency]="userBaseCurrency()"
                 [catColor]="budget.categoryColor">
               </app-budget-indicator>
             </ion-label>
@@ -50,7 +48,7 @@
 </ion-content>
 
 <!-- Barra de acción fija — mismo patrón que Dashboard -->
-<div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pb-3 pt-3 bg-monefy-mint z-10"
+<div class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pb-3 pt-3 bg-myfinance-mint z-10"
   style="bottom: calc(env(safe-area-inset-bottom) + 56px);">
   <ion-button (click)="openAddModal()" expand="block" class="font-semibold"
     style="--background: var(--color-green-500); --background-activated: var(--color-green-700); --border-radius: 12px; text-transform: none;">

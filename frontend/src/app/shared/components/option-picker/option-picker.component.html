@@ -14,68 +14,57 @@
 
     <!-- MODO TILES: grid 4-col con borde de color (categorías) -->
     @if (mode === 'tiles') {
-      <div class="grid grid-cols-4 gap-3">
-        @for (item of items; track item.value) {
-          <button
-            type="button"
-            (click)="select(item.value)"
-            class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 p-2 aspect-square transition-all active:scale-95"
-            [style.border-color]="item.color || '#E5E7EB'"
-            [style.background-color]="selectedValue === item.value ? (item.color || '#E5E7EB') + '33' : (item.color || '#E5E7EB') + '1a'"
-            [class.ring-2]="selectedValue === item.value"
-            [class.ring-monefy-green]="selectedValue === item.value"
-          >
-            <span class="text-2xl leading-none">{{ item.icon }}</span>
-            <span class="text-[10px] text-center text-monefy-text-primary font-medium leading-tight line-clamp-2">{{ item.label }}</span>
-          </button>
-        }
-      </div>
+    <div class="grid grid-cols-4 gap-3">
+      @for (item of items; track item.value) {
+      <button type="button" (click)="select(item.value)"
+        class="flex flex-col items-center justify-center gap-1 rounded-xl border-2 p-2 aspect-square transition-all active:scale-95"
+        [style.border-color]="item.color || '#E5E7EB'"
+        [style.background-color]="selectedValue === item.value ? (item.color || '#E5E7EB') + '33' : (item.color || '#E5E7EB') + '1a'"
+        [class.ring-2]="selectedValue === item.value" [class.ring-myfinance-green]="selectedValue === item.value">
+        <span class="text-2xl leading-none">{{ item.icon }}</span>
+        <span class="text-[10px] text-center text-myfinance-text-primary font-medium leading-tight line-clamp-2">{{
+          item.label }}</span>
+      </button>
+      }
+    </div>
     }
 
     <!-- MODO CARDS: grid 2-col con icono + nombre (carteras) -->
     @if (mode === 'cards') {
-      <div class="grid grid-cols-2 gap-3">
-        @for (item of items; track item.value) {
-          <button
-            type="button"
-            (click)="select(item.value)"
-            class="flex items-center gap-3 rounded-2xl border-2 p-3 transition-all active:scale-95 text-left"
-            [class.border-monefy-green]="selectedValue === item.value"
-            [class.bg-monefy-mint]="selectedValue === item.value"
-            [class.border-gray-100]="selectedValue !== item.value"
-            [class.bg-white]="selectedValue !== item.value"
-          >
-            <span class="text-3xl leading-none flex-shrink-0">{{ item.icon }}</span>
-            <div class="flex-1 min-w-0">
-              <span class="text-sm font-bold text-monefy-text-primary truncate block">{{ item.label }}</span>
-              @if (item.sublabel) {
-                <span class="text-[10px] text-monefy-text-secondary">{{ item.sublabel }}</span>
-              }
-            </div>
-          </button>
-        }
-      </div>
+    <div class="grid grid-cols-2 gap-3">
+      @for (item of items; track item.value) {
+      <button type="button" (click)="select(item.value)"
+        class="flex items-center gap-3 rounded-2xl border-2 p-3 transition-all active:scale-95 text-left"
+        [class.border-myfinance-green]="selectedValue === item.value"
+        [class.bg-myfinance-mint]="selectedValue === item.value" [class.border-gray-100]="selectedValue !== item.value"
+        [class.bg-white]="selectedValue !== item.value">
+        <span class="text-3xl leading-none flex-shrink-0">{{ item.icon }}</span>
+        <div class="flex-1 min-w-0">
+          <span class="text-sm font-bold text-myfinance-text-primary truncate block">{{ item.label }}</span>
+          @if (item.sublabel) {
+          <span class="text-[10px] text-myfinance-text-secondary">{{ item.sublabel }}</span>
+          }
+        </div>
+      </button>
+      }
+    </div>
     }
 
     <!-- MODO PILLS: flex-wrap de pastillas (divisas, períodos) -->
     @if (mode === 'pills') {
-      <div class="flex flex-wrap gap-3 justify-center pt-2">
-        @for (item of items; track item.value) {
-          <button
-            type="button"
-            (click)="select(item.value)"
-            class="px-6 py-3 rounded-full border-2 text-base font-bold transition-all active:scale-95"
-            [class.border-monefy-green]="selectedValue === item.value"
-            [class.bg-monefy-mint]="selectedValue === item.value"
-            [class.text-monefy-green]="selectedValue === item.value"
-            [class.border-gray-200]="selectedValue !== item.value"
-            [class.text-gray-600]="selectedValue !== item.value"
-            [class.bg-white]="selectedValue !== item.value"
-          >
-            {{ item.label }}
-          </button>
-        }
-      </div>
+    <div class="flex flex-wrap gap-3 justify-center pt-2">
+      @for (item of items; track item.value) {
+      <button type="button" (click)="select(item.value)"
+        class="px-6 py-3 rounded-full border-2 text-base font-bold transition-all active:scale-95"
+        [class.border-myfinance-green]="selectedValue === item.value"
+        [class.bg-myfinance-mint]="selectedValue === item.value"
+        [class.text-myfinance-green]="selectedValue === item.value"
+        [class.border-gray-200]="selectedValue !== item.value" [class.text-gray-600]="selectedValue !== item.value"
+        [class.bg-white]="selectedValue !== item.value">
+        {{ item.label }}
+      </button>
+      }
+    </div>
     }
 
   </div>
