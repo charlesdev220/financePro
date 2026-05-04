@@ -2,6 +2,7 @@ import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
 import { AnalyticsService, MonthlyTotal, CategorySpendingItem } from '@features/analytics/services/analytics.service';
 import { ITransaction } from '@models/transaction.model';
 import { ICategory } from '@models/category.model';
+import { APP_COLORS } from '@core/constants/colors.constants';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers inline
@@ -272,9 +273,9 @@ describe('AnalyticsService', () => {
     }
 
     const categories: ICategory[] = [
-      cat('cat-1', 'Comida', '🍔', '#4CAF50'),
-      cat('cat-2', 'Transporte', '🚗', '#2196F3'),
-      cat('cat-3', 'Ocio', '🎮', '#FF9800'),
+      cat('cat-1', 'Comida', '🍔', APP_COLORS.GREEN_BASE),
+      cat('cat-2', 'Transporte', '🚗', APP_COLORS.BLUE),
+      cat('cat-3', 'Ocio', '🎮', APP_COLORS.YELLOW),
     ];
 
     // REQ-09 sc1: transacciones mixtas → solo EXPENSE acumuladas
@@ -314,7 +315,7 @@ describe('AnalyticsService', () => {
       expect(result.length).toBe(1);
       expect(result[0].name).toBe('Otros');
       expect(result[0].icon).toBe('💰');
-      expect(result[0].color).toBe('#9E9E9E');
+      expect(result[0].color).toBe(APP_COLORS.GRAY);
     });
 
     // REQ-09 sc4: varios gastos → ordenados DESC por total
