@@ -4,6 +4,25 @@ Registro de lecciones técnicas extraídas de cada iteración del proyecto. Appe
 
 ---
 
+### Qué hemos aprendido en el desarrollo de esta iteración (iOS Export — Deploy en iPhone):
+*Qué se aprendió:*
+- `environment.prod.ts` vacío es silencioso en desarrollo pero rompe todo en producción: `spreadsheetId: ''` genera URLs con doble `//` y 401 de Sheets. El `set-env.js` debe generar SIEMPRE ambos archivos (`environment.ts` y `environment.prod.ts`).
+- El Bundle ID en Capacitor (`appId`) es un namespace global de Apple — `com.myfinance.app` ya estaba tomado. Siempre usar un identificador único basado en el dominio o nombre propio del desarrollador.
+- Capacitor requiere que `@capacitor/ios` esté instalado como paquete npm ANTES de poder correr `npx cap add ios`, aunque el CLI de Capacitor ya esté disponible.
+- Para deploy en device físico con cuenta personal (sin Apple Developer Program), Apple exige confiar manualmente en el certificado desde Ajustes → General → VPN y gestión del dispositivo.
+- `xcode-select --switch` es obligatorio después de instalar Xcode.app — sin esto, `xcodebuild` sigue usando Command Line Tools y falla.
+*Por qué se aprendió:* Cada uno de estos errores apareció en secuencia durante el primer deploy real en iPhone 13, forzando diagnóstico y corrección paso a paso.
+*Dónde se aprendió:* Sesión de deploy iOS en vivo — conversación 2026-05-06.
+
+---
+
+### Qué hemos aprendido en el desarrollo de esta iteración (Capacitor Build — Fase 6):
+*Qué se aprendió:* Las carpetas `android/` e `ios/` no deben commitearse — se regeneran en cada entorno con `npx cap add` + `npx cap sync`. El `.gitignore` ya las excluye correctamente. El flujo correcto es: build Angular → cap add (primera vez) → cap sync (actualizaciones posteriores). `prebuild` de npm solo dispara cuando se llama al script `build`; para producción hay que llamar `set-env.js` explícitamente en el script `build:prod`.
+*Por qué se aprendió:* El explore.md confirmó que ninguna plataforma existe en el repo; el `.gitignore` ya tiene las exclusiones correctas, lo que valida que la política de "no commitear plataformas nativas" es intencional. El entorno actual (macOS sin Xcode.app ni CocoaPods, sin ANDROID_HOME) confirmó que `cap add` requiere herramientas nativas instaladas — no solo el CLI de Capacitor.
+*Dónde se aprendió:* `.sdd/changes/capacitor-build-phase6/explore.md` + `frontend/capacitor.config.ts` + verificación de entorno en apply (TASK-02)
+
+---
+
 ### Qué hemos aprendido en el desarrollo de esta iteración (E2E Playwright — Fase 6):
 *Qué se aprendió:* El formulario de transacción (`TransactionFormComponent`) no usa `ion-input` ni `ion-select` para sus campos — usa `input[type="number"]` nativo para el monto y botones tile custom para cartera/categoría. El modal de Ionic con `[isOpen]` y `ng-template` renderiza el contenido en Light DOM dentro del scope del `ion-modal`, por lo que `modal.locator(...)` es suficiente para interactuar con el formulario sin necesidad de `pierceDeep`.
 *Por qué se aprendió:* Los tests TRANSACCION-01/02 fallaban porque buscaban `ion-input, ion-select` dentro del modal — selectores que no existen en el template del formulario. Al leer el HTML real se descubrió que la UI usa un teclado numérico custom y tiles de selección.

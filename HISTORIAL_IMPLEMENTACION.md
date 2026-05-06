@@ -4,6 +4,38 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (iOS Export — Deploy en iPhone):
+*Fase actual:* Fase 6: Capacitor iOS — app corriendo en dispositivo físico iPhone 13
+*Estado actual:* Completado ✅ | 2026-05-06
+- ✔️ **Xcode + CocoaPods:** instalados y configurados; `xcode-select` apuntado a Xcode.app
+- ✔️ **`@capacitor/ios` instalado:** paquete npm añadido como dependencia del proyecto
+- ✔️ **`capacitor.config.ts` actualizado:** safe area, fondo mint, splash verde, StatusBar DARK, HTTPS forzado
+- ✔️ **`ios/` scaffoldeada:** `npx cap add ios` + `npx cap sync` — proyecto Xcode generado en `frontend/ios/`
+- ✔️ **Scripts iOS en package.json:** `ios:setup`, `ios:sync`, `ios:open`, `ios:run` agregados
+- ✔️ **`scripts/prepare-ios.sh`:** script de onboarding con validación de prereqs
+- ✔️ **Bundle ID resuelto:** cambiado de `com.myfinance.app` (ocupado) a `com.cbv.myfinance`
+- ✔️ **`environment.prod.ts` corregido:** `set-env.js` ahora genera también el archivo de producción — eliminado bug de `spreadsheetId` vacío en builds iOS
+- ✔️ **App corriendo en iPhone 13:** build y deploy exitoso vía Xcode (iOS 15+ compatible)
+- ✔️ **Importación de datos históricos:** 2.718 transacciones + 18 categorías + 3 wallets + 1.090 conceptos cargados a Google Sheets desde Monefy/BBVA
+- ✔️ **`docs/ios-export-guide.md`:** guía completa del proceso de export iOS con errores frecuentes y flujo diario
+*Deuda técnica documentada:* Android pendiente (requiere Android Studio). Firma de distribución App Store (Apple Developer Program) excluida del scope.
+*Próximos pasos:* Probar flujos de la app en iPhone 13 en condiciones reales; corregir bugs de UX que aparezcan en dispositivo físico.
+
+---
+
+### Qué hemos completado hasta ahora (Capacitor Build — Fase 6):
+*Fase actual:* Fase 6: Capacitor — plataformas nativas scaffoldeadas y sincronizadas
+*Estado actual:* Completado (parcial — plataformas nativas pendientes de entorno)
+- ✔️ **Scripts Capacitor en package.json:** build:prod, cap:add:android, cap:add:ios, cap:sync agregados
+- ✔️ **Build de producción Angular:** `ng build --configuration production` exitoso — `www/` generado (1.75 MB inicial)
+- ⏳ **Plataforma Android:** PENDIENTE MANUAL — requiere Android Studio + ANDROID_HOME definido (`npm run cap:add:android` listo en package.json)
+- ⏳ **Plataforma iOS:** PENDIENTE MANUAL — requiere Xcode.app 15+ y CocoaPods (`npm run cap:add:ios` listo en package.json)
+- ⏳ **Sincronización (cap sync):** PENDIENTE MANUAL — ejecutar `npm run cap:sync` después de añadir al menos una plataforma
+*Deuda técnica documentada:* Firma de app (keystore Android + certificados iOS) y CI/CD excluidos del scope por decisión del usuario.
+*Próximos pasos:* (1) Instalar Android Studio + definir ANDROID_HOME → ejecutar `npm run cap:add:android` → `npm run cap:sync`; (2) Instalar Xcode.app 15+ + CocoaPods → ejecutar `npm run cap:add:ios` → `npm run cap:sync`; (3) Para distribuir: firma Android con keystore, Apple Developer Account para iOS. Iniciar nuevo cambio SDD cuando se requiera.
+
+---
+
 ### Qué hemos completado hasta ahora (E2E Playwright — Fase 6):
 *Fase actual:* Fase 6: Suite E2E Playwright — verificación y nuevos flujos críticos
 *Estado actual:* Completado

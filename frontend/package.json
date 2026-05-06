@@ -16,7 +16,15 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report",
-    "format": "prettier --write \"src/**/*.{ts,html,scss}\""
+    "format": "prettier --write \"src/**/*.{ts,html,scss}\"",
+    "build:prod": "node scripts/set-env.js && ng build --configuration production",
+    "cap:add:android": "npx cap add android",
+    "cap:add:ios": "npx cap add ios",
+    "cap:sync": "npx cap sync",
+    "ios:open": "npx cap open ios",
+    "ios:run": "npx cap run ios",
+    "ios:sync": "npm run build:prod && npx cap sync ios",
+    "ios:setup": "npx cap add ios && npx cap sync ios"
   },
   "private": true,
   "dependencies": {
@@ -31,6 +39,7 @@
     "@capacitor/app": "8.1.0",
     "@capacitor/core": "8.3.0",
     "@capacitor/haptics": "8.0.2",
+    "@capacitor/ios": "^8.3.1",
     "@capacitor/keyboard": "8.0.3",
     "@capacitor/status-bar": "8.0.2",
     "@ionic/angular": "^8.0.0",

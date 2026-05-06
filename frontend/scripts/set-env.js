@@ -39,20 +39,25 @@ if (missing.length) {
   process.exit(1);
 }
 
-const content = `// AUTO-GENERATED — no editar manualmente. Fuente: .env
+const vars = {
+  googleServiceAccountEmail: env['GOOGLE_SERVICE_ACCOUNT_EMAIL'],
+  googlePrivateKey: env['GOOGLE_PRIVATE_KEY'],
+  spreadsheetId: env['SPREADSHEET_ID'],
+  currencyApiKey: env['CURRENCY_API_KEY'],
+};
+
+const devContent = `// AUTO-GENERATED — no editar manualmente. Fuente: .env
 // Regenerar: npm run set-env
-export const environment = ${JSON.stringify(
-  {
-    production: false,
-    googleServiceAccountEmail: env['GOOGLE_SERVICE_ACCOUNT_EMAIL'],
-    googlePrivateKey: env['GOOGLE_PRIVATE_KEY'],
-    spreadsheetId: env['SPREADSHEET_ID'],
-    currencyApiKey: env['CURRENCY_API_KEY'],
-  },
-  null,
-  2
-)};
+export const environment = ${JSON.stringify({ production: false, ...vars }, null, 2)};
 `;
 
-fs.writeFileSync(outPath, content);
-console.log('[set-env] environment.ts generado correctamente.');
+const prodContent = `// AUTO-GENERATED — no editar manualmente. Fuente: .env
+// Regenerar: npm run set-env
+export const environment = ${JSON.stringify({ production: true, ...vars }, null, 2)};
+`;
+
+const prodPath = path.join(__dirname, '../src/environments/environment.prod.ts');
+
+fs.writeFileSync(outPath, devContent);
+fs.writeFileSync(prodPath, prodContent);
+console.log('[set-env] environment.ts y environment.prod.ts generados correctamente.');
