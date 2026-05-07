@@ -4,6 +4,12 @@ import { ICategory } from '@models/category.model';
 import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 import { APP_COLORS } from '@core/constants/colors.constants';
 
+export interface PeriodSummary {
+  income:  number;
+  expense: number;
+  balance: number;
+}
+
 export interface MonthlyTotal {
   period: string; // YYYY-MM
   income: number;
@@ -34,16 +40,72 @@ export interface SpendingItem {
 export class AnalyticsService {
 
   /**
-   * Agrupa transacciones por período YYYY-MM y suma income/expense usando amountBase.
+   * Calcula el resumen financiero (ingresos, gastos, balance) de un array de transacciones.
+   * El llamador es responsable de filtrar por rango de fechas antes de invocar.
+   */
+  calculateSummary(txs: ITransaction[]): PeriodSummary {
+    const safe = (n: number) => (isNaN(n) || !isFinite(n) ? 0 : n);
+    const income  = txs
+      .filter(t => t.type === TRANSACTION_TYPES.INCOME)
+      .reduce((sum, t) => sum + safe(t.amountBase), 0);
+    const expense = txs
+      .filter(t => t.type === TRANSACTION_TYPES.EXPENSE)
+      .reduce((sum, t) => sum + safe(t.amountBase), 0);
+    return { income, expense, balance: income - expense };
+  }
+
+  /**
+   * Comparación inter-anual: agrupa TODAS las transacciones disponibles por mes custom
+   * y devuelve solo los períodos cuyo mes de display coincide con `displayMonth` (1-12).
+   * Permite ver el mismo mes a lo largo de distintos años (ej: Mayo 2022-2026).
+   */
+  getSameMonthAcrossYears(
+    txs: ITransaction[],
+    displayMonth: number,
+    monthStartDay: number,
+  ): MonthlyTotal[] {
+    const all      = this.getMonthlyTotals(txs, 9999, monthStartDay);
+    const monthStr = String(displayMonth).padStart(2, '0');
+    return all.filter(t => t.period.endsWith(`-${monthStr}`));
+  }
+
+  /**
+   * Agrupa transacciones por período custom y suma income/expense usando amountBase.
+   * Con monthStartDay > 1, una transacción del día >= startDay pertenece al período
+   * del mes SIGUIENTE (ej: startDay=27 → transacción del 28/04 → período "2026-05").
    * Retorna los últimos `months` períodos con datos, ordenados cronológicamente.
    */
-  getMonthlyTotals(txs: ITransaction[], months: number): MonthlyTotal[] {
+  getMonthlyTotals(txs: ITransaction[], months: number, monthStartDay: number = 1): MonthlyTotal[] {
     if (!txs.length) return [];
 
     const map = new Map<string, MonthlyTotal>();
 
     for (const tx of txs) {
-      const period = tx.date.slice(0, 7);
+      const d     = new Date(tx.date + 'T12:00:00');
+      const day   = d.getDate();
+      const month = d.getMonth();     // 0-based
+      const year  = d.getFullYear();
+
+      let periodMonth: number;
+      let periodYear:  number;
+
+      if (monthStartDay <= 1) {
+        // Mes calendario estándar
+        periodMonth = month;
+        periodYear  = year;
+      } else if (day >= monthStartDay) {
+        // El día cae en la primera parte del período → pertenece al mes siguiente
+        const next  = month + 1;
+        periodMonth = next % 12;
+        periodYear  = year + Math.floor(next / 12);
+      } else {
+        // El día cae en la segunda parte del período → pertenece al mismo mes
+        periodMonth = month;
+        periodYear  = year;
+      }
+
+      const period = `${periodYear}-${String(periodMonth + 1).padStart(2, '0')}`;
+
       if (!map.has(period)) {
         map.set(period, { period, income: 0, expense: 0 });
       }

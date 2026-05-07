@@ -4,11 +4,17 @@ import {
   IonHeader,
   IonTitle,
   IonToolbar,
+  IonIcon,
+  IonInput,
 } from '@ionic/angular/standalone';
+import { addIcons } from 'ionicons';
+import { chevronBackOutline, chevronForwardOutline, calendarOutline, closeOutline } from 'ionicons/icons';
 
 import { TransactionsStateService } from '@core/state/transactions.state';
 import { CategoriesStateService } from '@core/state/categories.state';
 import { CurrencyStateService } from '@core/state/currency.state';
+import { UserSettingsStateService } from '@core/state/user-settings.state';
+import { PeriodService } from '@core/services/period.service';
 import { AnalyticsService } from './services/analytics.service';
 import { AnalyticsChartComponent } from './components/analytics-chart/analytics-chart.component';
 import { CategorySpendingChartComponent } from './components/category-spending-chart/category-spending-chart.component';
@@ -18,19 +24,9 @@ import { PeriodSelectorComponent } from '@shared/components/period-selector/peri
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 import { PeriodTab } from '@core/constants/period.constants';
 
-function sixMonthsAgo(): string {
-  const date = new Date();
-  date.setMonth(date.getMonth() - 5);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-}
 
-function tabToYearMonth(tab: PeriodTab): string {
-  const now = new Date();
-  if (tab === 'year') {
-    const start = new Date(now.getFullYear(), 0, 1);
-    return `${start.getFullYear()}-01`;
-  }
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+function monthsInRange(tab: PeriodTab): number {
+  return tab === 'year' ? 12 : 6;
 }
 
 @Component({
@@ -40,10 +36,8 @@ function tabToYearMonth(tab: PeriodTab): string {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    IonContent,
-    IonHeader,
-    IonTitle,
-    IonToolbar,
+    IonContent, IonHeader, IonTitle, IonToolbar,
+    IonIcon, IonInput,
     PeriodSelectorComponent,
     AnalyticsChartComponent,
     CategorySpendingChartComponent,
@@ -53,63 +47,150 @@ function tabToYearMonth(tab: PeriodTab): string {
   ],
 })
 export class AnalyticsPage implements OnInit {
-  private readonly txState          = inject(TransactionsStateService);
-  private readonly categoriesState  = inject(CategoriesStateService);
-  private readonly currencyState    = inject(CurrencyStateService);
-  private readonly analyticsService = inject(AnalyticsService);
+  private readonly txState            = inject(TransactionsStateService);
+  private readonly categoriesState    = inject(CategoriesStateService);
+  private readonly currencyState      = inject(CurrencyStateService);
+  private readonly userSettingsState  = inject(UserSettingsStateService);
+  private readonly periodService      = inject(PeriodService);
+  private readonly analyticsService   = inject(AnalyticsService);
 
-  /** Todas las transacciones del usuario para calcular totales y clasificaciones. */
-  readonly allTxs = this.txState.items;
-
-  /** Moneda base del usuario. Fallback 'EUR' antes de cargar. */
+  readonly allTxs           = this.txState.items;
+  readonly categories       = this.categoriesState.items;
   readonly userBaseCurrency = computed(() => this.currencyState.baseCurrency() ?? 'EUR');
 
-  /** Categorías activas del usuario para el análisis de gastos. */
-  readonly categories = this.categoriesState.items;
-
-  readonly startPeriod      = signal<string>(sixMonthsAgo());
-  readonly selectedCategory = signal<string | null>(null);
-  /** Tab activo en el selector de período — controla la vista de analytics. */
+  /** Tab activo en el selector de período. */
   readonly activePeriodTab  = signal<PeriodTab>('month');
+  /** Offset de navegación: 0 = período actual, -1 = anterior, etc. */
+  readonly navigationOffset = signal<number>(0);
+  /** Modo rango personalizado activo. */
+  readonly isCustomRange    = signal<boolean>(false);
+  /** Fecha inicio del rango personalizado (YYYY-MM-DD). */
+  readonly customFrom       = signal<string>('');
+  /** Fecha fin del rango personalizado (YYYY-MM-DD). */
+  readonly customTo         = signal<string>('');
 
-  /** Transacciones a partir del período de inicio seleccionado, para el análisis. */
-  readonly filteredTxs = computed(() =>
-    this.allTxs().filter(tx => tx.date.slice(0, 7) >= this.startPeriod()),
+  /** Etiqueta legible del período — usa PeriodService con monthStartDay del usuario. */
+  readonly periodLabel = computed(() =>
+    this.periodService.getPeriodLabel(
+      this.activePeriodTab(),
+      new Date(),
+      this.userSettingsState.monthStartDay(),
+      this.navigationOffset(),
+    )
   );
 
-  /** Totales mensuales (ingresos + gastos) de los últimos 6 meses filtrados. */
-  readonly monthlyTotals = computed(() =>
-    this.analyticsService.getMonthlyTotals(this.filteredTxs(), 6),
-  );
+  /** Deshabilita la flecha > cuando ya estamos en el período actual. */
+  readonly canNavigateForward = computed(() => this.navigationOffset() < 0);
 
-  /** Períodos disponibles derivados de los totales mensuales, para el selector. */
-  readonly periods = computed(() => this.monthlyTotals().map(t => t.period));
-
-  /** Totales del último período disponible para el header de resumen. */
-  readonly currentPeriodSummary = computed(() => {
-    const totals = this.monthlyTotals();
-    if (!totals.length) return { income: 0, expense: 0, balance: 0 };
-    const last = totals[totals.length - 1];
-    return { income: last.income, expense: last.expense, balance: last.income - last.expense };
+  /** Rango de fechas activo — respeta monthStartDay y usa rango personalizado si está activo. */
+  readonly dateRange = computed(() => {
+    if (this.isCustomRange() && this.customFrom() && this.customTo()) {
+      return { from: this.customFrom(), to: this.customTo() };
+    }
+    return this.periodService.getDateRange(
+      this.activePeriodTab(),
+      new Date(),
+      this.userSettingsState.monthStartDay(),
+      this.navigationOffset(),
+    );
   });
 
-  /** Clasificación de gastos recurrentes vs superfluos del período seleccionado. */
+  /** Transacciones dentro del rango activo. */
+  readonly filteredTxs = computed(() => {
+    const { from, to } = this.dateRange();
+    return this.allTxs().filter(tx => tx.date >= from && tx.date <= to);
+  });
+
+  /** Totales mensuales del período activo — usado para proyecciones, ranking y categorías. */
+  readonly monthlyTotals = computed(() =>
+    this.analyticsService.getMonthlyTotals(
+      this.filteredTxs(),
+      monthsInRange(this.activePeriodTab()),
+      this.userSettingsState.monthStartDay(),
+    ),
+  );
+
+  /**
+   * Totales para el gráfico de barras.
+   * En tab "Mes" (sin rango custom): comparación inter-anual del mismo mes en años anteriores.
+   * En el resto de tabs: usa los totales del período activo.
+   */
+  readonly chartTotals = computed(() => {
+    const tab = this.activePeriodTab();
+    const msd = this.userSettingsState.monthStartDay();
+
+    if (tab === 'month' && !this.isCustomRange()) {
+      const endMonth = parseInt(this.dateRange().to.slice(5, 7), 10);
+      return this.analyticsService.getSameMonthAcrossYears(
+        this.allTxs(), endMonth, msd,
+      );
+    }
+    return this.monthlyTotals();
+  });
+
+  readonly periods = computed(() => this.monthlyTotals().map(t => t.period));
+
+  /** Resumen del período activo delegado en AnalyticsService — fuente única de verdad. */
+  readonly currentPeriodSummary = computed(() =>
+    this.analyticsService.calculateSummary(this.filteredTxs())
+  );
+
   readonly spendingData = computed(() =>
     this.analyticsService.classifySpending(this.filteredTxs(), this.periods()),
   );
 
-  /** Gasto acumulado por categoría para el período filtrado, ordenado DESC. */
   readonly categorySpending = computed(() =>
     this.analyticsService.getCategorySpending(this.filteredTxs(), this.categories()),
   );
 
+  constructor() {
+    addIcons({ chevronBackOutline, chevronForwardOutline, calendarOutline, closeOutline });
+  }
+
   ngOnInit(): void {
     this.txState.load();
     this.categoriesState.load();
+    this.userSettingsState.load();
   }
 
   onTabChange(tab: PeriodTab): void {
     this.activePeriodTab.set(tab);
-    this.startPeriod.set(tabToYearMonth(tab));
+    this.navigationOffset.set(0);
+    this.isCustomRange.set(false);
+  }
+
+  onNavigatePrev(): void {
+    this.isCustomRange.set(false);
+    this.navigationOffset.update(v => v - 1);
+  }
+
+  onNavigateNext(): void {
+    if (this.canNavigateForward()) {
+      this.isCustomRange.set(false);
+      this.navigationOffset.update(v => v + 1);
+    }
+  }
+
+  onToggleCustomRange(): void {
+    const next = !this.isCustomRange();
+    this.isCustomRange.set(next);
+    if (next) {
+      const { from, to } = this.periodService.getDateRange(
+        this.activePeriodTab(),
+        new Date(),
+        this.userSettingsState.monthStartDay(),
+        this.navigationOffset(),
+      );
+      this.customFrom.set(from);
+      this.customTo.set(to);
+    }
+  }
+
+  onCustomFromChange(event: CustomEvent): void {
+    this.customFrom.set(event.detail.value ?? '');
+  }
+
+  onCustomToChange(event: CustomEvent): void {
+    this.customTo.set(event.detail.value ?? '');
   }
 }

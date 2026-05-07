@@ -40,7 +40,7 @@ Chart.register(
   standalone: true,
   imports: [],
   templateUrl: './chart-bar.component.html',
-  styleUrls: [],
+  styleUrls: ['./chart-bar.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChartBarComponent implements AfterViewInit, OnDestroy {

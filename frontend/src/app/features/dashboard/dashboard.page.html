@@ -1,4 +1,4 @@
-<ion-content [fullscreen]="true">
+<ion-content>
 
   <!-- Estado inicial: Cuenta vacía (Seeding) -->
   @if (needsSeed()) {
@@ -31,12 +31,32 @@
   <!-- Contenido normal del Dashboard -->
 
   <!-- Header verde — full width, contenido centrado en desktop -->
-  <div class="bg-[var(--ion-color-primary)] pb-8 pt-10 rounded-b-[40px] shadow-sm">
+  <div class="bg-[var(--ion-color-primary)] pt-4 pb-4 rounded-b-[40px] shadow-sm">
     <div class="max-w-screen-xl mx-auto">
-      <app-workspace-selector [workspaces]="workspacesState.items()" [activeId]="workspacesState.activeWorkspaceId()"
-        (switched)="onWorkspaceSwitched($event)" (newRequested)="onNewWorkspace()">
-      </app-workspace-selector>
-      <div class="flex items-center gap-2 px-2">
+
+      <!-- Saldo pill + ingresos/gastos -->
+      <div class="flex flex-col items-center px-4">
+        <div class="bg-white/20 backdrop-blur-md px-6 py-3 rounded-full border border-white/30 shadow-lg mb-2">
+          <span class="text-white/80 text-xs font-bold tracking-widest uppercase block text-center">Saldo Actual</span>
+          <span class="text-white text-3xl font-extrabold tracking-tight">
+            {{ summary().balance | currencyFormat:userBaseCurrency() }}
+          </span>
+        </div>
+        <div class="flex gap-8 mt-3 text-white/90">
+          <div class="flex flex-col items-center">
+            <span class="text-[10px] uppercase font-bold opacity-75">Ingresos</span>
+            <span class="text-sm font-bold">{{ summary().totalIncome | currencyFormat:userBaseCurrency() }}</span>
+          </div>
+          <div class="w-[1px] h-8 bg-white/20"></div>
+          <div class="flex flex-col items-center">
+            <span class="text-[10px] uppercase font-bold opacity-75">Gastos</span>
+            <span class="text-sm font-bold">{{ summary().totalExpenses | currencyFormat:userBaseCurrency() }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selector de período + navegación — debajo del saldo -->
+      <div class="flex items-center gap-2 px-2 mt-4">
         <button class="p-2 text-white/80 hover:text-white transition-colors" (click)="onNavigatePrev()"
           aria-label="Período anterior">
           <ion-icon name="chevron-back-outline" class="text-xl"></ion-icon>
@@ -51,26 +71,6 @@
         </button>
       </div>
 
-      <div class="flex flex-col items-center mt-4">
-        <div class="bg-white/20 backdrop-blur-md px-6 py-3 rounded-full border border-white/30 shadow-lg mb-2">
-          <span class="text-white/80 text-xs font-bold tracking-widest uppercase block text-center">Saldo Actual</span>
-          <span class="text-white text-3xl font-extrabold tracking-tight">
-            {{ summary().balance | currencyFormat:userBaseCurrency() }}
-          </span>
-        </div>
-
-        <div class="flex gap-8 mt-4 text-white/90">
-          <div class="flex flex-col items-center">
-            <span class="text-[10px] uppercase font-bold opacity-75">Ingresos</span>
-            <span class="text-sm font-bold">{{ summary().totalIncome | currencyFormat:userBaseCurrency() }}</span>
-          </div>
-          <div class="w-[1px] h-8 bg-white/20"></div>
-          <div class="flex flex-col items-center">
-            <span class="text-[10px] uppercase font-bold opacity-75">Gastos</span>
-            <span class="text-sm font-bold">{{ summary().totalExpenses | currencyFormat:userBaseCurrency() }}</span>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 

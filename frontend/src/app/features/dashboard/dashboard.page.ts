@@ -46,7 +46,6 @@ import { TransactionFormComponent } from '@features/transactions/transaction-for
 import { WorkspaceFormComponent } from '@features/workspaces/workspace-form/workspace-form.component';
 import { DashboardChartComponent } from './components/dashboard-chart/dashboard-chart.component';
 import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
-import { WorkspaceSelectorComponent } from '@shared/components/workspace-selector/workspace-selector.component';
 import { DashboardService, DateRange } from './services/dashboard.service';
 import { DataSeedService } from '@core/services/data-seed.service';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
@@ -70,7 +69,6 @@ import { TRANSACTION_TYPES, TransactionType } from '@core/constants/transaction.
     IonModal,
     DashboardChartComponent,
     PeriodSelectorComponent,
-    WorkspaceSelectorComponent,
     CurrencyFormatPipe,
     RelativeDatePipe,
     TransactionFormComponent,

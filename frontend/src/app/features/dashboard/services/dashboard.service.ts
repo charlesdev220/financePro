@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ITransaction } from '@models/transaction.model';
 import { ICategory } from '@models/category.model';
 import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 import { APP_COLORS } from '@core/constants/colors.constants';
+import { AnalyticsService } from '@features/analytics/services/analytics.service';
 
 export interface DashboardSummary {
   totalIncome: number;
@@ -26,24 +27,16 @@ export interface DateRange {
 
 @Injectable({ providedIn: 'root' })
 export class DashboardService {
+  private readonly analyticsService = inject(AnalyticsService);
+
   /**
    * Calcula el resumen financiero del rango de fechas dado.
-   * Filtra transacciones cuya fecha esté dentro del rango [from, to] (ISO 8601).
+   * Delega en AnalyticsService.calculateSummary — fuente única de verdad.
    */
   calculateSummary(transactions: ITransaction[], range: DateRange): DashboardSummary {
     const periodTxs = transactions.filter(t => t.date >= range.from && t.date <= range.to);
-    const safe = (n: number) => (isNaN(n) || !isFinite(n) ? 0 : n);
-    const totalIncome = periodTxs
-      .filter(t => t.type === TRANSACTION_TYPES.INCOME)
-      .reduce((sum, t) => sum + safe(t.amountBase), 0);
-    const totalExpenses = periodTxs
-      .filter(t => t.type === TRANSACTION_TYPES.EXPENSE)
-      .reduce((sum, t) => sum + safe(t.amountBase), 0);
-    return {
-      totalIncome,
-      totalExpenses,
-      balance: totalIncome - totalExpenses,
-    };
+    const { income, expense, balance } = this.analyticsService.calculateSummary(periodTxs);
+    return { totalIncome: income, totalExpenses: expense, balance };
   }
 
   /**

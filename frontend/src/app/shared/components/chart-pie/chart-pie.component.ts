@@ -57,7 +57,7 @@ export class ChartPieComponent implements AfterViewInit, OnDestroy {
           if (this.data() && this.initialized() && !this.chart) {
             this.createChart(this.data()!);
           }
-        }, 100);
+        }, 350);
       }
     });
   }

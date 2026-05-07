@@ -1,6 +1,6 @@
 <div class="relative flex flex-col items-center">
   @if (chartData()) {
-  <div class="relative w-full aspect-square max-h-[280px]">
+  <div class="relative w-full" style="height: 200px;">
     <app-chart-pie [data]="chartData()" [refreshTrigger]="refreshTick()"></app-chart-pie>
 
     <!-- Balance central (Monefy soul) -->

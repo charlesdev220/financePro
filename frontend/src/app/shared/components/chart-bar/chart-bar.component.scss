@@ -1,0 +1,8 @@
+/* Excepción: Chart.js ignora el height del contenedor sin !important */
+:host {
+  display: block;
+}
+
+canvas {
+  max-height: 220px !important;
+}
