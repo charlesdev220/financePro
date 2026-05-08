@@ -1,0 +1,71 @@
+<!-- Vista "Este mes": valor numérico grande con signo y color semántico -->
+@if (!isYearView()) {
+  <div class="flex flex-col items-center justify-center py-6 gap-1">
+    @if (currentMonth() === 0) {
+      <span class="text-4xl font-extrabold text-gray-400">
+        0 {{ currency() }}
+      </span>
+      <p class="text-xs text-myfinance-text-secondary">Sin movimientos este mes</p>
+    } @else {
+      <span
+        class="text-4xl font-extrabold"
+        [class.text-myfinance-green]="isMonthPositive()"
+        [class.text-myfinance-red]="isMonthNegative()"
+      >
+        {{ monthPrefix() }}{{ currentMonth() | number:'1.2-2' }} {{ currency() }}
+      </span>
+      <p class="text-xs text-myfinance-text-secondary">
+        @if (isMonthPositive()) {
+          Ahorraste este mes
+        } @else {
+          Gastaste más de lo que ingresaste
+        }
+      </p>
+    }
+  </div>
+}
+
+<!-- Vista anual: dos secciones de barras -->
+@if (isYearView()) {
+  <!-- Subsección: Este año mes a mes -->
+  <div class="mb-5">
+    <p class="text-xs font-semibold text-myfinance-text-secondary mb-2 uppercase tracking-wide">
+      Este año (mes a mes)
+    </p>
+    @if (hasYearData()) {
+      <app-chart-bar
+        [datasets]="yearDatasets()"
+        [labels]="yearLabels()"
+        type="bar"
+        ariaLabel="Gráfico de ahorro mensual del año en curso"
+        [showLegend]="false"
+      />
+    } @else {
+      <div class="flex flex-col items-center justify-center py-8 gap-2 text-center">
+        <span class="text-3xl">💰</span>
+        <p class="text-sm text-gray-400">Sin datos de ahorro para este año</p>
+      </div>
+    }
+  </div>
+
+  <!-- Subsección: Todos los años -->
+  <div>
+    <p class="text-xs font-semibold text-myfinance-text-secondary mb-2 uppercase tracking-wide">
+      Todos los años
+    </p>
+    @if (hasAllYearsData()) {
+      <app-chart-bar
+        [datasets]="allYearsDatasets()"
+        [labels]="allYearsLabels()"
+        type="bar"
+        ariaLabel="Gráfico de ahorro anual — historial completo"
+        [showLegend]="false"
+      />
+    } @else {
+      <div class="flex flex-col items-center justify-center py-8 gap-2 text-center">
+        <span class="text-3xl">📅</span>
+        <p class="text-sm text-gray-400">Sin historial de años anteriores</p>
+      </div>
+    }
+  </div>
+}

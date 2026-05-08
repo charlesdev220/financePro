@@ -4,6 +4,13 @@ Registro de lecciones técnicas extraídas de cada iteración del proyecto. Appe
 
 ---
 
+### Qué hemos aprendido en el desarrollo de esta iteración (Savings Chart — Gráfica de Ahorro):
+*Qué se aprendió:* Cuando un componente dumb recibe un input booleano de control (`isYearView`) en lugar de gestionar su propio `signal<Vista>`, se simplifica la API pero se pierde la autonomía visual — el componente no puede cambiar de vista sin que el padre lo decida. Esta decisión de diseño es válida cuando el padre ya tiene el estado del período activo (el tab selector de Analytics), pero hay que documentarla como deuda si el componente se reutiliza en otro contexto donde el padre no tenga ese estado. La alternativa es un `signal<SavingsView>` interno con un output `viewChanged` para notificar al padre si necesita sincronizarse.
+*Por qué se aprendió:* El spec definía un selector de 3 vistas interno; la implementación lo simplificó a un booleano controlado desde el padre. El verify detectó la desviación y obligó a decidir conscientemente si era deuda técnica o simplificación aceptable.
+*Dónde se aprendió:* `.sdd/archive/2026-05-08-savings-chart/verify-report.md` — REQ-06 WARNING.
+
+---
+
 ### Qué hemos aprendido en el desarrollo de esta iteración (iOS Export — Deploy en iPhone):
 *Qué se aprendió:*
 - `environment.prod.ts` vacío es silencioso en desarrollo pero rompe todo en producción: `spreadsheetId: ''` genera URLs con doble `//` y 401 de Sheets. El `set-env.js` debe generar SIEMPRE ambos archivos (`environment.ts` y `environment.prod.ts`).

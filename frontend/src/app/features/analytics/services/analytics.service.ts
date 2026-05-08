@@ -16,6 +16,11 @@ export interface MonthlyTotal {
   expense: number;
 }
 
+export interface SavingPoint {
+  period: string; // YYYY-MM o YYYY
+  saving: number; // income - expense
+}
+
 export interface CategoryTotal {
   categoryId: string;
   total: number;

@@ -20,6 +20,7 @@ import { AnalyticsChartComponent } from './components/analytics-chart/analytics-
 import { CategorySpendingChartComponent } from './components/category-spending-chart/category-spending-chart.component';
 import { ProjectionsComponent } from './components/projections/projections.component';
 import { SpendingRankingComponent } from './components/spending-ranking/spending-ranking.component';
+import { SavingsChartComponent } from './components/savings-chart/savings-chart.component';
 import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
 import { BalanceSummaryHeaderComponent } from '@shared/components/balance-summary-header/balance-summary-header.component';
 import { PeriodTab } from '@core/constants/period.constants';
@@ -44,6 +45,7 @@ function monthsInRange(tab: PeriodTab): number {
     CategorySpendingChartComponent,
     ProjectionsComponent,
     SpendingRankingComponent,
+    SavingsChartComponent,
   ],
 })
 export class AnalyticsPage implements OnInit {
@@ -181,6 +183,37 @@ export class AnalyticsPage implements OnInit {
     )
   );
 
+
+  /**
+   * Ahorro neto del período mensual en curso, respetando monthStartDay del usuario.
+   * Usa periodService para obtener el rango correcto (ej: 27 abr – 26 may).
+   */
+  readonly savingsCurrentMonth = computed(() => {
+    const { from, to } = this.periodService.getDateRange(
+      'month', new Date(), this.userSettingsState.monthStartDay(), 0,
+    );
+    const monthTxs = this.allTxs().filter(tx => tx.date >= from && tx.date <= to);
+    return this.analyticsService.calculateSummary(monthTxs).balance;
+  });
+
+  /**
+   * 12 SavingPoint del año en curso, uno por mes, respetando monthStartDay del usuario.
+   * Mapea getYearMonthlyTotals() — siempre 12 elementos con ceros donde no hay datos.
+   */
+  readonly savingsCurrentYear = computed(() => {
+    const year = new Date().getFullYear();
+    const msd = this.userSettingsState.monthStartDay();
+    return this.analyticsService.getYearMonthlyTotals(this.allTxs(), year, msd)
+      .map(t => ({ period: t.period, saving: t.income - t.expense }));
+  });
+
+  /**
+   * Un SavingPoint por año disponible en el historial — reutiliza yearlyTotals() ya computado.
+   * Ordenado ASC por período. Retorna [] si no hay transacciones.
+   */
+  readonly savingsAllYears = computed(() =>
+    this.yearlyTotals().map(t => ({ period: t.period, saving: t.income - t.expense }))
+  );
 
   /** Resumen del período activo delegado en AnalyticsService — fuente única de verdad. */
   readonly currentPeriodSummary = computed(() =>

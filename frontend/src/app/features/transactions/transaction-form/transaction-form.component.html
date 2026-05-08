@@ -165,10 +165,12 @@
       }
 
       <!-- Descripción y Notas -->
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-3">
+      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-3"
+        (click)="hideNumpad()">
         <ion-item lines="full" class="ion-no-padding px-4">
           <ion-textarea formControlName="concept" placeholder="¿En qué lo usaste?" label="Descripción"
-            labelPlacement="stacked" [autoGrow]="true" rows="1" class="text-sm font-semibold"></ion-textarea>
+            labelPlacement="stacked" [autoGrow]="true" rows="1" class="text-sm font-semibold"
+            (ionBlur)="scheduleShowNumpad()"></ion-textarea>
         </ion-item>
         @if (suggestions().length > 0) {
         <div class="flex flex-wrap gap-2 px-4 py-2 border-t border-gray-50">
@@ -182,7 +184,8 @@
         }
         <ion-item lines="none" class="ion-no-padding px-4">
           <ion-textarea formControlName="notes" placeholder="Notas adicionales..." label="Notas"
-            labelPlacement="stacked" [autoGrow]="true" rows="1" class="text-xs text-gray-500"></ion-textarea>
+            labelPlacement="stacked" [autoGrow]="true" rows="1" class="text-xs text-gray-500"
+            (ionBlur)="scheduleShowNumpad()"></ion-textarea>
         </ion-item>
       </div>
 
@@ -207,7 +210,8 @@
   </form>
 </ion-content>
 
-<!-- Numpad — visible solo en mobile (md:hidden), fijo al fondo del ion-page -->
+<!-- Numpad — visible solo en mobile (md:hidden), oculto cuando el foco está en un campo de texto -->
+@if (showNumpad()) {
 <div class="md:hidden bg-white border-t border-gray-200 shadow-[0_-8px_30px_rgba(0,0,0,0.05)]"
   style="padding-bottom: env(safe-area-inset-bottom);">
   <div class="grid grid-cols-3 select-none">
@@ -228,3 +232,4 @@
     </div>
   </div>
 </div>
+}

@@ -4,6 +4,21 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Savings Chart — Gráfica de Ahorro):
+*Fase actual:* Fase archive: cambio cerrado y archivado
+*Estado actual:* Completado ✅ | 2026-05-08
+- ✔️ **`SavingPoint`:** interfaz `{ period: string; saving: number }` exportada desde `analytics.service.ts`
+- ✔️ **`savingsCurrentMonth`:** computed en `AnalyticsPage` — filtra por mes en curso con `monthStartDay` e invoca `calculateSummary().balance`
+- ✔️ **`savingsCurrentYear`:** computed en `AnalyticsPage` — siempre 12 `SavingPoint` via `getYearMonthlyTotals()`, `saving = income − expense`
+- ✔️ **`savingsAllYears`:** computed en `AnalyticsPage` — reutiliza `yearlyTotals()` existente, cero lógica duplicada
+- ✔️ **`SavingsChartComponent`:** standalone dumb, 5 inputs signal-based, colores por signo via `APP_COLORS`, asterisco en mes en curso, empty state con CTA
+- ✔️ **Sección "Ahorro" en `analytics.page.html`:** insertada después de "Ingresos vs Gastos", ligada al tab de período del padre via `isYearView`
+- ✔️ **Verify:** PASS WITH WARNINGS — 9/10 REQs compliant; desviación REQ-06 aceptada como simplificación consciente
+*Deuda técnica documentada:* REQ-06: el componente no tiene selector de vistas interno — el padre controla la vista via `isYearView` booleano. "Este año" e "Historial" se muestran juntos en scroll vertical.
+*Próximos pasos:* Ninguno — cambio cerrado.
+
+---
+
 ### Qué hemos completado hasta ahora (iOS Export — Deploy en iPhone):
 *Fase actual:* Fase 6: Capacitor iOS — app corriendo en dispositivo físico iPhone 13
 *Estado actual:* Completado ✅ | 2026-05-06

@@ -1,18 +1,14 @@
 <ion-header>
   <ion-toolbar color="primary">
-    <ion-title>Analytics</ion-title>
+    <ion-title>Análisis</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content style="--background: var(--color-green-50);">
 
   <!-- Header verde resumen -->
-  <app-balance-summary-header
-    [balance]="currentPeriodSummary().balance"
-    [income]="currentPeriodSummary().income"
-    [expense]="currentPeriodSummary().expense"
-    [currency]="userBaseCurrency()"
-  />
+  <app-balance-summary-header [balance]="currentPeriodSummary().balance" [income]="currentPeriodSummary().income"
+    [expense]="currentPeriodSummary().expense" [currency]="userBaseCurrency()" />
 
   <div class="max-w-screen-xl mx-auto px-4 pt-4">
 
@@ -72,11 +68,19 @@
     </section>
 
     <section class="mb-6">
+      <h2 class="text-base font-semibold text-myfinance-text-primary mb-1">Ahorro</h2>
+      <p class="text-xs text-myfinance-text-secondary mb-3">Lo que te sobra cada período</p>
+      <app-savings-chart [currentMonth]="savingsCurrentMonth()" [currentYear]="savingsCurrentYear()"
+        [allYears]="savingsAllYears()" [currency]="userBaseCurrency()" [isYearView]="activePeriodTab() === 'year'" />
+    </section>
+
+    <section class="mb-6">
       <h2 class="text-base font-semibold text-myfinance-text-primary mb-3">Gasto por categoría</h2>
       <app-category-spending-chart [data]="categorySpending()" [currency]="userBaseCurrency()" />
     </section>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- PROYECCCIONES -->
       <section>
         <h2 class="text-base font-semibold text-myfinance-text-primary mb-3">Proyección de tendencia</h2>
         <app-projections [data]="projectionData()" [horizon]="3" />
@@ -95,6 +99,7 @@
       </section>
       }
 
+      <!-- RANKING DE GASTOS -->
       <section>
         <h2 class="text-base font-semibold text-myfinance-text-primary mb-3">Ranking de gastos</h2>
         <app-spending-ranking [recurrentes]="spendingData().recurrentes.slice(0, 10)"

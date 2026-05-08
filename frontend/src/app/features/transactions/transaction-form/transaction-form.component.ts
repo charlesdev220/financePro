@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, inject, input, signal, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, NgZone, OnInit, computed, inject, input, signal, output } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
+import { Keyboard } from '@capacitor/keyboard';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import {
@@ -67,6 +69,7 @@ export class TransactionFormComponent implements OnInit {
   private readonly conceptsService = inject(ConceptsService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly modalCtrl = inject(ModalController);
+  private readonly ngZone = inject(NgZone);
 
   /** El FormGroup raíz para el formulario reactivo. */
   form!: FormGroup;
@@ -159,6 +162,26 @@ export class TransactionFormComponent implements OnInit {
   /** Representación en string del monto para el teclado personalizado. */
   readonly amountString = signal<string>('0');
 
+  /** Controla la visibilidad del numpad — se oculta cuando el foco está en un campo de texto. */
+  readonly showNumpad = signal<boolean>(true);
+
+  private _showNumpadTimer: ReturnType<typeof setTimeout> | null = null;
+
+  hideNumpad(): void {
+    if (this._showNumpadTimer) {
+      clearTimeout(this._showNumpadTimer);
+      this._showNumpadTimer = null;
+    }
+    this.showNumpad.set(false);
+  }
+
+  scheduleShowNumpad(): void {
+    this._showNumpadTimer = setTimeout(() => {
+      this.showNumpad.set(true);
+      this._showNumpadTimer = null;
+    }, 200);
+  }
+
   /** Lista de categorías filtrada dinámicamente por el tipo de transacción actual. */
   readonly filteredCategories = computed(() =>
     this.typeValue() === TRANSACTION_TYPES.INCOME ? this.incomeCategories() : this.expenseCategories(),
@@ -197,6 +220,12 @@ export class TransactionFormComponent implements OnInit {
    * Orquesta la inicialización reactiva del formulario.
    */
   ngOnInit(): void {
+    if (Capacitor.isNativePlatform()) {
+      Keyboard.addListener('keyboardWillShow', () => this.ngZone.run(() => this.hideNumpad()));
+      Keyboard.addListener('keyboardWillHide', () => this.ngZone.run(() => this.scheduleShowNumpad()));
+      this.destroyRef.onDestroy(() => Keyboard.removeAllListeners());
+    }
+
     const tx = this.transaction();
     const initialType = tx?.type ?? this.initialType() ?? TRANSACTION_TYPES.EXPENSE;
 
