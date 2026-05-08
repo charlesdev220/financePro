@@ -1,28 +1,26 @@
 <ion-header class="ion-no-border">
   <ion-toolbar color="primary" class="px-2">
-    <ion-buttons slot="start">
+    <!--<ion-buttons slot="start">
       <ion-button (click)="openSettings()">
         <ion-icon slot="icon-only" name="settings-outline"></ion-icon>
       </ion-button>
-    </ion-buttons>
+    </ion-buttons>-->
 
-    <ion-title>
-      <ion-select
-        [value]="workspacesState.activeWorkspaceId()"
-        interface="popover"
+    <ion-title class="text-center">
+      <ion-select [value]="workspacesState.activeWorkspaceId()" interface="popover"
         (ionChange)="onWorkspaceChange($event)"
-        style="--color: white; --placeholder-color: white; color: white; font-family: 'Pacifico', cursive; font-size: 1.25rem; max-width: 100%;">
+        class="max-w-full justify-center"
+        style="--color: white; --placeholder-color: white; color: white; font-family: 'Pacifico', cursive; font-size: 1.25rem;">
         @for (ws of workspacesState.items(); track ws.workspaceId) {
-          <ion-select-option [value]="ws.workspaceId">{{ ws.icon }} {{ ws.name }}</ion-select-option>
+        <ion-select-option [value]="ws.workspaceId">{{ ws.icon }} {{ ws.name }}</ion-select-option>
         }
       </ion-select>
     </ion-title>
 
-    <ion-buttons slot="end">
+    <!--<ion-buttons slot="end">
       <ion-button (click)="confirmLogout()">
         <ion-icon slot="icon-only" name="log-out-outline"></ion-icon>
       </ion-button>
-    </ion-buttons>
+    </ion-buttons>-->
   </ion-toolbar>
 </ion-header>
-<ion-router-outlet></ion-router-outlet>

@@ -1,0 +1,16 @@
+<div class="bg-[var(--ion-color-primary)] pb-6 rounded-b-[40px] shadow-sm px-4 pt-4 flex flex-col items-center gap-3">
+  <p class="text-white/70 text-xs font-semibold tracking-widest uppercase">Saldo actual</p>
+  <div class="bg-white/20 backdrop-blur-md px-6 py-2 rounded-full border border-white/30 shadow-lg">
+    <span class="text-white text-3xl font-extrabold tracking-tight">
+      {{ balance() | currencyFormat:currency() }}
+    </span>
+  </div>
+  <div class="flex gap-6 mt-1">
+    <span class="text-white/80 text-sm font-semibold">
+      INGRESOS {{ income() | currencyFormat:currency() }}
+    </span>
+    <span class="text-white/80 text-sm font-semibold">
+      GASTOS {{ expense() | currencyFormat:currency() }}
+    </span>
+  </div>
+</div>

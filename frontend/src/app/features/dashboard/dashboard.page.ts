@@ -16,7 +16,6 @@ import {
   IonNote,
   AlertController,
   IonModal,
-  IonSpinner,
   ModalController,
   ToastController,
 } from '@ionic/angular/standalone';
@@ -24,8 +23,6 @@ import { addIcons } from 'ionicons';
 import {
   addOutline,
   removeOutline,
-  rocketOutline,
-  sparklesOutline,
   folderOpenOutline,
   chevronBackOutline,
   chevronForwardOutline,
@@ -45,6 +42,9 @@ import { PeriodTab } from '@core/constants/period.constants';
 import { TransactionFormComponent } from '@features/transactions/transaction-form/transaction-form.component';
 import { WorkspaceFormComponent } from '@features/workspaces/workspace-form/workspace-form.component';
 import { DashboardChartComponent } from './components/dashboard-chart/dashboard-chart.component';
+import { DashboardOnboardingComponent } from './components/dashboard-onboarding/dashboard-onboarding.component';
+import { BalanceSummaryHeaderComponent } from '@shared/components/balance-summary-header/balance-summary-header.component';
+import { ShareHeaderComponent } from '@shared/components/share-header/share-header.component';
 import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
 import { DashboardService, DateRange } from './services/dashboard.service';
 import { DataSeedService } from '@core/services/data-seed.service';
@@ -65,9 +65,11 @@ import { TRANSACTION_TYPES, TransactionType } from '@core/constants/transaction.
     IonItem,
     IonLabel,
     IonNote,
-    IonSpinner,
     IonModal,
+    ShareHeaderComponent,
+    BalanceSummaryHeaderComponent,
     DashboardChartComponent,
+    DashboardOnboardingComponent,
     PeriodSelectorComponent,
     CurrencyFormatPipe,
     RelativeDatePipe,
@@ -217,7 +219,7 @@ export class DashboardPage implements OnInit {
   });
 
   constructor() {
-    addIcons({ addOutline, removeOutline, rocketOutline, sparklesOutline, folderOpenOutline, chevronBackOutline, chevronForwardOutline });
+    addIcons({ addOutline, removeOutline, folderOpenOutline, chevronBackOutline, chevronForwardOutline });
   }
 
   ngOnInit(): void {
@@ -250,7 +252,7 @@ export class DashboardPage implements OnInit {
   }
 
   goToTransactions(): void {
-    this.router.navigate(['/tabs/dashboard/transactions']);
+    this.router.navigate(['/tabs/transactions']);
   }
 
   goToWallets(): void {

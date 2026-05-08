@@ -9,20 +9,7 @@ export const tabsRoutes: Routes = [
   {
     path: 'dashboard',
     loadComponent: () =>
-      import('@shared/components/share-header/share-header.component')
-        .then(m => m.ShareHeaderComponent),
-    children: [
-      {
-        path: '',
-        loadComponent: () =>
-          import('../dashboard/dashboard.page').then(m => m.DashboardPage),
-      },
-      {
-        path: 'transactions',
-        loadComponent: () =>
-          import('../transactions/transaction-list/transaction-list.page').then(m => m.TransactionListPage),
-      },
-    ],
+      import('../dashboard/dashboard.page').then(m => m.DashboardPage),
   },
   {
     path: 'transactions',

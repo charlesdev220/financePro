@@ -1,77 +1,34 @@
+<app-share-header />
+
 <ion-content style="--background: var(--color-green-50);">
 
 
   <!-- Estado inicial: Cuenta vacía (Seeding) -->
   @if (needsSeed()) {
-  <div class="flex flex-col items-center justify-center min-h-[80vh] px-8 text-center bg-gray-50">
-    <div class="w-24 h-24 mb-6 flex items-center justify-center rounded-full bg-blue-100 text-blue-600">
-      <ion-icon name="rocket-outline" class="text-5xl"></ion-icon>
-    </div>
-    <h1 class="text-2xl font-bold text-gray-900 mb-2">¡Bienvenido a MyFinance!</h1>
-    <p class="text-gray-600 mb-8 max-w-xs">
-      Parece que es tu primera vez aquí. Vamos a preparar tu cuenta con carteras y categorías básicas para que empieces
-      a ahorrar hoy mismo.
-    </p>
-
-    <ion-button (click)="seedData()" expand="block" shape="round" class="w-full max-w-xs h-12 text-lg font-semibold"
-      [disabled]="isSeeding()">
-      @if (isSeeding()) {
-      <ion-spinner name="crescent" slot="start"></ion-spinner>
-      Preparando...
-      } @else {
-      <ion-icon name="sparkles-outline" slot="start"></ion-icon>
-      Inicializar mi cuenta
-      }
-    </ion-button>
-
-    <p class="mt-4 text-xs text-gray-400">
-      Esto creará carteras como "Efectivo" y categorías como "Alimentación".
-    </p>
-  </div>
+  <app-dashboard-onboarding [isSeeding]="isSeeding()" (seed)="seedData()" />
   } @else {
   <!-- Contenido normal del Dashboard -->
 
-  <!-- Header verde — full width, contenido centrado en desktop -->
-  <div class="bg-[var(--ion-color-primary)] pt-4 pb-4 rounded-b-[40px] shadow-sm">
-    <div class="max-w-screen-xl mx-auto">
+  <!-- Header verde resumen -->
+  <app-balance-summary-header [balance]="summary().balance" [income]="summary().totalIncome"
+    [expense]="summary().totalExpenses" [currency]="userBaseCurrency()" />
 
-      <!-- Saldo pill + ingresos/gastos -->
-      <div class="flex flex-col items-center px-4">
-        <div class="bg-white/20 backdrop-blur-md px-6 py-3 rounded-full border border-white/30 shadow-lg mb-2">
-          <span class="text-white/80 text-xs font-bold tracking-widest uppercase block text-center">Saldo Actual</span>
-          <span class="text-white text-3xl font-extrabold tracking-tight">
-            {{ summary().balance | currencyFormat:userBaseCurrency() }}
-          </span>
-        </div>
-        <div class="flex gap-8 mt-3 text-white/90">
-          <div class="flex flex-col items-center">
-            <span class="text-[10px] uppercase font-bold opacity-75">Ingresos</span>
-            <span class="text-sm font-bold">{{ summary().totalIncome | currencyFormat:userBaseCurrency() }}</span>
-          </div>
-          <div class="w-[1px] h-8 bg-white/20"></div>
-          <div class="flex flex-col items-center">
-            <span class="text-[10px] uppercase font-bold opacity-75">Gastos</span>
-            <span class="text-sm font-bold">{{ summary().totalExpenses | currencyFormat:userBaseCurrency() }}</span>
-          </div>
-        </div>
+  <!-- Selector de período + navegación -->
+  <div class="max-w-screen-xl mx-auto">
+    <div class="flex items-center gap-2 px-2 mt-3">
+      <button class="p-2 text-myfinance-text-secondary hover:text-myfinance-text-primary transition-colors"
+        (click)="onNavigatePrev()" aria-label="Período anterior">
+        <ion-icon name="chevron-back-outline" class="text-xl"></ion-icon>
+      </button>
+      <div class="flex-1">
+        <app-period-selector [activeTab]="activePeriodTab()" (tabChange)="onTabChange($event)" />
+        <p class="text-center text-myfinance-text-secondary text-xs mt-1 font-medium">{{ periodLabel() }}</p>
       </div>
-
-      <!-- Selector de período + navegación — debajo del saldo -->
-      <div class="flex items-center gap-2 px-2 mt-4">
-        <button class="p-2 text-white/80 hover:text-white transition-colors" (click)="onNavigatePrev()"
-          aria-label="Período anterior">
-          <ion-icon name="chevron-back-outline" class="text-xl"></ion-icon>
-        </button>
-        <div class="flex-1">
-          <app-period-selector [activeTab]="activePeriodTab()" (tabChange)="onTabChange($event)"></app-period-selector>
-          <p class="text-center text-white/80 text-xs mt-1 font-medium">{{ periodLabel() }}</p>
-        </div>
-        <button class="p-2 text-white/80 hover:text-white transition-colors disabled:opacity-30"
-          (click)="onNavigateNext()" [disabled]="!canNavigateForward()" aria-label="Período siguiente">
-          <ion-icon name="chevron-forward-outline" class="text-xl"></ion-icon>
-        </button>
-      </div>
-
+      <button
+        class="p-2 text-myfinance-text-secondary hover:text-myfinance-text-primary transition-colors disabled:opacity-30"
+        (click)="onNavigateNext()" [disabled]="!canNavigateForward()" aria-label="Período siguiente">
+        <ion-icon name="chevron-forward-outline" class="text-xl"></ion-icon>
+      </button>
     </div>
   </div>
 

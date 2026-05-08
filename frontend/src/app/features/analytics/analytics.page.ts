@@ -21,7 +21,7 @@ import { CategorySpendingChartComponent } from './components/category-spending-c
 import { ProjectionsComponent } from './components/projections/projections.component';
 import { SpendingRankingComponent } from './components/spending-ranking/spending-ranking.component';
 import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
-import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
+import { BalanceSummaryHeaderComponent } from '@shared/components/balance-summary-header/balance-summary-header.component';
 import { PeriodTab } from '@core/constants/period.constants';
 
 
@@ -38,12 +38,12 @@ function monthsInRange(tab: PeriodTab): number {
   imports: [
     IonContent, IonHeader, IonTitle, IonToolbar,
     IonIcon, IonInput,
+    BalanceSummaryHeaderComponent,
     PeriodSelectorComponent,
     AnalyticsChartComponent,
     CategorySpendingChartComponent,
     ProjectionsComponent,
     SpendingRankingComponent,
-    CurrencyFormatPipe,
   ],
 })
 export class AnalyticsPage implements OnInit {
