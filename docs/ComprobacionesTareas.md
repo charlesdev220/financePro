@@ -3,7 +3,8 @@ en un nuevo sdd implementa estas tareas:
 
 '/Users/charles/Documents/apps/FinancePro/tools/data-import' '/Users/charles/Documents/apps/FinancePro/recursos/monefy_database-2026-04-11_21-12-08.db' quiero que me crees un md con el parseo hacia       
   nuestra bd en google sheet para estos datos, el data-import es un script para ello, quiero que estos datos se guarden para el usuario chalme220@gmail.com, pero antes quiero ver que se vayan a guardar     
-  bien, con sus categorias correctas, fechas correctas, etc                                                                                                                                                   
+  bien, con sus categorias correctas, fechas correct
+  as, etc                                                                                                                                                   
   
 - quiero que crees un md con mi estilo de ux actual. Que tipo de botones uso, que tipo de listas, que tipo de iconos, que tipografia utilizo, que graficos, como inserto informacion, la edito. En definitiva que sea el manual de ux que necesito para trabajar conmigo
 

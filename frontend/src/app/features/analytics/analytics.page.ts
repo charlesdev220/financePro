@@ -47,27 +47,27 @@ function monthsInRange(tab: PeriodTab): number {
   ],
 })
 export class AnalyticsPage implements OnInit {
-  private readonly txState            = inject(TransactionsStateService);
-  private readonly categoriesState    = inject(CategoriesStateService);
-  private readonly currencyState      = inject(CurrencyStateService);
-  private readonly userSettingsState  = inject(UserSettingsStateService);
-  private readonly periodService      = inject(PeriodService);
-  private readonly analyticsService   = inject(AnalyticsService);
+  private readonly txState = inject(TransactionsStateService);
+  private readonly categoriesState = inject(CategoriesStateService);
+  private readonly currencyState = inject(CurrencyStateService);
+  private readonly userSettingsState = inject(UserSettingsStateService);
+  private readonly periodService = inject(PeriodService);
+  private readonly analyticsService = inject(AnalyticsService);
 
-  readonly allTxs           = this.txState.items;
-  readonly categories       = this.categoriesState.items;
+  readonly allTxs = this.txState.items;
+  readonly categories = this.categoriesState.items;
   readonly userBaseCurrency = computed(() => this.currencyState.baseCurrency() ?? 'EUR');
 
   /** Tab activo en el selector de período. */
-  readonly activePeriodTab  = signal<PeriodTab>('month');
+  readonly activePeriodTab = signal<PeriodTab>('month');
   /** Offset de navegación: 0 = período actual, -1 = anterior, etc. */
   readonly navigationOffset = signal<number>(0);
   /** Modo rango personalizado activo. */
-  readonly isCustomRange    = signal<boolean>(false);
+  readonly isCustomRange = signal<boolean>(false);
   /** Fecha inicio del rango personalizado (YYYY-MM-DD). */
-  readonly customFrom       = signal<string>('');
+  readonly customFrom = signal<string>('');
   /** Fecha fin del rango personalizado (YYYY-MM-DD). */
-  readonly customTo         = signal<string>('');
+  readonly customTo = signal<string>('');
 
   /** Etiqueta legible del período — usa PeriodService con monthStartDay del usuario. */
   readonly periodLabel = computed(() =>
@@ -101,19 +101,56 @@ export class AnalyticsPage implements OnInit {
     return this.allTxs().filter(tx => tx.date >= from && tx.date <= to);
   });
 
-  /** Totales mensuales del período activo — usado para proyecciones, ranking y categorías. */
-  readonly monthlyTotals = computed(() =>
-    this.analyticsService.getMonthlyTotals(
-      this.filteredTxs(),
-      monthsInRange(this.activePeriodTab()),
+  /** Últimos 4 períodos completos (excluye el período en curso) — para proyección a corto plazo. */
+  readonly monthlyTotals = computed(() => {
+    const currentPeriod = new Date().toISOString().slice(0, 7);
+    const completedTxs = this.allTxs().filter(tx => tx.date.slice(0, 7) < currentPeriod);
+    return this.analyticsService.getMonthlyTotals(
+      completedTxs,
+      4,
       this.userSettingsState.monthStartDay(),
-    ),
-  );
+    );
+  });
 
   /**
-   * Totales para el gráfico de barras.
-   * En tab "Mes" (sin rango custom): comparación inter-anual del mismo mes en años anteriores.
-   * En el resto de tabs: usa los totales del período activo.
+   * Datos para la proyección de tendencia a corto plazo.
+   * En tab anual, incluye todos los meses del año seleccionado (con ceros para meses sin datos)
+   * filtrados a períodos completos — garantiza que enero aparezca aunque no tenga transacciones.
+   */
+  readonly projectionData = computed(() => {
+    const currentPeriod = new Date().toISOString().slice(0, 7);
+    const completedTxs = this.allTxs().filter(tx => tx.date.slice(0, 7) < currentPeriod);
+
+    if (this.activePeriodTab() === 'year' && !this.isCustomRange()) {
+      const year = new Date().getFullYear() + this.navigationOffset();
+      const msd = this.userSettingsState.monthStartDay();
+      return this.analyticsService.getYearMonthlyTotals(completedTxs, year, msd)
+        .filter(t => t.period < currentPeriod);
+    }
+
+    return this.analyticsService.getMonthlyTotals(
+      completedTxs,
+      4,
+      this.userSettingsState.monthStartDay(),
+    );
+  });
+
+  /** Todo el historial de períodos completos — para proyección histórica en tab anual. */
+  readonly allHistoricalMonthlyTotals = computed(() => {
+    const currentPeriod = new Date().toISOString().slice(0, 7);
+    const completedTxs = this.allTxs().filter(tx => tx.date.slice(0, 7) < currentPeriod);
+    return this.analyticsService.getMonthlyTotals(
+      completedTxs,
+      9999,
+      this.userSettingsState.monthStartDay(),
+    );
+  });
+
+  /**
+   * Totales para el gráfico de barras Ingresos vs Gastos.
+   * Tab "Mes": comparación inter-anual del mismo mes en años anteriores.
+   * Tab "Año": 12 períodos fijos del año (con ceros si no hay datos) — garantiza que enero siempre aparece.
+   * Resto de tabs: períodos del rango activo respetando monthStartDay del usuario.
    */
   readonly chartTotals = computed(() => {
     const tab = this.activePeriodTab();
@@ -121,14 +158,29 @@ export class AnalyticsPage implements OnInit {
 
     if (tab === 'month' && !this.isCustomRange()) {
       const endMonth = parseInt(this.dateRange().to.slice(5, 7), 10);
-      return this.analyticsService.getSameMonthAcrossYears(
-        this.allTxs(), endMonth, msd,
-      );
+      return this.analyticsService.getSameMonthAcrossYears(this.allTxs(), endMonth, msd);
     }
-    return this.monthlyTotals();
+    if (tab === 'year') {
+      const year = new Date().getFullYear() + this.navigationOffset();
+      return this.analyticsService.getYearMonthlyTotals(this.filteredTxs(), year, msd);
+    }
+    return this.analyticsService.getMonthlyTotals(
+      this.filteredTxs(),
+      monthsInRange(tab),
+      msd,
+    );
   });
 
   readonly periods = computed(() => this.monthlyTotals().map(t => t.period));
+
+  /** Totales agrupados por año — todo el historial disponible, solo visible en tab anual. */
+  readonly yearlyTotals = computed(() =>
+    this.analyticsService.getYearlyTotals(
+      this.allTxs(),
+      this.userSettingsState.monthStartDay(),
+    )
+  );
+
 
   /** Resumen del período activo delegado en AnalyticsService — fuente única de verdad. */
   readonly currentPeriodSummary = computed(() =>

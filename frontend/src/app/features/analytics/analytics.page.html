@@ -36,22 +36,20 @@
       </button>
 
       <button class="flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold"
-        [class.bg-myfinance-green]="isCustomRange()"
-        [class.text-white]="isCustomRange()"
-        [class.text-myfinance-text-secondary]="!isCustomRange()"
-        [class.bg-gray-100]="!isCustomRange()"
+        [class.bg-myfinance-green]="isCustomRange()" [class.text-white]="isCustomRange()"
+        [class.text-myfinance-text-secondary]="!isCustomRange()" [class.bg-gray-100]="!isCustomRange()"
         (click)="onToggleCustomRange()">
         <ion-icon name="calendar-outline" class="text-base"></ion-icon>
         @if (isCustomRange()) {
-          <span>Rango activo</span>
-          <ion-icon name="close-outline" class="text-base"></ion-icon>
+        <span>Rango activo</span>
+        <ion-icon name="close-outline" class="text-base"></ion-icon>
         } @else {
-          <span>{{ periodLabel() }}</span>
+        <span>{{ periodLabel() }}</span>
         }
       </button>
 
-      <button class="p-2 text-myfinance-text-secondary disabled:opacity-30"
-        (click)="onNavigateNext()" [disabled]="!canNavigateForward()" aria-label="Período siguiente">
+      <button class="p-2 text-myfinance-text-secondary disabled:opacity-30" (click)="onNavigateNext()"
+        [disabled]="!canNavigateForward()" aria-label="Período siguiente">
         <ion-icon name="chevron-forward-outline" class="text-xl"></ion-icon>
       </button>
     </div>
@@ -63,22 +61,14 @@
       <div class="flex gap-3 items-center">
         <div class="flex-1">
           <p class="text-[10px] text-myfinance-text-secondary mb-1 font-semibold">DESDE</p>
-          <ion-input
-            type="date"
-            [value]="customFrom()"
-            (ionChange)="onCustomFromChange($event)"
-            fill="outline"
+          <ion-input type="date" [value]="customFrom()" (ionChange)="onCustomFromChange($event)" fill="outline"
             style="--border-radius: 8px; --padding-start: 8px; font-size: 0.875rem;">
           </ion-input>
         </div>
         <span class="text-myfinance-text-secondary font-bold mt-4">→</span>
         <div class="flex-1">
           <p class="text-[10px] text-myfinance-text-secondary mb-1 font-semibold">HASTA</p>
-          <ion-input
-            type="date"
-            [value]="customTo()"
-            (ionChange)="onCustomToChange($event)"
-            fill="outline"
+          <ion-input type="date" [value]="customTo()" (ionChange)="onCustomToChange($event)" fill="outline"
             style="--border-radius: 8px; --padding-start: 8px; font-size: 0.875rem;">
           </ion-input>
         </div>
@@ -87,26 +77,41 @@
     }
 
     <section class="mb-6">
-      <h2 class="text-base font-semibold text-[var(--ion-text-color)] mb-3">Ingresos vs Gastos</h2>
+      <h2 class="text-base font-semibold text-myfinance-text-primary mb-3">Ingresos vs Gastos</h2>
       <app-analytics-chart [data]="chartTotals()" />
     </section>
 
     <section class="mb-6">
-      <h2 class="text-base font-semibold text-[var(--ion-text-color)] mb-3">Gasto por categoría</h2>
+      <h2 class="text-base font-semibold text-myfinance-text-primary mb-3">Gasto por categoría</h2>
       <app-category-spending-chart [data]="categorySpending()" [currency]="userBaseCurrency()" />
     </section>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <section>
-        <h2 class="text-base font-semibold text-[var(--ion-text-color)] mb-3">Proyección de tendencia</h2>
-        <app-projections [data]="monthlyTotals()" [horizon]="3" />
+        <h2 class="text-base font-semibold text-myfinance-text-primary mb-3">Proyección de tendencia</h2>
+        <app-projections [data]="projectionData()" [horizon]="3" />
       </section>
+      @if (activePeriodTab() === 'year') {
+      <section class="mt-6 mb-6">
+        <h2 class="text-base font-semibold text-myfinance-text-primary mb-1">Tendencia histórica total</h2>
+        <p class="text-xs text-myfinance-text-secondary mb-3">Proyección sobre todos los meses de la base de datos</p>
+        <app-projections [data]="allHistoricalMonthlyTotals()" [horizon]="6" />
+      </section>
+
+      <section class="mt-6 mb-6">
+        <h2 class="text-base font-semibold text-myfinance-text-primary mb-1">Ingresos vs Gastos — todo el historial</h2>
+        <p class="text-xs text-myfinance-text-secondary mb-3">Todos los meses de todos los años disponibles</p>
+        <app-analytics-chart [data]="allHistoricalMonthlyTotals()" />
+      </section>
+      }
+
       <section>
-        <h2 class="text-base font-semibold text-[var(--ion-text-color)] mb-3">Ranking de gastos</h2>
-        <app-spending-ranking [recurrentes]="spendingData().recurrentes" [superfluos]="spendingData().superfluos"
-          [userCurrency]="userBaseCurrency()" />
+        <h2 class="text-base font-semibold text-myfinance-text-primary mb-3">Ranking de gastos</h2>
+        <app-spending-ranking [recurrentes]="spendingData().recurrentes.slice(0, 10)"
+          [superfluos]="spendingData().superfluos.slice(0, 10)" [userCurrency]="userBaseCurrency()" />
       </section>
     </div>
+
 
   </div>
 

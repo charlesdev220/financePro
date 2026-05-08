@@ -16,19 +16,26 @@ export class ProjectionsComponent {
   data = input<MonthlyTotal[]>([]);
   horizon = input<3 | 6 | 12>(3);
 
-  /** True cuando hay al menos 3 meses de datos para generar una regresión fiable. */
-  readonly hasEnoughData = computed(() => this.data().length >= 3);/** ES UN IF*/
+  private readonly currentPeriod = new Date().toISOString().slice(0, 7);
 
-  /** Etiquetas del eje X: períodos históricos + períodos proyectados según el horizonte. */
+  /** Solo meses completos — excluye el mes en curso para no distorsionar la regresión. */
+  private readonly completedData = computed(() =>
+    this.data().filter(t => t.period < this.currentPeriod)
+  );
+
+  /** True cuando hay al menos 3 meses completos de datos para generar una regresión fiable. */
+  readonly hasEnoughData = computed(() => this.completedData().length >= 3);
+
+  /** Etiquetas del eje X: meses completos + períodos proyectados según el horizonte. */
   readonly labels = computed(() => {
-    const historical = this.data().map(t => t.period);
-    const projected = this.buildProjectedPeriods(this.data(), this.horizon());
+    const historical = this.completedData().map(t => t.period);
+    const projected = this.buildProjectedPeriods(this.completedData(), this.horizon());
     return [...historical, ...projected];
   });
 
-  /** Datasets para Chart.js: gasto histórico real + proyección lineal para el horizonte elegido. */
+  /** Datasets para Chart.js: gasto histórico (meses completos) + proyección lineal. */
   readonly datasets = computed<ChartDataset[]>(() => {
-    const data = this.data();
+    const data = this.completedData();
     const horizon = this.horizon();
     const points = data.map((t, i) => ({ x: i, y: t.expense }));
     const { slope, intercept } = this.analyticsService.linearRegression(points);

@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { DatePipe } from '@angular/common';
 import { SpendingItem } from '@features/analytics/services/analytics.service';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 
 @Component({
   selector: 'app-spending-ranking',
   standalone: true,
-  imports: [CurrencyFormatPipe],
+  imports: [CurrencyFormatPipe, DatePipe],
   templateUrl: './spending-ranking.component.html',
   styleUrls: [],
   changeDetection: ChangeDetectionStrategy.OnPush,

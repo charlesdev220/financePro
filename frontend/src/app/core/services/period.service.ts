@@ -55,7 +55,7 @@ export class PeriodService {
       case 'month':
         return this._monthRange(today, monthStartDay, offset);
       case 'year':
-        return this._yearRange(today, offset);
+        return this._yearRange(today, monthStartDay, offset);
     }
   }
 
@@ -101,8 +101,7 @@ export class PeriodService {
         }
       }
       case 'year': {
-        const date = new Date(range.from + 'T12:00:00');
-        return String(date.getFullYear());
+        return String(today.getFullYear() + offset);
       }
     }
   }
@@ -167,11 +166,8 @@ export class PeriodService {
     return { from, to };
   }
 
-  private _yearRange(today: Date, offset: number): DateRange {
+  private _yearRange(today: Date, _monthStartDay: number, offset: number): DateRange {
     const year = today.getFullYear() + offset;
-    return {
-      from: `${year}-01-01`,
-      to:   `${year}-12-31`,
-    };
+    return { from: `${year}-01-01`, to: `${year}-12-31` };
   }
 }

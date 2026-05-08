@@ -5,7 +5,15 @@
   <ul class="list-none p-0 m-0 divide-y divide-gray-100">
     @for (item of recurrentes(); track item.concept) {
       <li class="ranking-item flex justify-between items-center px-4 py-3">
-        <span class="ranking-concept text-sm text-gray-800">{{ item.concept }}</span>
+        <div class="flex flex-col">
+          <div class="flex items-center gap-1">
+            <span class="ranking-concept text-sm text-gray-800">{{ item.concept }}</span>
+            @if (item.count > 1) {
+              <span class="text-xs text-myfinance-text-secondary font-medium">(x {{ item.count }})</span>
+            }
+          </div>
+          <span class="text-xs text-myfinance-text-secondary">{{ item.date | date:'dd/MM/yyyy' }}</span>
+        </div>
         <span class="font-semibold text-sm text-red-500">{{ item.amountBase | currencyFormat:userCurrency() }}</span>
       </li>
     } @empty {
@@ -21,7 +29,15 @@
   <ul class="list-none p-0 m-0 divide-y divide-gray-100">
     @for (item of superfluos(); track item.concept) {
       <li class="ranking-item flex justify-between items-center px-4 py-3">
-        <span class="ranking-concept text-sm text-gray-800">{{ item.concept }}</span>
+        <div class="flex flex-col">
+          <div class="flex items-center gap-1">
+            <span class="ranking-concept text-sm text-gray-800">{{ item.concept }}</span>
+            @if (item.count > 1) {
+              <span class="text-xs text-myfinance-text-secondary font-medium">(x {{ item.count }})</span>
+            }
+          </div>
+          <span class="text-xs text-myfinance-text-secondary">{{ item.date | date:'dd/MM/yyyy' }}</span>
+        </div>
         <span class="font-semibold text-sm text-red-500">{{ item.amountBase | currencyFormat:userCurrency() }}</span>
       </li>
     } @empty {

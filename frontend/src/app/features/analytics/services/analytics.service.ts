@@ -34,6 +34,8 @@ export interface SpendingItem {
   categoryId: string;
   amountBase: number;
   isRecurring: boolean;
+  date: string;
+  count: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -120,6 +122,36 @@ export class AnalyticsService {
     return Array.from(map.values())
       .sort((a, b) => a.period.localeCompare(b.period))
       .slice(-months);
+  }
+
+  /**
+   * Devuelve siempre los 12 períodos del año YYYY aunque no tengan transacciones.
+   * Garantiza que el gráfico anual muestre todos los meses del 1 al 12.
+   */
+  getYearMonthlyTotals(txs: ITransaction[], year: number, monthStartDay: number): MonthlyTotal[] {
+    const actual = this.getMonthlyTotals(txs, 9999, monthStartDay);
+    return Array.from({ length: 12 }, (_, i) => {
+      const period = `${year}-${String(i + 1).padStart(2, '0')}`;
+      return actual.find(t => t.period === period) ?? { period, income: 0, expense: 0 };
+    });
+  }
+
+  /**
+   * Agrupa todo el historial de transacciones por año calendario y suma income/expense.
+   * Retorna una entrada por año ordenada cronológicamente.
+   */
+  getYearlyTotals(txs: ITransaction[], monthStartDay: number = 1): MonthlyTotal[] {
+    if (!txs.length) return [];
+    const monthly = this.getMonthlyTotals(txs, 9999, monthStartDay);
+    const map = new Map<string, MonthlyTotal>();
+    for (const m of monthly) {
+      const year = m.period.slice(0, 4);
+      if (!map.has(year)) map.set(year, { period: year, income: 0, expense: 0 });
+      const entry = map.get(year)!;
+      entry.income  += m.income;
+      entry.expense += m.expense;
+    }
+    return Array.from(map.values()).sort((a, b) => a.period.localeCompare(b.period));
   }
 
   /**
@@ -221,15 +253,9 @@ export class AnalyticsService {
     }
 
     // Recurrentes: isRecurring OR aparece en ≥3 períodos
-    const recurrentes: SpendingItem[] = expenses
-      .filter(tx => tx.isRecurring || (conceptPeriods.get(tx.concept)?.size ?? 0) >= 3)
-      .map(tx => ({
-        concept:    tx.concept,
-        categoryId: tx.categoryId,
-        amountBase: tx.amountBase,
-        isRecurring: tx.isRecurring,
-      }))
-      .sort((a, b) => b.amountBase - a.amountBase);
+    const recurrentes: SpendingItem[] = this.deduplicateByConcept(
+      expenses.filter(tx => tx.isRecurring || (conceptPeriods.get(tx.concept)?.size ?? 0) >= 3)
+    ).sort((a, b) => b.amountBase - a.amountBase);
 
     // Superfluos: amountBase ≥ P75 (requiere ≥4 gastos)
     let superfluos: SpendingItem[] = [];
@@ -238,17 +264,36 @@ export class AnalyticsService {
       const p75Index = Math.floor(sorted.length * 0.75);
       const p75      = sorted[p75Index].amountBase;
 
-      superfluos = expenses
-        .filter(tx => tx.amountBase >= p75)
-        .map(tx => ({
-          concept:    tx.concept,
-          categoryId: tx.categoryId,
-          amountBase: tx.amountBase,
-          isRecurring: tx.isRecurring,
-        }))
-        .sort((a, b) => b.amountBase - a.amountBase);
+      superfluos = this.deduplicateByConcept(
+        expenses.filter(tx => tx.amountBase >= p75)
+      ).sort((a, b) => b.amountBase - a.amountBase);
     }
 
     return { recurrentes, superfluos };
+  }
+
+  /** Agrupa transacciones por concepto: conserva la más reciente y agrega count. */
+  private deduplicateByConcept(txs: ITransaction[]): SpendingItem[] {
+    const map = new Map<string, SpendingItem>();
+    for (const tx of txs) {
+      const existing = map.get(tx.concept);
+      if (!existing) {
+        map.set(tx.concept, {
+          concept:     tx.concept,
+          categoryId:  tx.categoryId,
+          amountBase:  tx.amountBase,
+          isRecurring: tx.isRecurring,
+          date:        tx.date,
+          count:       1,
+        });
+      } else {
+        existing.count++;
+        if (tx.date > existing.date) {
+          existing.date       = tx.date;
+          existing.amountBase = tx.amountBase;
+        }
+      }
+    }
+    return Array.from(map.values());
   }
 }
