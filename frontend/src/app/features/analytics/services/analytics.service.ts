@@ -73,7 +73,14 @@ export class AnalyticsService {
   ): MonthlyTotal[] {
     const all      = this.getMonthlyTotals(txs, 9999, monthStartDay);
     const monthStr = String(displayMonth).padStart(2, '0');
-    return all.filter(t => t.period.endsWith(`-${monthStr}`));
+    const filtered = all.filter(t => t.period.endsWith(`-${monthStr}`));
+
+    // Garantizar que el año en curso siempre aparezca aunque no tenga transacciones
+    const currentYearPeriod = `${new Date().getFullYear()}-${monthStr}`;
+    if (!filtered.some(t => t.period === currentYearPeriod)) {
+      return [...filtered, { period: currentYearPeriod, income: 0, expense: 0 }];
+    }
+    return filtered;
   }
 
   /**
@@ -88,30 +95,7 @@ export class AnalyticsService {
     const map = new Map<string, MonthlyTotal>();
 
     for (const tx of txs) {
-      const d     = new Date(tx.date + 'T12:00:00');
-      const day   = d.getDate();
-      const month = d.getMonth();     // 0-based
-      const year  = d.getFullYear();
-
-      let periodMonth: number;
-      let periodYear:  number;
-
-      if (monthStartDay <= 1) {
-        // Mes calendario estándar
-        periodMonth = month;
-        periodYear  = year;
-      } else if (day >= monthStartDay) {
-        // El día cae en la primera parte del período → pertenece al mes siguiente
-        const next  = month + 1;
-        periodMonth = next % 12;
-        periodYear  = year + Math.floor(next / 12);
-      } else {
-        // El día cae en la segunda parte del período → pertenece al mismo mes
-        periodMonth = month;
-        periodYear  = year;
-      }
-
-      const period = `${periodYear}-${String(periodMonth + 1).padStart(2, '0')}`;
+      const period = this.getPeriodKey(tx.date, monthStartDay);
 
       if (!map.has(period)) {
         map.set(period, { period, income: 0, expense: 0 });
@@ -239,7 +223,7 @@ export class AnalyticsService {
    */
   classifySpending(
     txs: ITransaction[],
-    periods: string[],
+    monthStartDay: number = 1,
   ): { recurrentes: SpendingItem[]; superfluos: SpendingItem[] } {
     const expenses = txs.filter(tx => tx.type === TRANSACTION_TYPES.EXPENSE);
 
@@ -250,7 +234,7 @@ export class AnalyticsService {
     // Mapa: concepto → set de períodos en los que aparece
     const conceptPeriods = new Map<string, Set<string>>();
     for (const tx of expenses) {
-      const period = tx.date.slice(0, 7);
+      const period = this.getPeriodKey(tx.date, monthStartDay);
       if (!conceptPeriods.has(tx.concept)) {
         conceptPeriods.set(tx.concept, new Set());
       }
@@ -275,6 +259,31 @@ export class AnalyticsService {
     }
 
     return { recurrentes, superfluos };
+  }
+
+  /** Devuelve la clave de período "YYYY-MM" respetando el día de inicio de mes custom. */
+  private getPeriodKey(date: string, monthStartDay: number): string {
+    const d     = new Date(date + 'T12:00:00');
+    const day   = d.getDate();
+    const month = d.getMonth();
+    const year  = d.getFullYear();
+
+    let periodMonth: number;
+    let periodYear:  number;
+
+    if (monthStartDay <= 1) {
+      periodMonth = month;
+      periodYear  = year;
+    } else if (day >= monthStartDay) {
+      const next  = month + 1;
+      periodMonth = next % 12;
+      periodYear  = year + Math.floor(next / 12);
+    } else {
+      periodMonth = month;
+      periodYear  = year;
+    }
+
+    return `${periodYear}-${String(periodMonth + 1).padStart(2, '0')}`;
   }
 
   /** Agrupa transacciones por concepto: conserva la más reciente y agrega count. */

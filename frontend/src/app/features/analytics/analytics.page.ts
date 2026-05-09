@@ -66,10 +66,13 @@ export class AnalyticsPage implements OnInit {
     return this.allTxs().filter(tx => tx.date >= from && tx.date <= to);
   });
 
-  /** Transacciones de períodos ya cerrados (mes anterior al actual). Fuente para proyecciones. */
+  /** Transacciones de períodos ya cerrados. Usa el inicio real del período custom para no incluir
+   *  transacciones del mes calendario anterior que pertenecen al período actual (ej: monthStartDay=15). */
   private readonly completedTxs = computed(() => {
-    const currentPeriod = new Date().toISOString().slice(0, 7);
-    return this.allTxs().filter(tx => tx.date.slice(0, 7) < currentPeriod);
+    const { from } = this.periodService.getDateRange(
+      'month', new Date(), this.userSettingsState.monthStartDay(), 0,
+    );
+    return this.allTxs().filter(tx => tx.date < from);
   });
 
   /** Año seleccionado en la navegación. Fuente única para todos los cómputos anuales. */
@@ -79,15 +82,15 @@ export class AnalyticsPage implements OnInit {
 
   /**
    * Fuente única para todos los gráficos en tab "Año".
-   * getYearMonthlyTotals recibe filteredTxs() cuyo rango ya respeta monthStartDay
-   * (PeriodService._yearRange incluye el fragmento de diciembre del año anterior).
-   * Garantiza 12 períodos con ceros donde no hay datos.
+   * Usa allTxs() para que getYearMonthlyTotals pueda asignar correctamente las
+   * transacciones de diciembre del año anterior al período "enero" cuando monthStartDay > 1.
+   * getYearMonthlyTotals filtra internamente solo los 12 períodos del año seleccionado.
    */
   private readonly yearMonthlyData = computed(() => {
     const { tab, isCustomRange } = this.periodState();
     if (tab !== 'year' || isCustomRange) return [];
     return this.analyticsService.getYearMonthlyTotals(
-      this.filteredTxs(),
+      this.allTxs(),
       this.selectedYear(),
       this.userSettingsState.monthStartDay(),
     );
@@ -112,7 +115,11 @@ export class AnalyticsPage implements OnInit {
     if (tab === 'year') {
       return this.yearMonthlyData();
     }
-    return this.analyticsService.getMonthlyTotals(this.filteredTxs(), tab === 'week' ? 6 : 4, msd);
+    if (tab === 'week' || tab === 'day') {
+      const { income, expense } = this.analyticsService.calculateSummary(this.filteredTxs());
+      return [{ period: dateRange.from.slice(0, 7), income, expense }];
+    }
+    return this.analyticsService.getMonthlyTotals(this.filteredTxs(), 4, msd);
   });
 
   /**
@@ -128,7 +135,7 @@ export class AnalyticsPage implements OnInit {
       return this.yearMonthlyData().filter(t => t.period < currentPeriod);
     }
     return this.analyticsService.getMonthlyTotals(
-      this.completedTxs(),
+      this.filteredTxs(),
       4,
       this.userSettingsState.monthStartDay(),
     );
@@ -143,33 +150,15 @@ export class AnalyticsPage implements OnInit {
     )
   );
 
-  /** Últimos 4 períodos completos — para el componente de proyección fuera del tab anual. */
-  readonly monthlyTotals = computed(() =>
-    this.analyticsService.getMonthlyTotals(
-      this.completedTxs(),
-      4,
-      this.userSettingsState.monthStartDay(),
-    )
-  );
-
-  readonly periods = computed(() => this.monthlyTotals().map(t => t.period));
-
   /** Totales agrupados por año — todo el historial disponible. */
   readonly yearlyTotals = computed(() =>
     this.analyticsService.getYearlyTotals(this.allTxs(), this.userSettingsState.monthStartDay())
   );
 
-  /**
-   * Ahorro neto del período mensual en curso (siempre mes actual, no afectado por navegación).
-   * Usa PeriodService para obtener el rango correcto según monthStartDay.
-   */
-  readonly savingsCurrentMonth = computed(() => {
-    const { from, to } = this.periodService.getDateRange(
-      'month', new Date(), this.userSettingsState.monthStartDay(), 0,
-    );
-    const monthTxs = this.allTxs().filter(tx => tx.date >= from && tx.date <= to);
-    return this.analyticsService.calculateSummary(monthTxs).balance;
-  });
+  /** Ahorro neto del período activo navegado — refleja el offset/tab actual. */
+  readonly savingsCurrentMonth = computed(() =>
+    this.analyticsService.calculateSummary(this.filteredTxs()).balance
+  );
 
   /**
    * 12 SavingPoint del año seleccionado, uno por mes, respetando monthStartDay.
@@ -177,14 +166,14 @@ export class AnalyticsPage implements OnInit {
    * Siempre 12 elementos con ceros donde no hay datos.
    */
   readonly savingsCurrentYear = computed(() => {
-    const { tab, isCustomRange } = this.periodState();
+    const { tab, isCustomRange, dateRange } = this.periodState();
     const msd = this.userSettingsState.monthStartDay();
 
     const data = (tab === 'year' && !isCustomRange)
       ? this.yearMonthlyData()
       : this.analyticsService.getYearMonthlyTotals(
           this.allTxs(),
-          new Date().getFullYear(),
+          new Date(dateRange.to + 'T12:00:00').getFullYear(),
           msd,
         );
     return data.map(t => ({ period: t.period, saving: t.income - t.expense }));
@@ -201,12 +190,21 @@ export class AnalyticsPage implements OnInit {
   );
 
   readonly spendingData = computed(() =>
-    this.analyticsService.classifySpending(this.filteredTxs(), this.periods())
+    this.analyticsService.classifySpending(this.filteredTxs(), this.userSettingsState.monthStartDay())
   );
 
   readonly categorySpending = computed(() =>
     this.analyticsService.getCategorySpending(this.filteredTxs(), this.categories())
   );
+
+  /** Aria-label descriptivo del gráfico principal según el tab activo. */
+  readonly chartAriaLabel = computed(() => {
+    const tab = this.periodState().tab;
+    if (tab === 'week') return 'Gráfico de ingresos y gastos — semana';
+    if (tab === 'day')  return 'Gráfico de ingresos y gastos — día';
+    if (tab === 'year') return 'Gráfico de ingresos y gastos — año';
+    return 'Gráfico de ingresos y gastos — mes';
+  });
 
   ngOnInit(): void {
     this.txState.load();

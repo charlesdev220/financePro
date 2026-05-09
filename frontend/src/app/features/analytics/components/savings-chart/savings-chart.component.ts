@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
 import { ChartDataset } from 'chart.js';
 import { ChartBarComponent } from '@shared/components/chart-bar/chart-bar.component';
 import { SavingPoint } from '@features/analytics/services/analytics.service';
 import { APP_COLORS } from '@core/constants/colors.constants';
+import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
 
 const MONTH_SHORT_LABELS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
@@ -11,7 +11,7 @@ const MONTH_SHORT_LABELS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ag
   selector: 'app-savings-chart',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ChartBarComponent, DecimalPipe],
+  imports: [ChartBarComponent, CurrencyFormatPipe],
   templateUrl: './savings-chart.component.html',
 })
 export class SavingsChartComponent {

@@ -4,6 +4,13 @@ Registro de lecciones técnicas extraídas de cada iteración del proyecto. Appe
 
 ---
 
+### Qué hemos aprendido en el desarrollo de esta iteración (Fix Analytics Period Filter):
+*Qué se aprendió:* Con `monthStartDay > 1`, las transacciones de los primeros días del mes calendario (ej: 28-31 de enero) pertenecen al período siguiente según la lógica custom. Esto genera "barras vacías" en el gráfico anual para el mes calendario (2026-01 vacío porque sus txns van a 2026-02) y ausencias en el gráfico inter-anual (getSameMonthAcrossYears no incluye 2026 si el período "2026-01" tiene 0 transacciones). No son bugs del código sino consecuencias esperadas del sistema de períodos custom. La solución UX es usar labels legibles ("ene '26") en lugar de ISO crudos para reducir la confusión. Para el gráfico de ahorro anual en períodos que cruzan año, usar `dateRange.to` (no `from`) para que "27 dic – 26 ene 2026" muestre el ahorro de 2026. Para la proyección OLS, filtrar períodos con 0 datos antes de calcular la regresión, ya que `getYearMonthlyTotals` garantiza 12 entradas aunque haya meses sin transacciones.
+*Por qué se aprendió:* La verificación con el usuario chalme220@gmail.com (monthStartDay=27) expuso que el período "27 dic – 26 ene 2026" tiene 0 txns (las 4 de ene 2026 están en el período siguiente), lo que reveló varios comportamientos inesperados en gráficos y proyecciones.
+*Dónde se aprendió:* Playwright inspector — verificación de enero 2026 en tabs Mes y Año; `tools/data-import/get-user-id.mjs` y `output/transactions.json` para obtener datos reales.
+
+---
+
 ### Qué hemos aprendido en el desarrollo de esta iteración (Savings Chart — Gráfica de Ahorro):
 *Qué se aprendió:* Cuando un componente dumb recibe un input booleano de control (`isYearView`) en lugar de gestionar su propio `signal<Vista>`, se simplifica la API pero se pierde la autonomía visual — el componente no puede cambiar de vista sin que el padre lo decida. Esta decisión de diseño es válida cuando el padre ya tiene el estado del período activo (el tab selector de Analytics), pero hay que documentarla como deuda si el componente se reutiliza en otro contexto donde el padre no tenga ese estado. La alternativa es un `signal<SavingsView>` interno con un output `viewChanged` para notificar al padre si necesita sincronizarse.
 *Por qué se aprendió:* El spec definía un selector de 3 vistas interno; la implementación lo simplificó a un booleano controlado desde el padre. El verify detectó la desviación y obligó a decidir conscientemente si era deuda técnica o simplificación aceptable.

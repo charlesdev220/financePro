@@ -18,9 +18,9 @@ export class ProjectionsComponent {
 
   private readonly currentPeriod = new Date().toISOString().slice(0, 7);
 
-  /** Solo meses completos — excluye el mes en curso para no distorsionar la regresión. */
+  /** Meses completos con actividad real — excluye el mes en curso y períodos sin transacciones para no distorsionar la regresión. */
   private readonly completedData = computed(() =>
-    this.data().filter(t => t.period < this.currentPeriod)
+    this.data().filter(t => t.period < this.currentPeriod && (t.income > 0 || t.expense > 0))
   );
 
   /** True cuando hay al menos 3 meses completos de datos para generar una regresión fiable. */

@@ -4,6 +4,39 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Fix Analytics Period Filter + Bug Fixes):
+*Fase actual:* Fase archive: cambio cerrado y archivado
+*Estado actual:* Completado ✅ | 2026-05-09
+- ✔️ **REQ-01:** `projectionData()` usa `filteredTxs()` del período navegado — respeta el offset/tab activo
+- ✔️ **REQ-02:** `savingsCurrentMonth` = `calculateSummary(filteredTxs()).balance` — refleja el período activo
+- ✔️ **REQ-03+BUG-005:** `savingsCurrentYear` usa `dateRange.to` (no `from`) — correcto para períodos que cruzan año (ej: "27 dic – 26 ene 2026" muestra ahorro de 2026, no 2025)
+- ✔️ **REQ-04:** `chartTotals()` en `week`/`day` devuelve 1 `MonthlyTotal` con suma directa desde `filteredTxs()`
+- ✔️ **REQ-05:** Eliminados signals huérfanos `periods` y `monthlyTotals`; `classifySpending()` sin parámetro `periods`
+- ✔️ **BUG-002 labels:** `analytics-chart.component.ts` transforma labels "YYYY-MM" a "ene", "feb"... con año corto cuando hay múltiples años ("ene '23", "ene '24")
+- ✔️ **BUG-003 proyección:** `projections.component.ts` filtra meses con 0 datos en `completedData` — regresión lineal ya no distorsionada por huecos históricos
+- ✔️ **BUG-001 colores:** `analytics-chart.component.ts` usa `APP_COLORS.GREEN+'b3'` y `APP_COLORS.RED+'b3'` — paleta Monefy DS
+- ✔️ **BUG-002 aria-label:** `AnalyticsChartComponent` recibe `ariaLabel` como input dinámico — computed `chartAriaLabel` en la page varía por tab
+- ✔️ **BUG-001 formato decimal:** `savings-chart.component` usa `CurrencyFormatPipe` (locale es-AR, coma decimal) en lugar de `DecimalPipe` (punto decimal)
+- ✔️ **BUG-004 inter-anual:** `getSameMonthAcrossYears` ahora siempre incluye el año en curso aunque tenga 0 transacciones — el gráfico comparativo de enero nunca omite 2026
+*Deuda técnica documentada:* BUG-007 (clicks E2E silenciosos — solo tests, requiere `scrollIntoView` en el period navigator)
+*Próximos pasos:* ninguno
+
+---
+
+### Qué hemos completado hasta ahora (Fix Analytics Period Filter):
+*Fase actual:* Fase apply: implementación completa
+*Estado actual:* En Proceso — pendiente verificación manual | 2026-05-09
+- ✔️ **REQ-05 service:** eliminado parámetro huérfano `periods: string[]` de `classifySpending()` en `analytics.service.ts`
+- ✔️ **REQ-05 page:** eliminados `monthlyTotals` computed y `periods` computed de `analytics.page.ts`; `spendingData()` actualizado sin segundo argumento
+- ✔️ **REQ-01:** `projectionData()` usa `filteredTxs()` en lugar de `completedTxs()` para tabs no-year — respeta el período navegado
+- ✔️ **REQ-02:** `savingsCurrentMonth` simplificado a `calculateSummary(filteredTxs()).balance` — refleja el offset/tab activo
+- ✔️ **REQ-03:** `savingsCurrentYear` usa `new Date(dateRange.from + 'T12:00:00').getFullYear()` para derivar el año del período navegado
+- ✔️ **REQ-04:** `chartTotals()` en `week`/`day` retorna 1 `MonthlyTotal` con suma directa de `filteredTxs()`, sin subdividir por mes
+*Deuda técnica documentada:* ninguna
+*Próximos pasos:* verificación manual en browser (Phase 4 del tasks.md)
+
+---
+
 ### Qué hemos completado hasta ahora (Savings Chart — Gráfica de Ahorro):
 *Fase actual:* Fase archive: cambio cerrado y archivado
 *Estado actual:* Completado ✅ | 2026-05-08

@@ -12,7 +12,7 @@
         [class.text-myfinance-green]="isMonthPositive()"
         [class.text-myfinance-red]="isMonthNegative()"
       >
-        {{ monthPrefix() }}{{ currentMonth() | number:'1.2-2' }} {{ currency() }}
+        {{ monthPrefix() }}{{ currentMonth() | currencyFormat:currency() }}
       </span>
       <p class="text-xs text-myfinance-text-secondary">
         @if (isMonthPositive()) {

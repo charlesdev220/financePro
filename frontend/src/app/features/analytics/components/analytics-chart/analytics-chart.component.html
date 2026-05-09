@@ -3,7 +3,7 @@
     [datasets]="datasets()"
     [labels]="labels()"
     type="bar"
-    ariaLabel="Gráfico histórico de ingresos y gastos por mes"
+    [ariaLabel]="ariaLabel()"
   />
 } @else {
   <div class="flex flex-col items-center justify-center py-10 gap-2 text-center">
