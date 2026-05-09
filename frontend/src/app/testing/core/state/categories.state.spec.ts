@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 
 import { CategoriesStateService } from '@core/state/categories.state';
 import { CategoryService } from '@features/categories/services/category.service';
+import { AppendResponse } from '@features/transactions/services/transaction.service';
 import { WorkspacesStateService } from '@core/state/workspaces.state';
 import { ICategory } from '@models/category.model';
 
@@ -72,7 +73,7 @@ describe('CategoriesStateService', () => {
 
   it('should add category optimistically and reload', async () => {
     const newCategory = { ...mockCategory, categoryId: 'cat_new' };
-    spectator.inject(CategoryService).saveCategory.mockReturnValue(of(undefined));
+    spectator.inject(CategoryService).saveCategory.mockReturnValue(of({ updates: { updatedRange: 'CATEGORIES!A10:K10' } } as AppendResponse));
     spectator.inject(CategoryService).loadCategories.mockReturnValue(of({ categories: [newCategory], rowMap: { cat_new: 3 } }));
 
     spectator.service.add(newCategory);

@@ -19,6 +19,13 @@ import { ITransaction, TransactionDraft } from '@models/transaction.model';
 // F: currency | G: amount_base | H: concept | I: date | J: type
 // K: is_recurring | L: recurrence_rule | M: notes | N: created_at | O: updated_at | P: workspace_id
 
+export interface AppendResponse {
+  updates?: {
+    updatedRange?: string;
+    updatedRows?: number;
+  };
+}
+
 function parseNum(v: unknown): number {
   const n = Number(String(v ?? 0).replace(',', '.'));
   return isNaN(n) || !isFinite(n) ? 0 : n;
@@ -117,8 +124,8 @@ export class TransactionService {
     };
   }
 
-  saveTransaction(tx: ITransaction): Observable<unknown> {
-    return this.sheetsApi.appendRow('TRANSACTIONS!A1', [transactionToRow(tx)]);
+  saveTransaction(tx: ITransaction): Observable<AppendResponse> {
+    return this.sheetsApi.appendRow('TRANSACTIONS!A1', [transactionToRow(tx)]) as Observable<AppendResponse>;
   }
 
   updateTransaction(tx: ITransaction, rowNumber: number): Observable<unknown> {

@@ -18,14 +18,12 @@ Senior Architect, 15+ años, GDE & MVP. Mentor apasionado. Frustrás cuando algu
 
 ## 📏 Reglas Globales
 
-- **utiliza siempre el `prompt-enrichment.md`** antes de hacer cualquier implementacion, ya sea una correccion o una nueva implementacion, consulta al prompt_enricher
-- **Ante una nueva petición:** leer `HISTORIAL_IMPLEMENTACION.md` → preparar plan en `MyFinance_Implementation_Plan.md` → continuar con el flujo SDD.
-- **Para un nuevo desarrollo:** verificar estado en `.sdd/changes/` y retomar si hay trabajo pendiente; si no, iniciar con `/sdd-new <cambio>`.
+- **utiliza siempre el `prompt-enrichment.md`** antes de hacer cualquier implementacion, ya sea una correccion o una nueva implementacion, el prompt devuelto por prompt-enrichment.md debe ser aceptado por el usuario antes de proceder.
+- **Nunca** realizar cambios que contradigan al prompt del usuario.
+- **Actualizar `HISTORIAL_IMPLEMENTACION.md` y `HISTORIAL_APRENDIZAJE.md`** (insertar al principio, bajo el encabezado) tras cada implementacion.
 - **Nunca** añadir Co-Authored-By ni atribución IA a commits.
 - **Nunca** ejecutar build tras cambios salvo petición explícita.
-- **Nunca** usar `cat`, `grep`, `find`, `sed`, `ls` en Bash — usar las herramientas nativas (Read, Grep, Glob, Edit, Write).
-- **Nunca** ejecutar las aplicaciones sin consultar; si se da acceso, siempre terminar esas ejecuciones.
-- **Nunca** añadir imágenes o recursos que no se vayan a utilizar.
+- **Nunca** ejecutar las aplicaciones sin consultar; si se da acceso, siempre terminar esas ejecuciones como playwrigth.
 - **Cero código a medias:** prohibido `TODO`, `FIXME`, `MOCK`. Todo entregado debe ser funcional.
 - **Zero Secrets:** tokens y contraseñas solo en variables de entorno, nunca en código.
 - **Nunca** implementar codigo por una pequena peticion, siempre esperar confirmacion antes de proceder.
@@ -98,7 +96,7 @@ Prompt
         │     └── lee: typescript · angular · html · ionic · ngrx · tailwind · ux-ui · sheets-api
         ├── qa-automation             ← escribe y ejecuta tests unitarios (Karma/Jasmine)
         │     └── lee: angular · ngrx · typescript + verify.md del cambio activo
-        ├── playwright-inspector      ← escribe, ejecuta y valida tests E2E Playwright + inspección visual → bug-report.md
+        ├── playwright-inspector      ← escribe, ejecuta y valida tests E2E Playwright + inspección visual → bug-report.md (necesita aprovacion antes de continuar)
         │     └── lee: ux-ui · ionic · tailwind · HISTORIAL_IMPLEMENTACION
         └── devops-cloud              ← builds, CI/CD, secrets
               └── lee: CLAUDE.md (sección Stack)

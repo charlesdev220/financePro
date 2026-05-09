@@ -4,7 +4,7 @@ import { createServiceFactory, SpectatorService, mockProvider } from '@ngneat/sp
 import { of, throwError } from 'rxjs';
 
 import { TransactionsStateService } from '@core/state/transactions.state';
-import { TransactionService } from '@features/transactions/services/transaction.service';
+import { TransactionService, AppendResponse } from '@features/transactions/services/transaction.service';
 import { ConceptsService } from '@features/transactions/services/concepts.service';
 import { CurrencyApiService } from '@core/services/currency-api.service';
 import { BudgetsStateService } from '@core/state/budgets.state';
@@ -43,7 +43,7 @@ describe('TransactionsStateService', () => {
       ],
     });
 
-    spectator.inject(TransactionService).saveTransaction.mockReturnValue(of(undefined));
+    spectator.inject(TransactionService).saveTransaction.mockReturnValue(of({ updates: { updatedRange: 'TRANSACTIONS!A10:P10' } } as AppendResponse));
     spectator.inject(TransactionService).deleteTransaction.mockReturnValue(of(undefined));
     spectator.inject(TransactionService).processRecurring.mockReturnValue([]);
     spectator.inject(ConceptsService).upsertConcept.mockReturnValue(Promise.resolve());
@@ -55,7 +55,7 @@ describe('TransactionsStateService', () => {
     const newRec: ITransaction = { ...MOCK_TRANSACTIONS[0], txId: 'rec_1' };
     spectator.inject(TransactionService).loadTransactions.mockReturnValue(of({ transactions: TWO_TXS, rowMap: {} }));
     spectator.inject(TransactionService).processRecurring.mockReturnValue([newRec]);
-    spectator.inject(TransactionService).saveTransaction.mockReturnValue(of(undefined));
+    spectator.inject(TransactionService).saveTransaction.mockReturnValue(of({ updates: { updatedRange: 'TRANSACTIONS!A10:P10' } } as AppendResponse));
 
     spectator.service.load();
     flushMicrotasks();

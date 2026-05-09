@@ -1,5 +1,6 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom, from, concatMap, toArray } from 'rxjs';
+import { AppendResponse } from '@features/transactions/services/transaction.service';
 import { ITransaction, TransactionDraft } from '@models/transaction.model';
 import { TransactionService } from '@features/transactions/services/transaction.service';
 import { ConceptsService } from '@features/transactions/services/concepts.service';
@@ -20,6 +21,7 @@ export class TransactionsStateService {
   private readonly _loading  = signal<boolean>(false);
   private readonly _error    = signal<string | null>(null);
   private readonly _rowMap   = signal<Record<string, number>>({});
+  private readonly _loaded   = signal<boolean>(false);
 
   /** Transacciones del workspace activo. Las transacciones sin workspaceId heredan el workspace default (retrocompatibilidad). */
   readonly items   = computed(() => {
@@ -32,15 +34,17 @@ export class TransactionsStateService {
   /** Mapa txId → número de fila en Sheets. */
   readonly rowMap  = this._rowMap.asReadonly();
 
-  load(): void {
+  load(force = false): Promise<void> {
+    if (this._loaded() && !force) return Promise.resolve();
     this._loading.set(true);
     this._error.set(null);
-    firstValueFrom(this.transactionService.loadTransactions(this.workspacesState.defaultWorkspaceId()))
+    return firstValueFrom(this.transactionService.loadTransactions(this.workspacesState.defaultWorkspaceId()))
       .then(({ transactions, rowMap }) => {
         const newRecurring = this.transactionService.processRecurring(transactions);
         if (newRecurring.length === 0) {
           this._allItems.set(transactions);
           this._rowMap.set(rowMap);
+          this._loaded.set(true);
           return;
         }
         return firstValueFrom(
@@ -51,6 +55,7 @@ export class TransactionsStateService {
         ).then(() => {
           this._allItems.set([...transactions, ...newRecurring]);
           this._rowMap.set(rowMap);
+          this._loaded.set(true);
         });
       })
       .catch(err => this._error.set(String(err)))
@@ -65,7 +70,13 @@ export class TransactionsStateService {
         const prevItems = this._allItems();
         this._allItems.update(items => [...items, transaction]);
         return firstValueFrom(this.transactionService.saveTransaction(transaction))
-          .then(() => {
+          .then((response: AppendResponse) => {
+            const rowNumber = this._parseRowNumber(response?.updates?.updatedRange);
+            if (rowNumber) {
+              this._rowMap.update(m => ({ ...m, [transaction.txId]: rowNumber }));
+            } else {
+              this.load(true);
+            }
             this.conceptsService.upsertConcept(transaction).catch(() => {});
             if (transaction.type === TRANSACTION_TYPES.EXPENSE) {
               this.budgetsState.recalculate(
@@ -74,9 +85,6 @@ export class TransactionsStateService {
                 this._allItems(),
               );
             }
-            // Recarga para sincronizar _rowMap con el número de fila real en Sheets.
-            // Sin esto, editar una transacción recién agregada en la misma sesión crea un duplicado.
-            this.load();
           })
           .catch(err => {
             this._allItems.set(prevItems);
@@ -115,6 +123,12 @@ export class TransactionsStateService {
         this._allItems.set(prevItems);
         this._error.set(String(err));
       });
+  }
+
+  private _parseRowNumber(range: string | undefined): number | null {
+    if (!range) return null;
+    const match = range.match(/!A(\d+)/);
+    return match ? Number(match[1]) : null;
   }
 
   delete(txId: string, rowNumber: number): void {

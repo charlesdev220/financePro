@@ -3,6 +3,7 @@ import { Observable, map } from 'rxjs';
 import { SheetsApiService } from '@core/services/sheets-api.service';
 import { AuthService } from '@core/services/auth.service';
 import { IWallet } from '@models/wallet.model';
+import { AppendResponse } from '@features/transactions/services/transaction.service';
 import { APP_COLORS } from '@core/constants/colors.constants';
 
 // WALLETS schema (A:J — 10 columnas)
@@ -66,8 +67,8 @@ export class WalletService {
     );
   }
 
-  saveWallet(wallet: IWallet): Observable<unknown> {
-    return this.sheetsApi.appendRow('WALLETS!A1', [walletToRow(wallet)]);
+  saveWallet(wallet: IWallet): Observable<AppendResponse> {
+    return this.sheetsApi.appendRow('WALLETS!A1', [walletToRow(wallet)]) as Observable<AppendResponse>;
   }
 
   updateWallet(wallet: IWallet, rowNumber: number): Observable<unknown> {

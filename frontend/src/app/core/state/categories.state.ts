@@ -2,6 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ICategory } from '@models/category.model';
 import { CategoryService } from '@features/categories/services/category.service';
+import { AppendResponse } from '@features/transactions/services/transaction.service';
 import { WorkspacesStateService } from '@core/state/workspaces.state';
 
 @Injectable({ providedIn: 'root' })
@@ -13,6 +14,7 @@ export class CategoriesStateService {
   private readonly _loading  = signal<boolean>(false);
   private readonly _error    = signal<string | null>(null);
   private readonly _rowMap   = signal<Record<string, number>>({});
+  private readonly _loaded   = signal<boolean>(false);
 
   /** Categorías del workspace activo. Las categorías sin workspaceId heredan el workspace default (retrocompatibilidad). */
   readonly items   = computed(() => {
@@ -25,28 +27,42 @@ export class CategoriesStateService {
   /** Mapa categoryId → número de fila en Sheets. */
   readonly rowMap  = this._rowMap.asReadonly();
 
-  load(): void {
+  load(force = false): Promise<void> {
+    if (this._loaded() && !force) return Promise.resolve();
     this._loading.set(true);
     this._error.set(null);
-    firstValueFrom(this.categoryService.loadCategories(this.workspacesState.defaultWorkspaceId()))
+    return firstValueFrom(this.categoryService.loadCategories(this.workspacesState.defaultWorkspaceId()))
       .then(({ categories, rowMap }) => {
         this._allItems.set(categories);
         this._rowMap.set(rowMap);
+        this._loaded.set(true);
       })
       .catch(err => this._error.set(String(err)))
       .finally(() => this._loading.set(false));
   }
 
-  /** Agrega categoría optimistamente y recarga para sincronizar rowMap tras el append. */
   add(category: ICategory): void {
     const prevItems = this._allItems();
     this._allItems.update(items => [...items, category]);
     firstValueFrom(this.categoryService.saveCategory(category))
-      .then(() => this.load())
+      .then((response: AppendResponse) => {
+        const rowNumber = this._parseRowNumber(response?.updates?.updatedRange);
+        if (rowNumber) {
+          this._rowMap.update(m => ({ ...m, [category.categoryId]: rowNumber }));
+        } else {
+          this.load(true);
+        }
+      })
       .catch(err => {
         this._allItems.set(prevItems);
         this._error.set(String(err));
       });
+  }
+
+  private _parseRowNumber(range: string | undefined): number | null {
+    if (!range) return null;
+    const match = range.match(/!A(\d+)/);
+    return match ? Number(match[1]) : null;
   }
 
   update(category: ICategory, rowNumber: number): void {

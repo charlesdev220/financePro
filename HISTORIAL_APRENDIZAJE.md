@@ -4,6 +4,20 @@ Registro de lecciones técnicas extraídas de cada iteración del proyecto. Appe
 
 ---
 
+### Qué hemos aprendido en el desarrollo de esta iteración (Optimización de Carga de Transacciones — ARCHIVADO):
+*Qué se aprendió:* Hacer que `load()` retorne `Promise<void>` (en lugar de `void`) permite composición real con `Promise.all()` en `onRefresh()` y garantiza que el spinner de pull-to-refresh se cierra solo cuando los 3 calls HTTP terminaron. El flag `_loaded = signal<boolean>(false)` solo debe activarse en el `.then()` exitoso — nunca en `.catch()` ni `.finally()` — para que los errores de red permitan reintentos automáticos. La Sheets API v4 incluye `updates.updatedRange` en la respuesta de `append`; extraer el número de fila con `/!A(\d+)/` elimina el reload completo post-inserción en cualquier state service, no solo en transacciones. Aplicar el mismo patrón a wallets y categories requiere tipar `saveWallet()` y `saveCategory()` con `Observable<AppendResponse>` e importar el tipo desde `transaction.service.ts`.
+*Por qué se aprendió:* Al corregir los warnings del verify-report se vio que el patrón `_parseRowNumber` es transversal a los 3 dominios (transactions, wallets, categories) y que un `load()` void hace imposible coordinar el cierre del pull-to-refresh con la finalización real de las peticiones.
+*Dónde se aprendió:* Verify-report del SDD (warnings W-01, W-02, W-03) + corrección inline de los 3 state services.
+
+---
+
+### Qué hemos aprendido en el desarrollo de esta iteración (Optimización de Carga de Transacciones):
+*Qué se aprendió:* Un guard `_loaded = signal<boolean>(false)` en los state services es el mecanismo correcto para evitar llamadas HTTP repetidas en navegación entre tabs — no se debe usar `_allItems().length > 0` porque un usuario con 0 ítems dispararía la API en cada visita. El flag solo se activa en `.then()` exitoso, nunca en `.finally()`, para que errores de red permitan reintentos. La Sheets API v4 devuelve `updates.updatedRange` (ej: `TRANSACTIONS!A47:P47`) en la respuesta de `append` — extraer el número de fila con `/!A(\d+)/` elimina el `load()` completo que se hacía tras cada inserción. El pull-to-refresh pasa `force: true` para saltear el guard cuando el usuario quiere datos frescos explícitamente.
+*Por qué se aprendió:* La lentitud perceptible en el tab de transacciones se debía a que cada navegación al tab lanzaba 3 llamadas HTTP (transactions + wallets + categories) y cada inserción sumaba un 4to `load()` completo para sincronizar el `rowMap`.
+*Dónde se aprendió:* Análisis de `transaction-list.page.ts` → `transactions.state.ts` → `transaction.service.ts` + documentación de Sheets API v4 (campo `updates.updatedRange` en respuesta de `append`).
+
+---
+
 ### Qué hemos aprendido en el desarrollo de esta iteración (Fix Analytics Period Filter):
 *Qué se aprendió:* Con `monthStartDay > 1`, las transacciones de los primeros días del mes calendario (ej: 28-31 de enero) pertenecen al período siguiente según la lógica custom. Esto genera "barras vacías" en el gráfico anual para el mes calendario (2026-01 vacío porque sus txns van a 2026-02) y ausencias en el gráfico inter-anual (getSameMonthAcrossYears no incluye 2026 si el período "2026-01" tiene 0 transacciones). No son bugs del código sino consecuencias esperadas del sistema de períodos custom. La solución UX es usar labels legibles ("ene '26") en lugar de ISO crudos para reducir la confusión. Para el gráfico de ahorro anual en períodos que cruzan año, usar `dateRange.to` (no `from`) para que "27 dic – 26 ene 2026" muestre el ahorro de 2026. Para la proyección OLS, filtrar períodos con 0 datos antes de calcular la regresión, ya que `getYearMonthlyTotals` garantiza 12 entradas aunque haya meses sin transacciones.
 *Por qué se aprendió:* La verificación con el usuario chalme220@gmail.com (monthStartDay=27) expuso que el período "27 dic – 26 ene 2026" tiene 0 txns (las 4 de ene 2026 están en el período siguiente), lo que reveló varios comportamientos inesperados en gráficos y proyecciones.

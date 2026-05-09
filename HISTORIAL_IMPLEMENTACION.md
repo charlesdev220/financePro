@@ -4,6 +4,31 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Optimización de Carga de Transacciones — ARCHIVADO):
+*Fase actual:* Fase archive: cambio cerrado y archivado
+*Estado actual:* Completado ✅ | 2026-05-09
+- ✔️ **Guard `_loaded`:** `TransactionsStateService`, `WalletsStateService` y `CategoriesStateService` evitan HTTP redundantes en navegaciones repetidas; `load(force=false)` retorna `Promise<void>`
+- ✔️ **rowMap sin reload:** `add()` en los 3 state services extrae el número de fila de `AppendResponse.updates.updatedRange` y actualiza `_rowMap` directamente
+- ✔️ **`AppendResponse` tipada:** `saveTransaction()`, `saveWallet()` y `saveCategory()` retornan `Observable<AppendResponse>`
+- ✔️ **Pull-to-refresh correcto:** `onRefresh()` usa `Promise.all()` y espera a los 3 loads antes de cerrar el spinner
+- ✔️ **Warnings W-01/W-02/W-03 corregidos:** spinner, rowMap de wallets y rowMap de categories sincronizados
+*Deuda técnica documentada:* Tests unitarios de SC-01 a SC-06 pendientes (S-01, S-02 del verify-report); literal `'expense'` en `transaction.service.ts:45` (S-03)
+*Próximos pasos:* Agregar specs Karma para los 6 escenarios BDD del guard y el flujo `_parseRowNumber`
+
+---
+
+### Qué hemos completado hasta ahora (Optimización de Carga de Transacciones):
+*Fase actual:* Fase apply: implementación completada
+*Estado actual:* Completado ✅ | 2026-05-09
+- ✔️ **Guard `_loaded`:** `TransactionsStateService`, `WalletsStateService` y `CategoriesStateService` evitan llamadas HTTP redundantes en navegaciones repetidas al tab
+- ✔️ **Eliminación del reload tras `add()`:** `TransactionsStateService.add()` extrae el `rowNumber` de `AppendResponse.updates.updatedRange` y actualiza `_rowMap` directamente sin relanzar `load()`
+- ✔️ **`AppendResponse` tipada:** `TransactionService.saveTransaction()` retorna `Observable<AppendResponse>` con `updates.updatedRange`
+- ✔️ **Pull-to-refresh:** `onRefresh()` con `force: true` y `ion-refresher` en `TransactionListPage`
+*Deuda técnica documentada:* `CategoriesStateService.add()` también hace `load()` tras guardar — fuera de scope de este cambio, pendiente para siguiente iteración
+*Próximos pasos:* `sdd-verify` para validar SC-01 a SC-06
+
+---
+
 ### Qué hemos completado hasta ahora (Fix Analytics Period Filter + Bug Fixes):
 *Fase actual:* Fase archive: cambio cerrado y archivado
 *Estado actual:* Completado ✅ | 2026-05-09

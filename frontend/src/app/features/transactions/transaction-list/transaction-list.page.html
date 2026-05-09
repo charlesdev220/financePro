@@ -17,6 +17,10 @@
 </ion-header>
 
 <ion-content style="--background: var(--color-bg-mint);">
+  <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)">
+    <ion-refresher-content />
+  </ion-refresher>
+
   <!-- Filtros Rápidos (Monefy Style) -->
   <div class="bg-[var(--color-primary)] pb-4 rounded-b-[40px] shadow-lg">
     <div class="flex gap-2 p-4 overflow-x-auto no-scrollbar max-w-screen-xl mx-auto">

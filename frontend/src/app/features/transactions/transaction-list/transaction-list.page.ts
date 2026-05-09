@@ -13,6 +13,8 @@ import {
   IonItemOption,
   IonItemOptions,
   IonModal,
+  IonRefresher,
+  IonRefresherContent,
   ToastController,
   AlertController,
 } from '@ionic/angular/standalone';
@@ -45,6 +47,8 @@ import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
     IonItem, IonLabel,
     IonItemSliding, IonItemOption, IonItemOptions,
     IonModal,
+    IonRefresher,
+    IonRefresherContent,
     TransactionFormComponent,
     RelativeDatePipe, CurrencyFormatPipe,
   ],
@@ -224,6 +228,15 @@ export class TransactionListPage implements OnInit {
     this.txState.load();
     this.walletsState.load();
     this.categoriesState.load();
+  }
+
+  async onRefresh(event: CustomEvent): Promise<void> {
+    await Promise.all([
+      this.txState.load(true),
+      this.walletsState.load(true),
+      this.categoriesState.load(true),
+    ]);
+    (event.target as HTMLIonRefresherElement).complete();
   }
 
   openAddModal(): void {

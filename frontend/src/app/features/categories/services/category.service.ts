@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, map, switchMap } from 'rxjs';
 import { SheetsApiService } from '@core/services/sheets-api.service';
 import { ICategory } from '@models/category.model';
+import { AppendResponse } from '@features/transactions/services/transaction.service';
 import { APP_COLORS } from '@core/constants/colors.constants';
 
 // CATEGORIES schema (A:K — 11 columnas)
@@ -65,8 +66,8 @@ export class CategoryService {
     );
   }
 
-  saveCategory(category: ICategory): Observable<unknown> {
-    return this.sheetsApi.appendRow('CATEGORIES!A1', [categoryToRow(category)]);
+  saveCategory(category: ICategory): Observable<AppendResponse> {
+    return this.sheetsApi.appendRow('CATEGORIES!A1', [categoryToRow(category)]) as Observable<AppendResponse>;
   }
 
   updateCategory(category: ICategory, rowNumber: number): Observable<unknown> {

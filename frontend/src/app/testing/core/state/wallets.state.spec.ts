@@ -4,6 +4,7 @@ import { signal } from '@angular/core';
 
 import { WalletsStateService } from '@core/state/wallets.state';
 import { WalletService } from '@features/wallets/services/wallet.service';
+import { AppendResponse } from '@features/transactions/services/transaction.service';
 import { WorkspacesStateService } from '@core/state/workspaces.state';
 import { IWallet } from '@models/wallet.model';
 
