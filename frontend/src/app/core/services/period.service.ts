@@ -166,8 +166,19 @@ export class PeriodService {
     return { from, to };
   }
 
-  private _yearRange(today: Date, _monthStartDay: number, offset: number): DateRange {
-    const year = today.getFullYear() + offset;
-    return { from: `${year}-01-01`, to: `${year}-12-31` };
+  private _yearRange(today: Date, monthStartDay: number, offset: number): DateRange {
+    const year  = today.getFullYear() + offset;
+    const start = Math.max(1, Math.min(28, monthStartDay));
+    if (start <= 1) {
+      return { from: `${year}-01-01`, to: `${year}-12-31` };
+    }
+    // Con monthStartDay > 1, el año comienza el día `start` de diciembre del año anterior.
+    // Ej: monthStartDay=27 → año 2026 va de 2025-12-27 a 2026-12-26
+    const fromDay = String(start).padStart(2, '0');
+    const toDay   = String(start - 1).padStart(2, '0');
+    return {
+      from: `${year - 1}-12-${fromDay}`,
+      to:   `${year}-12-${toDay}`,
+    };
   }
 }

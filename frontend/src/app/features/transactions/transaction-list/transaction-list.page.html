@@ -173,18 +173,18 @@
           </div>
         </div>
 
-        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-white rounded-3xl shadow-sm border border-gray-100">
           @for (tx of group.transactions; track tx.txId; let last = $last) {
-          <ion-item-sliding>
-            <ion-item lines="none" class="ion-no-padding px-4" (click)="openEditModal(tx)"
-              style="--padding-start: 16px; --padding-end: 16px; --inner-padding-end: 0;">
+          <ion-item-sliding #sliding>
+            <ion-item lines="none" class="ion-no-padding"
+              style="--padding-start: 16px; --padding-end: 8px; --inner-padding-end: 0;">
               <div slot="start" class="flex flex-col items-center mr-4">
                 <div
                   class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center text-xl shadow-inner border border-white">
                   {{ tx.categoryIcon }}
                 </div>
               </div>
-              <ion-label class="py-4">
+              <ion-label class="py-3">
                 <div class="flex justify-between items-start mb-1">
                   <h3 class="text-sm font-bold text-gray-900 m-0">{{ tx.concept || tx.categoryName }}</h3>
                   <span class="text-sm font-black"
@@ -205,10 +205,20 @@
                   }
                 </div>
               </ion-label>
+              <div slot="end" class="flex items-center gap-1 pl-2">
+                <button type="button" class="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                  (click)="openEditModal(tx); $event.stopPropagation()">
+                  <ion-icon name="create-outline" class="text-myfinance-text-secondary text-base block"></ion-icon>
+                </button>
+                <button type="button" class="p-2 rounded-lg hover:bg-red-50 transition-colors"
+                  (click)="confirmDelete(tx); $event.stopPropagation()">
+                  <ion-icon name="trash-outline" class="text-myfinance-red text-base block"></ion-icon>
+                </button>
+              </div>
             </ion-item>
 
             <ion-item-options side="end">
-              <ion-item-option color="danger" (click)="deleteTransaction(tx)" style="--border-radius: 0 24px 24px 0;">
+              <ion-item-option color="danger" (click)="deleteTransaction(tx, sliding)" style="--border-radius: 0 24px 24px 0;">
                 <ion-icon slot="icon-only" name="trash-outline"></ion-icon>
               </ion-item-option>
             </ion-item-options>

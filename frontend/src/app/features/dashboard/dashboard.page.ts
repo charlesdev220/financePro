@@ -24,8 +24,6 @@ import {
   addOutline,
   removeOutline,
   folderOpenOutline,
-  chevronBackOutline,
-  chevronForwardOutline,
 } from 'ionicons/icons';
 
 import { Router } from '@angular/router';
@@ -38,14 +36,13 @@ import { CurrencyStateService } from '@core/state/currency.state';
 import { UserSettingsStateService } from '@core/state/user-settings.state';
 import { WorkspacesStateService } from '@core/state/workspaces.state';
 import { PeriodService } from '@core/services/period.service';
-import { PeriodTab } from '@core/constants/period.constants';
 import { TransactionFormComponent } from '@features/transactions/transaction-form/transaction-form.component';
 import { WorkspaceFormComponent } from '@features/workspaces/workspace-form/workspace-form.component';
 import { DashboardChartComponent } from './components/dashboard-chart/dashboard-chart.component';
 import { DashboardOnboardingComponent } from './components/dashboard-onboarding/dashboard-onboarding.component';
 import { BalanceSummaryHeaderComponent } from '@shared/components/balance-summary-header/balance-summary-header.component';
 import { ShareHeaderComponent } from '@shared/components/share-header/share-header.component';
-import { PeriodSelectorComponent } from '@shared/components/period-selector/period-selector.component';
+import { PeriodNavigatorComponent, PeriodNavigatorState } from '@shared/components/period-navigator/period-navigator.component';
 import { DashboardService, DateRange } from './services/dashboard.service';
 import { DataSeedService } from '@core/services/data-seed.service';
 import { CurrencyFormatPipe } from '@shared/pipes/currency-format.pipe';
@@ -70,7 +67,7 @@ import { TRANSACTION_TYPES, TransactionType } from '@core/constants/transaction.
     BalanceSummaryHeaderComponent,
     DashboardChartComponent,
     DashboardOnboardingComponent,
-    PeriodSelectorComponent,
+    PeriodNavigatorComponent,
     CurrencyFormatPipe,
     RelativeDatePipe,
     TransactionFormComponent,
@@ -102,10 +99,13 @@ export class DashboardPage implements OnInit {
   /** Workspaces del usuario para el selector de espacios en el header. */
   readonly workspacesState = inject(WorkspacesStateService);
 
-  /** Tab de período activo en el selector (día / semana / mes / año). */
-  readonly activePeriodTab = signal<PeriodTab>('month');
-  /** Offset de navegación temporal: 0 = período actual, -1 = anterior, -2 = hace 2, etc. */
-  readonly navigationOffset = signal<number>(0);
+  /** Estado completo del navegador de período — emitido por app-period-navigator. */
+  readonly periodState = signal<PeriodNavigatorState>({
+    tab: 'month',
+    offset: 0,
+    isCustomRange: false,
+    dateRange: this.periodService.getDateRange('month', new Date(), this.userSettingsState.monthStartDay(), 0),
+  });
 
   /** Estado de visibilidad del modal de nueva transacción. */
   readonly isModalOpen = signal(false);
@@ -132,28 +132,8 @@ export class DashboardPage implements OnInit {
   /** Moneda base del usuario. Fallback 'EUR' antes de cargar. */
   readonly userBaseCurrency = computed(() => this.currencyState.baseCurrency() ?? 'EUR');
 
-  /** Rango de fechas { from, to } calculado según tab activo, monthStartDay y offset de navegación. */
-  readonly dateRange = computed((): DateRange =>
-    this.periodService.getDateRange(
-      this.activePeriodTab(),
-      new Date(),
-      this.userSettingsState.monthStartDay(),
-      this.navigationOffset(),
-    )
-  );
-
-  /** Etiqueta legible del período activo para el header del dashboard. */
-  readonly periodLabel = computed(() =>
-    this.periodService.getPeriodLabel(
-      this.activePeriodTab(),
-      new Date(),
-      this.userSettingsState.monthStartDay(),
-      this.navigationOffset(),
-    )
-  );
-
-  /** Deshabilita el chevron > cuando ya estamos en el período actual (offset = 0). */
-  readonly canNavigateForward = computed(() => this.navigationOffset() < 0);
+  /** Rango de fechas activo — recibido del app-period-navigator. */
+  readonly dateRange = computed((): DateRange => this.periodState().dateRange);
 
   /** Resumen consolidado: Ingresos, Gastos y Balance del período actual. */
   readonly summary = computed(() =>
@@ -179,7 +159,6 @@ export class DashboardPage implements OnInit {
         if (b.mode === 'period') {
           return !!b.startDate && !!b.endDate && today >= b.startDate && today <= b.endDate;
         }
-        // indefinite: siempre visible
         return true;
       })
       .map(b => {
@@ -205,7 +184,6 @@ export class DashboardPage implements OnInit {
       .map(tx => {
         const cat = cats.find(c => c.categoryId === tx.categoryId);
         const isIncome = tx.type === TRANSACTION_TYPES.INCOME;
-        // Gasto negativo (devolución/reembolso): amount < 0 en un expense → se visualiza como ingreso
         const isEffectiveIncome = isIncome || (tx.type === TRANSACTION_TYPES.EXPENSE && tx.amount < 0);
         return {
           ...tx,
@@ -219,7 +197,7 @@ export class DashboardPage implements OnInit {
   });
 
   constructor() {
-    addIcons({ addOutline, removeOutline, folderOpenOutline, chevronBackOutline, chevronForwardOutline });
+    addIcons({ addOutline, removeOutline, folderOpenOutline });
   }
 
   ngOnInit(): void {
@@ -236,19 +214,8 @@ export class DashboardPage implements OnInit {
     this.chartRefreshTick.update(v => v + 1);
   }
 
-  onTabChange(tab: PeriodTab): void {
-    this.activePeriodTab.set(tab);
-    this.navigationOffset.set(0);
-  }
-
-  onNavigatePrev(): void {
-    this.navigationOffset.update(v => v - 1);
-  }
-
-  onNavigateNext(): void {
-    if (this.canNavigateForward()) {
-      this.navigationOffset.update(v => v + 1);
-    }
+  onPeriodChange(state: PeriodNavigatorState): void {
+    this.periodState.set(state);
   }
 
   goToTransactions(): void {

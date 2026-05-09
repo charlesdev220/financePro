@@ -14,6 +14,7 @@ import {
   IonItemOptions,
   IonModal,
   ToastController,
+  AlertController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { addOutline, trashOutline, createOutline, arrowUpOutline, arrowDownOutline, chevronUpOutline, chevronDownOutline, walletOutline, sparklesOutline, calendarOutline, closeCircleOutline, listOutline, pricetagsOutline } from 'ionicons/icons';
@@ -54,6 +55,7 @@ export class TransactionListPage implements OnInit {
   private readonly categoriesState  = inject(CategoriesStateService);
   private readonly currencyState    = inject(CurrencyStateService);
   private readonly toastCtrl        = inject(ToastController);
+  private readonly alertCtrl        = inject(AlertController);
   private readonly authService      = inject(AuthService);
 
   /** Filtro activo por cartera. */
@@ -232,6 +234,27 @@ export class TransactionListPage implements OnInit {
     this.isModalOpen.set(true);
   }
 
+  async confirmDelete(tx: ITransaction): Promise<void> {
+    const alert = await this.alertCtrl.create({
+      header: 'Eliminar transacción',
+      message: '¿Estás seguro? Esta acción no se puede deshacer.',
+      buttons: [
+        { text: 'Cancelar', role: 'cancel' },
+        {
+          text: 'Eliminar',
+          role: 'destructive',
+          handler: () => {
+            const rowNumber = this.rowMap()[tx.txId];
+            if (!rowNumber) return;
+            this.txState.delete(tx.txId, rowNumber);
+            this.showDeletedToast();
+          },
+        },
+      ],
+    });
+    await alert.present();
+  }
+
   openEditModal(tx: ITransaction): void {
     const user = this.authService.getUser();
     if (!user) return;
@@ -245,14 +268,17 @@ export class TransactionListPage implements OnInit {
     this.selectedTransaction.set(null);
   }
 
-  async deleteTransaction(tx: ITransaction): Promise<void> {
-    const rowNumber = this.rowMap()[tx.txId];
-    if (!rowNumber) return;
-    this.txState.delete(tx.txId, rowNumber);
+  async deleteTransaction(tx: ITransaction, slidingItem?: IonItemSliding): Promise<void> {
+    await slidingItem?.close();
+    await this.confirmDelete(tx);
+  }
+
+  private async showDeletedToast(): Promise<void> {
     const toast = await this.toastCtrl.create({
       message: 'Transacción eliminada',
       duration: 2000,
       color: 'medium',
+      position: 'bottom',
     });
     await toast.present();
   }

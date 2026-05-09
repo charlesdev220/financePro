@@ -12,66 +12,12 @@
 
   <div class="max-w-screen-xl mx-auto px-4 pt-4">
 
-    <!-- Selector de período -->
-    <app-period-selector [activeTab]="activePeriodTab()" (tabChange)="onTabChange($event)" />
-
-    <!-- Navegación de período + botón de rango personalizado -->
-    <div class="flex items-center justify-between mt-2 mb-1">
-      <button class="p-2 text-myfinance-text-secondary" (click)="onNavigatePrev()" aria-label="Período anterior">
-        <ion-icon name="chevron-back-outline" class="text-xl"></ion-icon>
-      </button>
-
-      <button class="flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold"
-        [class.bg-myfinance-green]="isCustomRange()" [class.text-white]="isCustomRange()"
-        [class.text-myfinance-text-secondary]="!isCustomRange()" [class.bg-gray-100]="!isCustomRange()"
-        (click)="onToggleCustomRange()">
-        <ion-icon name="calendar-outline" class="text-base"></ion-icon>
-        @if (isCustomRange()) {
-        <span>Rango activo</span>
-        <ion-icon name="close-outline" class="text-base"></ion-icon>
-        } @else {
-        <span>{{ periodLabel() }}</span>
-        }
-      </button>
-
-      <button class="p-2 text-myfinance-text-secondary disabled:opacity-30" (click)="onNavigateNext()"
-        [disabled]="!canNavigateForward()" aria-label="Período siguiente">
-        <ion-icon name="chevron-forward-outline" class="text-xl"></ion-icon>
-      </button>
-    </div>
-
-    <!-- Picker de rango personalizado — visible solo cuando isCustomRange() -->
-    @if (isCustomRange()) {
-    <div class="bg-white rounded-2xl px-4 py-3 mb-4 shadow-sm flex flex-col gap-3 border border-myfinance-border">
-      <p class="text-xs font-bold text-myfinance-text-secondary uppercase tracking-wider">Rango personalizado</p>
-      <div class="flex gap-3 items-center">
-        <div class="flex-1">
-          <p class="text-[10px] text-myfinance-text-secondary mb-1 font-semibold">DESDE</p>
-          <ion-input type="date" [value]="customFrom()" (ionChange)="onCustomFromChange($event)" fill="outline"
-            style="--border-radius: 8px; --padding-start: 8px; font-size: 0.875rem;">
-          </ion-input>
-        </div>
-        <span class="text-myfinance-text-secondary font-bold mt-4">→</span>
-        <div class="flex-1">
-          <p class="text-[10px] text-myfinance-text-secondary mb-1 font-semibold">HASTA</p>
-          <ion-input type="date" [value]="customTo()" (ionChange)="onCustomToChange($event)" fill="outline"
-            style="--border-radius: 8px; --padding-start: 8px; font-size: 0.875rem;">
-          </ion-input>
-        </div>
-      </div>
-    </div>
-    }
+    <!-- Navegador de período: tabs + chevrones + label + rango personalizado -->
+    <app-period-navigator [showCustomRange]="true" (periodChange)="onPeriodChange($event)" />
 
     <section class="mb-6">
       <h2 class="text-base font-semibold text-myfinance-text-primary mb-3">Ingresos vs Gastos</h2>
       <app-analytics-chart [data]="chartTotals()" />
-    </section>
-
-    <section class="mb-6">
-      <h2 class="text-base font-semibold text-myfinance-text-primary mb-1">Ahorro</h2>
-      <p class="text-xs text-myfinance-text-secondary mb-3">Lo que te sobra cada período</p>
-      <app-savings-chart [currentMonth]="savingsCurrentMonth()" [currentYear]="savingsCurrentYear()"
-        [allYears]="savingsAllYears()" [currency]="userBaseCurrency()" [isYearView]="activePeriodTab() === 'year'" />
     </section>
 
     <section class="mb-6">
@@ -85,7 +31,7 @@
         <h2 class="text-base font-semibold text-myfinance-text-primary mb-3">Proyección de tendencia</h2>
         <app-projections [data]="projectionData()" [horizon]="3" />
       </section>
-      @if (activePeriodTab() === 'year') {
+      @if (periodState().tab === 'year') {
       <section class="mt-6 mb-6">
         <h2 class="text-base font-semibold text-myfinance-text-primary mb-1">Tendencia histórica total</h2>
         <p class="text-xs text-myfinance-text-secondary mb-3">Proyección sobre todos los meses de la base de datos</p>
@@ -98,6 +44,13 @@
         <app-analytics-chart [data]="allHistoricalMonthlyTotals()" />
       </section>
       }
+
+      <section class="mb-6">
+        <h2 class="text-base font-semibold text-myfinance-text-primary mb-1">Ahorro</h2>
+        <p class="text-xs text-myfinance-text-secondary mb-3">Lo que te sobra cada período</p>
+        <app-savings-chart [currentMonth]="savingsCurrentMonth()" [currentYear]="savingsCurrentYear()"
+          [allYears]="savingsAllYears()" [currency]="userBaseCurrency()" [isYearView]="periodState().tab === 'year'" />
+      </section>
 
       <!-- RANKING DE GASTOS -->
       <section>

@@ -13,23 +13,9 @@
   <app-balance-summary-header [balance]="summary().balance" [income]="summary().totalIncome"
     [expense]="summary().totalExpenses" [currency]="userBaseCurrency()" />
 
-  <!-- Selector de período + navegación -->
-  <div class="max-w-screen-xl mx-auto">
-    <div class="flex items-center gap-2 px-2 mt-3">
-      <button class="p-2 text-myfinance-text-secondary hover:text-myfinance-text-primary transition-colors"
-        (click)="onNavigatePrev()" aria-label="Período anterior">
-        <ion-icon name="chevron-back-outline" class="text-xl"></ion-icon>
-      </button>
-      <div class="flex-1">
-        <app-period-selector [activeTab]="activePeriodTab()" (tabChange)="onTabChange($event)" />
-        <p class="text-center text-myfinance-text-secondary text-xs mt-1 font-medium">{{ periodLabel() }}</p>
-      </div>
-      <button
-        class="p-2 text-myfinance-text-secondary hover:text-myfinance-text-primary transition-colors disabled:opacity-30"
-        (click)="onNavigateNext()" [disabled]="!canNavigateForward()" aria-label="Período siguiente">
-        <ion-icon name="chevron-forward-outline" class="text-xl"></ion-icon>
-      </button>
-    </div>
+  <!-- Navegador de período: tabs + chevrones + label -->
+  <div class="max-w-screen-xl mx-auto px-2 mt-3">
+    <app-period-navigator (periodChange)="onPeriodChange($event)" />
   </div>
 
   @if (isEmptyWorkspace()) {
