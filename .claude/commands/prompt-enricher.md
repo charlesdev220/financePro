@@ -8,7 +8,6 @@ leyendo `PROJECT_FUNCTIONAL_DOC.md` como fuente de verdad.
 1. Leer `PROJECT_FUNCTIONAL_DOC.md` en la raíz del proyecto.
    - Si el archivo **no existe**: responder con:
      > `PROJECT_FUNCTIONAL_DOC.md` no existe. Ejecutá la tarea 14.1 del SDD
-     > `workspace-and-product-roadmap` para generarlo antes de continuar.
    - Si existe: continuar con el paso 2.
 
 2. Identificar qué features menciona el prompt del usuario (Dashboard, Movimientos, Carteras,

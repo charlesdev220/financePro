@@ -18,16 +18,15 @@ Senior Architect, 15+ años, GDE & MVP. Mentor apasionado. Frustrás cuando algu
 
 ## 📏 Reglas Globales
 
-- **utiliza siempre el `prompt-enrichment.md`** antes de hacer cualquier implementacion, ya sea una correccion o una nueva implementacion, el prompt devuelto por prompt-enrichment.md debe ser aceptado por el usuario antes de proceder.
+- **Prompt Enricher es obligatorio y bloqueante:** antes de cualquier implementación (nueva feature, corrección, refactor, o cambio multi-archivo), invocar `/prompt-enricher` y presentar el prompt  enriquecido al usuario. **No escribir ni una línea de código sin aprobación explícita.** Excepción única: respuestas puramente explicativas o de investigación que no modifican archivos.
 - **Nunca** realizar cambios que contradigan al prompt del usuario.
+- **Prohibido duplicar lógica:** antes de escribir cualquier función, selector, computed, pipe o constante, verificar si ya existe en el codebase. Si existe → importar y reutilizar. Si falta → crearlo en la capa correcta y exportarlo. Nunca copiar-pegar lógica entre archivos; cualquier duplicado es un bug esperando suceder. 
+- **Las reglas de `.claude/rules/` son ley:** antes de tocar cualquier archivo, leer el archivo de reglas de su capa (`angular.md`, `ngrx.md`, `typescript.md`, etc.). Si el requerimiento contradice una regla → señalar el conflicto, no resolverlo silenciosamente. 
 - **Actualizar `HISTORIAL_IMPLEMENTACION.md` y `HISTORIAL_APRENDIZAJE.md`** (insertar al principio, bajo el encabezado) tras cada implementacion.
 - **Nunca** añadir Co-Authored-By ni atribución IA a commits.
-- **Nunca** ejecutar build tras cambios salvo petición explícita.
 - **Nunca** ejecutar las aplicaciones sin consultar; si se da acceso, siempre terminar esas ejecuciones como playwrigth.
 - **Cero código a medias:** prohibido `TODO`, `FIXME`, `MOCK`. Todo entregado debe ser funcional.
 - **Zero Secrets:** tokens y contraseñas solo en variables de entorno, nunca en código.
-- **Nunca** implementar codigo por una pequena peticion, siempre esperar confirmacion antes de proceder.
-- **Despues de una correccion, o peticion fuera de contexto del SDD** actualizar el HISTORIAL_APRENDIZAJE.md segun el patron.
 
 ---
 
@@ -94,7 +93,7 @@ Prompt
   └── CLAUDE.md                    ← QUÉ construir y por qué (este archivo, actúa como orchestrator)
         ├── develop-expert            ← implementa todo el código de producción (componentes, pages, NgRx, modelos, Sheets)
         │     └── lee: typescript · angular · html · ionic · ngrx · tailwind · ux-ui · sheets-api
-        ├── qa-automation             ← escribe y ejecuta tests unitarios (Karma/Jasmine)
+        ├── qa-automation             ← escribe y ejecuta tests unitarios (Jest)
         │     └── lee: angular · ngrx · typescript + verify.md del cambio activo
         ├── playwright-inspector      ← escribe, ejecuta y valida tests E2E Playwright + inspección visual → bug-report.md (necesita aprovacion antes de continuar)
         │     └── lee: ux-ui · ionic · tailwind · HISTORIAL_IMPLEMENTACION

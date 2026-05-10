@@ -23,34 +23,34 @@
 
   <!-- Filtros Rápidos (Monefy Style) -->
   <div class="bg-[var(--color-primary)] pb-4 rounded-b-[40px] shadow-lg">
-    <div class="flex gap-2 p-4 overflow-x-auto no-scrollbar max-w-screen-xl mx-auto">
+    <div class="grid grid-cols-3 gap-2 px-3 pb-1 max-w-screen-xl mx-auto">
       <div
-        class="bg-white/20 backdrop-blur-md px-5 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform cursor-pointer"
+        class="bg-white/20 backdrop-blur-md px-3 py-2 rounded-2xl border border-white/20 text-white flex items-center justify-center gap-1.5 min-w-0 active:scale-95 transition-transform cursor-pointer"
         [class.bg-white/40]="openFilter() === 'wallet'" (click)="toggleFilter('wallet')">
-        <ion-icon name="wallet-outline" class="text-sm"></ion-icon>
-        <span class="text-sm font-bold">{{ filterWalletLabel() }}</span>
+        <ion-icon name="wallet-outline" class="text-sm flex-shrink-0"></ion-icon>
+        <span class="text-sm font-bold truncate">{{ filterWalletLabel() }}</span>
         @if (filterWallet()) {
-        <ion-icon name="close-circle-outline" class="text-sm ml-1"
+        <ion-icon name="close-circle-outline" class="text-sm flex-shrink-0"
           (click)="clearWalletFilter(); $event.stopPropagation()"></ion-icon>
         }
       </div>
       <div
-        class="bg-white/20 backdrop-blur-md px-5 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform cursor-pointer"
+        class="bg-white/20 backdrop-blur-md px-3 py-2 rounded-2xl border border-white/20 text-white flex items-center justify-center gap-1.5 min-w-0 active:scale-95 transition-transform cursor-pointer"
         [class.bg-white/40]="openFilter() === 'category'" (click)="toggleFilter('category')">
-        <ion-icon name="sparkles-outline" class="text-sm"></ion-icon>
-        <span class="text-sm font-bold">{{ filterCategoryLabel() }}</span>
+        <ion-icon name="sparkles-outline" class="text-sm flex-shrink-0"></ion-icon>
+        <span class="text-sm font-bold truncate">{{ filterCategoryLabel() }}</span>
         @if (filterCategory()) {
-        <ion-icon name="close-circle-outline" class="text-sm ml-1"
+        <ion-icon name="close-circle-outline" class="text-sm flex-shrink-0"
           (click)="clearCategoryFilter(); $event.stopPropagation()"></ion-icon>
         }
       </div>
       <div
-        class="bg-white/20 backdrop-blur-md px-5 py-2 rounded-2xl border border-white/20 text-white flex items-center gap-2 flex-shrink-0 active:scale-95 transition-transform cursor-pointer"
+        class="bg-white/20 backdrop-blur-md px-3 py-2 rounded-2xl border border-white/20 text-white flex items-center justify-center gap-1.5 min-w-0 active:scale-95 transition-transform cursor-pointer"
         [class.bg-white/40]="openFilter() === 'period'" (click)="toggleFilter('period')">
-        <ion-icon name="calendar-outline" class="text-sm"></ion-icon>
-        <span class="text-sm font-bold">{{ filterPeriodLabel() }}</span>
+        <ion-icon name="calendar-outline" class="text-sm flex-shrink-0"></ion-icon>
+        <span class="text-sm font-bold truncate">{{ filterPeriodLabel() }}</span>
         @if (filterDateFrom() || filterDateTo()) {
-        <ion-icon name="close-circle-outline" class="text-sm ml-1"
+        <ion-icon name="close-circle-outline" class="text-sm flex-shrink-0"
           (click)="clearPeriodFilter(); $event.stopPropagation()"></ion-icon>
         }
       </div>
