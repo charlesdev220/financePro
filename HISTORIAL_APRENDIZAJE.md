@@ -4,6 +4,27 @@ Registro de lecciones técnicas extraídas de cada iteración del proyecto. Appe
 
 ---
 
+### Qué hemos aprendido en el desarrollo de esta iteración (Refactor input+output → model() en components):
+*Qué se aprendió:* `model<T>()` es el reemplazo directo del par `input<T>` + `output<T>` cuando ambos representan el **mismo dato** y el padre necesita sincronizarlo en las dos direcciones. El output derivado se llama `{nombre}Change` automáticamente y habilita la sintaxis `[(nombre)]` en el padre. La regla de decisión es simple: si el output lleva el mismo tipo que el input y su único propósito es notificar un cambio de estado (no una acción), es candidato a `model()`. Cuando el output tiene semántica de acción independiente (`selected` en autocomplete, `switched` en workspace), se mantiene como `output()` separado. El `linkedSignal` como espejo local sigue siendo válido dentro del componente que usa `model()` para separar el estado visual del estado sincronizado con el padre.
+*Por qué se aprendió:* Al explorar dónde aplicar `model()` en el proyecto, `PeriodSelectorComponent` resultó el caso textbook: input y output del mismo tipo, output con sufijo `Change` casi por convención, y el padre solo necesitaba sincronizar el tab activo. `AutocompleteInputComponent` fue el caso con matiz: `value`+`inputChange` → `model()`, pero `selected` queda como `output()` porque su semántica es distinta (ítem confirmado del dropdown vs. tecleo libre).
+*Dónde se aprendió:* Refactor de `period-selector.component.ts`, `autocomplete-input.component.ts` y `budget-list.page.ts`.
+
+---
+
+### Qué hemos aprendido en el desarrollo de esta iteración (Migración effect() → linkedSignal en AutocompleteInputComponent):
+*Qué se aprendió:* `linkedSignal()` es la herramienta correcta cuando un signal escribible necesita sincronizarse con una fuente reactiva pero también debe aceptar `.set()` local. El patrón `effect(() => { writable.set(source()) })` es un anti-patrón porque mezcla reactividad declarativa con imperativa y genera una ejecución extra por cambio. Con `linkedSignal(() => source())` la sincronización es automática y gratuita, y las escrituras locales (`.set()`, `.update()`) siguen funcionando hasta el próximo cambio de fuente. Esto también elimina la necesidad del `constructor()` en componentes puramente reactivos.
+*Por qué se aprendió:* Al analizar dónde aplicar `linkedSignal` en el proyecto, `AutocompleteInputComponent` era el caso más claro: dos `effect()` cuyo único propósito era hacer `.set()` sobre otro signal — exactamente el anti-patrón que `linkedSignal` fue diseñado para reemplazar.
+*Dónde se aprendió:* Refactor de `autocomplete-input.component.ts` — signals `_value` y `showDropdown`.
+
+---
+
+### Qué hemos aprendido en el desarrollo de esta iteración (Migración subscribe → toSignal en TransactionForm):
+*Qué se aprendió:* `toSignal()` solo es migrable como field initializer cuando el Observable no depende del `FormGroup` — porque el form se crea en `ngOnInit()`, fuera del injection context. Los `valueChanges` de un form requieren `inject(Injector)` para usarse con `toSignal()` fuera del constructor, lo que agrega complejidad sin ganancia real. Un `WritableSignal` que se escribe en múltiples lugares (ej: `conceptValue` en `valueChanges` Y en `onSuggestionSelect`) no puede convertirse a `toSignal()` porque el resultado es de solo lectura. El patrón `subscribe() + takeUntilDestroyed()` es correcto y preferible cuando hay efectos secundarios (como `patchValue`) o cuando el signal necesita seguir siendo escribible.
+*Por qué se aprendió:* Al analizar los 3 candidatos de migración surgió que 2 de ellos tenían restricciones estructurales que hacen que `toSignal()` sea más complejo — no más simple — que el subscribe actual.
+*Dónde se aprendió:* Análisis de `transaction-form.component.ts` — campos `_concepts`, `conceptValue` y `typeValue`.
+
+---
+
 ### Qué hemos aprendido en el desarrollo de esta iteración (Optimización de Carga de Transacciones — ARCHIVADO):
 *Qué se aprendió:* Hacer que `load()` retorne `Promise<void>` (en lugar de `void`) permite composición real con `Promise.all()` en `onRefresh()` y garantiza que el spinner de pull-to-refresh se cierra solo cuando los 3 calls HTTP terminaron. El flag `_loaded = signal<boolean>(false)` solo debe activarse en el `.then()` exitoso — nunca en `.catch()` ni `.finally()` — para que los errores de red permitan reintentos automáticos. La Sheets API v4 incluye `updates.updatedRange` en la respuesta de `append`; extraer el número de fila con `/!A(\d+)/` elimina el reload completo post-inserción en cualquier state service, no solo en transacciones. Aplicar el mismo patrón a wallets y categories requiere tipar `saveWallet()` y `saveCategory()` con `Observable<AppendResponse>` e importar el tipo desde `transaction.service.ts`.
 *Por qué se aprendió:* Al corregir los warnings del verify-report se vio que el patrón `_parseRowNumber` es transversal a los 3 dominios (transactions, wallets, categories) y que un `load()` void hace imposible coordinar el cierre del pull-to-refresh con la finalización real de las peticiones.

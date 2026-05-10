@@ -1,10 +1,10 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  effect,
   input,
+  linkedSignal,
+  model,
   output,
-  signal,
 } from '@angular/core';
 import { toSignal, toObservable } from '@angular/core/rxjs-interop';
 import { Observable, switchMap } from 'rxjs';
@@ -24,12 +24,11 @@ import { IonInput, IonList, IonItem, IonLabel } from '@ionic/angular/standalone'
 export class AutocompleteInputComponent {
   suggestions$ = input.required<Observable<string[]>>();
   placeholder  = input<string>('');
-  value        = input<string>('');
+  /** Texto del input — two-way binding con el padre vía [(value)]. */
+  value        = model<string>('');
 
-  selected    = output<string>();
-  inputChange = output<string>();
-
-  readonly showDropdown = signal(false);
+  /** Emite el ítem confirmado del dropdown (semántica distinta a valueChange). */
+  selected = output<string>();
 
   /** Sugerencias aplanadas desde el Observable externo, reactivas al signal suggestions$. */
   readonly currentSuggestions = toSignal(
@@ -37,22 +36,22 @@ export class AutocompleteInputComponent {
     { initialValue: [] as string[] },
   );
 
-  protected readonly _value = signal('');
+  /** Espejo local escribible; se resetea cuando el padre actualiza value vía model. */
+  protected readonly _value = linkedSignal(() => this.value());
 
-  constructor() {
-    effect(() => { this._value.set(this.value()); });
-    effect(() => { this.showDropdown.set(this.currentSuggestions().length > 0); });
-  }
+  /** Se abre cuando hay sugerencias; puede cerrarse localmente con .set(false). */
+  readonly showDropdown = linkedSignal(() => this.currentSuggestions().length > 0);
 
   onInput(event: Event): void {
     const val = (event as CustomEvent).detail.value ?? '';
     this._value.set(val);
-    this.inputChange.emit(val);
+    this.value.set(val);
     if (!val) this.showDropdown.set(false);
   }
 
   selectSuggestion(text: string): void {
     this._value.set(text);
+    this.value.set(text);
     this.showDropdown.set(false);
     this.selected.emit(text);
   }

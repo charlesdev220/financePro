@@ -4,6 +4,40 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Refactor input+output → model() en PeriodSelector y AutocompleteInput):
+*Fase actual:* Refactor puntual — two-way binding con model() de Angular
+*Estado actual:* Completado ✅ | 2026-05-10
+- ✔️ **`PeriodSelectorComponent`:** `activeTab = input<PeriodTab>` + `tabChange = output<PeriodTab>` reemplazados por `activeTab = model<PeriodTab>('month')`. Método `selectPeriod` renombrado a `onTabSelect` que llama `this.activeTab.set(tab)`.
+- ✔️ **`AutocompleteInputComponent`:** `value = input<string>` + `inputChange = output<string>` reemplazados por `value = model<string>('')`. `selected = output<string>()` se mantiene (semántica diferente). `onInput` y `selectSuggestion` llaman `this.value.set(val)` para propagar al padre.
+- ✔️ **`budget-list.page.html`:** binding migrado de `[activeTab]="..." (tabChange)="..."` a `[(activeTab)]="activePeriodTab"`.
+- ✔️ **`budget-list.page.ts`:** `onTabChange()` eliminado; `currentPeriod` convertido a `computed()` (siempre retorna el mes actual, sin dependencia real del tab).
+- ✔️ **`period-selector.component.spec.ts`:** specs sc3 y sc4 actualizados para testear `onTabSelect` y verificar el model signal en lugar del output desaparecido.
+*Deuda técnica documentada:* Ninguna.
+*Próximos pasos:* Evaluar `workspace-selector` como tercer candidato (`activeId` + `switched`).
+
+---
+
+### Qué hemos completado hasta ahora (Migración effect() → linkedSignal en AutocompleteInputComponent):
+*Fase actual:* Refactor puntual — cambio atómico de 1 archivo
+*Estado actual:* Completado ✅ | 2026-05-10
+- ✔️ **`_value` como `linkedSignal`:** reemplaza `signal('') + effect(() => _value.set(value()))`. Se sincroniza automáticamente cuando el padre actualiza `value` pero sigue siendo escribible para edición local del usuario.
+- ✔️ **`showDropdown` como `linkedSignal`:** reemplaza `signal(false) + effect(() => showDropdown.set(currentSuggestions().length > 0))`. Se reabre automáticamente cuando llegan sugerencias; `.set(false)` en `onBlur` y `selectSuggestion` sigue funcionando.
+- ✔️ **`constructor()` eliminado:** sin `effect()` no hay nada que inicializar imperativamente. Imports `effect` y `signal` removidos.
+*Deuda técnica documentada:* Ninguna.
+*Próximos pasos:* Evaluar el mismo patrón en `TransactionFormComponent` (`selectedCategoryId`) y `PeriodNavigatorComponent` (`isCustomRange`).
+
+---
+
+### Qué hemos completado hasta ahora (Migración subscribe → toSignal en TransactionForm):
+*Fase actual:* Refactor puntual — cambio atómico de 1 archivo
+*Estado actual:* Completado ✅ | 2026-05-10
+- ✔️ **`_concepts` como field initializer:** `private readonly _concepts` pasó de `signal<IConcept[]>([])` + `subscribe` en `ngOnInit` a `toSignal(this.conceptsService.loadConcepts(), { initialValue: [] as IConcept[] })`. El ciclo de vida queda atado automáticamente al componente sin `takeUntilDestroyed`.
+- ✔️ **Análisis de los 3 candidatos:** solo `loadConcepts()` era migrable limpiamente. `concept valueChanges` mantiene `subscribe` porque `conceptValue` es `WritableSignal` (se escribe en `onSuggestionSelect`). `type valueChanges` mantiene `subscribe` por el efecto secundario `patchValue`.
+*Deuda técnica documentada:* Ninguna — los 2 subscribes restantes son el patrón correcto para sus contextos.
+*Próximos pasos:* Ninguno asociado a este cambio.
+
+---
+
 ### Qué hemos completado hasta ahora (Optimización de Carga de Transacciones — ARCHIVADO):
 *Fase actual:* Fase archive: cambio cerrado y archivado
 *Estado actual:* Completado ✅ | 2026-05-09

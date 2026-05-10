@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, model } from '@angular/core';
 import { PeriodTab, PERIOD_TABS } from '@core/constants/period.constants';
 
 @Component({
@@ -10,15 +10,12 @@ import { PeriodTab, PERIOD_TABS } from '@core/constants/period.constants';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PeriodSelectorComponent {
-  /** Tab de período activo recibido desde el padre (dashboard). */
-  activeTab = input<PeriodTab>('month');
-
-  /** Emite el nuevo tab seleccionado por el usuario al padre para actualizar el estado. */
-  tabChange = output<PeriodTab>();
+  /** Tab de período activo — two-way binding con el padre vía [(activeTab)]. */
+  activeTab = model<PeriodTab>('month');
 
   readonly tabs = PERIOD_TABS;
 
-  selectPeriod(tab: PeriodTab): void {
-    this.tabChange.emit(tab);
+  onTabSelect(tab: PeriodTab): void {
+    this.activeTab.set(tab);
   }
 }

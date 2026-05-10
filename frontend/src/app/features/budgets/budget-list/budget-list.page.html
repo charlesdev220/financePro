@@ -6,8 +6,7 @@
 
 <ion-content class="ion-padding" style="--background: var(--color-green-50);">
   <div class="max-w-screen-xl mx-auto pb-[calc(env(safe-area-inset-bottom)+80px)]">
-    <app-period-selector [activeTab]="activePeriodTab()" (tabChange)="onTabChange($event)">
-    </app-period-selector>
+    <app-period-selector [(activeTab)]="activePeriodTab"></app-period-selector>
 
     @if (budgets().length > 0) {
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">

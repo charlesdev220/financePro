@@ -27,25 +27,24 @@ describe('PeriodSelectorComponent', () => {
     expect(spectator.component.activeTab()).toBe('week');
   });
 
-  // sc3 — selectPeriod('day') emite tabChange con 'day'
-  it('selectPeriod_shouldEmitTabChange_forDay', () => {
+  // sc3 — onTabSelect('day') actualiza activeTab y emite activeTabChange con 'day'
+  it('onTabSelect_shouldUpdateModel_forDay', () => {
     let emitted: PeriodTab | undefined;
-    spectator.component.tabChange.subscribe((v: PeriodTab) => emitted = v);
+    spectator.component.activeTab.subscribe((v: PeriodTab) => emitted = v);
 
-    spectator.component.selectPeriod('day');
+    spectator.component.onTabSelect('day');
 
+    expect(spectator.component.activeTab()).toBe('day');
     expect(emitted).toBe('day');
   });
 
-  // sc4 — selectPeriod emite el tab correcto para cada uno de los 4 tipos
-  it('selectPeriod_shouldEmitCorrectTab_forAllTypes', () => {
+  // sc4 — onTabSelect actualiza el model correctamente para cada uno de los 4 tipos
+  it('onTabSelect_shouldUpdateModel_forAllTypes', () => {
     const tabs: PeriodTab[] = ['day', 'week', 'month', 'year'];
 
     tabs.forEach(tab => {
-      let emitted: PeriodTab | undefined;
-      spectator.component.tabChange.subscribe((v: PeriodTab) => emitted = v);
-      spectator.component.selectPeriod(tab);
-      expect(emitted).toBe(tab);
+      spectator.component.onTabSelect(tab);
+      expect(spectator.component.activeTab()).toBe(tab);
     });
   });
 

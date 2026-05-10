@@ -659,6 +659,7 @@ export class ProductoComponent {
 import { User } from '@core/models/user'; 
 import { BotonComponent } from '@shared/boton.component'; 
 ```
+TODO: añadir el especifico de tailwind en esta misma sección.
 
 ---
 

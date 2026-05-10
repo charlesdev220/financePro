@@ -259,6 +259,19 @@ explore → propose → spec → tasks → apply → verify → archive
 
 ---
 
+## 📱 Build iOS (Capacitor)
+
+```bash
+cd frontend
+npm run build:prod       # 1. Build Angular (set-env.js corre automático como prebuild)
+npx cap sync ios         # 2. Copia assets y sincroniza plugins nativos
+npx cap open ios         # 3. Abre Xcode — seleccioná signing team y corré en simulador/dispositivo
+```
+
+> Workspace: `frontend/ios/App/App.xcworkspace`
+
+---
+
 ## 🔒 Lección crítica de Git
 
 > Las lecciones de código están en `.claude/rules/`. Esta es la única que vive aquí porque no es código — es un procedimiento de emergencia.

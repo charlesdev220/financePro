@@ -28,7 +28,7 @@ frontend/.env
 
 # Capacitor native builds
 frontend/android/
-frontend/ios/
+#frontend/ios/
 
 # Secrets — NUNCA commitear credenciales
 frontend/src/environments/environment.ts

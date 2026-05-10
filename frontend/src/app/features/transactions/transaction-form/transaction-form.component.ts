@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, NgZone, OnInit, computed, inject, input, signal, output } from '@angular/core';
 import { Capacitor } from '@capacitor/core';
 import { Keyboard } from '@capacitor/keyboard';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import {
   IonHeader, IonToolbar, IonTitle, IonButtons, IonButton,
@@ -132,8 +132,11 @@ export class TransactionFormComponent implements OnInit {
   /** Controla el accordion de pickers en web (≥768px). Mutex: solo uno abierto a la vez. */
   readonly openPicker = signal<'wallet' | 'category' | 'currency' | null>(null);
 
-  /** Conceptos del usuario cargados una vez al abrir el formulario. */
-  private readonly _concepts = signal<IConcept[]>([]);
+  /** Conceptos del usuario cargados al inicializar el componente desde ConceptsService. */
+  private readonly _concepts = toSignal(
+    this.conceptsService.loadConcepts(),
+    { initialValue: [] as IConcept[] }
+  );
   /** Espejo reactivo del campo concept para derivar sugerencias con OnPush. */
   readonly conceptValue = signal<string>('');
   /** Sugerencias filtradas por categoría activa y prefijo escrito, máx. 5. */
@@ -275,9 +278,6 @@ export class TransactionFormComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(v => this.conceptValue.set(v ?? ''));
 
-    this.conceptsService.loadConcepts()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(concepts => this._concepts.set(concepts));
   }
 
   /**
