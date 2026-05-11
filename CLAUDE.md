@@ -121,40 +121,54 @@ Antes de ejecutar algo, preguntate: **¿esto infla mi contexto sin necesidad?**
 | Acción | Inline | Diferir / Delegar |
 |--------|--------|------------------|
 | Leer 1-3 archivos para decidir/verificar | ✅ | — |
-| Leer 4+ archivos para explorar | — | ✅ fase sdd-explore |
+| Leer 4+ archivos para explorar | — | ✅ `/sdd-init` (paso 1) |
 | Escribir un archivo atómico (ya sé qué) | ✅ | — |
-| Escribir feature en múltiples archivos | — | ✅ fase sdd-apply |
+| Escribir feature en múltiples archivos | — | ✅ `/sdd-impl` (paso 4) |
 | Bash para estado (git, gh) | ✅ | — |
-| Bash para ejecución (test, build) | — | ✅ fase sdd-verify |
+| Bash para ejecución (test, build) | — | ✅ `/sdd-verify` (paso 5) |
 
 ---
 
 ## ✅ Checklist del Orquestador
 
-- **Leer `PROJECT_FUNCTIONAL_DOC.md`** para identificar features y state services afectados antes de cualquier implementación multi-archivo.
-- **Planificación SDD obligatoria** para features nuevas o cambios multi-archivo. Prohibido escribir código complejo sin `tasks.md` previo. (Excepción: tareas atómicas de 1 archivo).
-- **Pausar siempre** después de `propose` y después de `tasks` — esperar aprobación del usuario.
-- **Si la implementación se desvía del `design.md`**: documentar el motivo en `apply-progress.md`.
+- **Consultar los depósitos de memoria antes de explorar:** en este orden: `project-map.json` (clave `_index`) → `HISTORIAL_APRENDIZAJE.md` → rules de `.claude/rules/` de las capas tocadas. El enricher consulta `PROJECT_FUNCTIONAL_DOC.md` para features y state services.
+- **Planificación SDD obligatoria** para features nuevas o cambios multi-archivo. Prohibido escribir código complejo sin `3-task.md` aprobado. (Excepción: tareas atómicas de 1 archivo).
+- **Pausar siempre** después de cada paso (1-init, 2-spec, 3-task, 4-impl) — esperar aprobación del usuario antes de avanzar.
+- **Si la implementación se desvía de `1-init.md`**: documentar el motivo en `4-impl-log.md`.
 - **Nunca implementar tareas que no fueron asignadas.**
 - **Antes de generar código**: consultar la regla de capa relevante en `.claude/rules/`.
-- **Cada fase devuelve:** `status`, resumen ejecutivo, artefactos generados, siguiente fase recomendada, riesgos.
+- **Cada paso devuelve:** `status`, resumen ejecutivo, artefactos generados, siguiente paso recomendado, riesgos.
 
 ### Formato estándar de `state.md`
 
 ```markdown
-## Estado del Cambio: {change-name}
+# State: {change-name}
 
-**Fase actual:** {fase}
-**Estado:** En Proceso / Esperando Aprobación / Completado
+**Creado:** {fecha}
+**Última actualización:** {fecha}
 
-### Fases completadas
-- [x] explore
+## Estado actual
+**Paso:** {1-init | 2-spec | 3-task | 4-impl | 5-verify}
+**Estado:** Esperando aprobación / En Proceso / Completado
 
-### Fase actual
-- [ ] propose
+## Progreso
+- [x] 1-init   — Completado {fecha} · archivos afectados: {N} · riesgos: {N}
+- [ ] 2-spec   — Pendiente
+- [ ] 3-task   — Pendiente
+- [ ] 4-impl   — Pendiente
+- [ ] 5-verify — Pendiente
 
-### Pendientes
-- [ ] spec · design · tasks · apply · verify · archive
+## Artefactos generados
+| Archivo | Paso | Estado |
+|---------|------|--------|
+| `1-init.md` | 1 | ✅ |
+| `2-spec.md` | 2 | pendiente |
+| `3-task.md` | 3 | pendiente |
+| `4-impl-log.md` | 4 | pendiente |
+| `5-verify-report.md` | 5 | pendiente |
+
+## Historial de decisiones
+- {fecha} · Paso 1: {decisión tomada}
 ```
 
 ---
