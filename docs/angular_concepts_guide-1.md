@@ -31,6 +31,7 @@ Aquí tienes la guía adaptada con los nuevos conceptos solicitados, haciendo fo
 23. [resource() y rxResource() — Carga Asíncrona Declarativa](#22-resource-y-rxresource--carga-asíncrona-declarativa)
 24. [@ViewChild vs viewChild() — Referencia a Elementos Hijos](#23-viewchild-vs-viewchild--referencia-a-elementos-hijos)
 25. [BehaviorSubject — Observable con Estado Actual](#24-behaviorsubject--observable-con-estado-actual)
+26. [readonly en Signals — referencia vs valor interno](#25-readonly-en-signals--referencia-vs-valor-interno)
 
 ---
 
@@ -1248,7 +1249,16 @@ filtroActivo = 'all';    // Angular no detecta cambios
 // ❌ Duplicar en Signal lo que ya está en el store
 transactions = signal<Transaction[]>([]); // usar toSignal(store.select(...))
 ```
+Son State Services con responsabilidad de Repository — un híbrido. No está mal, es una decisión arquitectónica válida para este stack (sin NgRx, con Signals),
+  pero mezclás dos roles:
 
+  - Repository: abstraer persistencia en Sheets
+  - State container: mantener el estado reactivo para la UI
+
+  Si el proyecto creciera, el trade-off sería: difícil intercambiar la fuente de datos sin tocar lógica de negocio, y difícil testear el estado sin mockear Sheets.
+
+  Por ahora es pragmático y coherente con el stack elegido.
+  
 ---
 
 ## 21. model() / model.required() — Two-Way Binding con Signals
@@ -1552,6 +1562,65 @@ private _transactions$ = new BehaviorSubject<Transaction[]>([]);  // usar NgRx
 ```
 
 
+
+---
+
+## 25. readonly en Signals — referencia vs valor interno
+
+**¿Por qué un `readonly` permite `.set()` y `.update()`?**
+
+En TypeScript, `readonly` protege la **referencia** — impide que la variable apunte a otro objeto. No dice nada sobre lo que el objeto puede hacer internamente.
+
+Un `WritableSignal<T>` expone `.set()` y `.update()` como métodos del objeto. El `readonly` solo bloquea la reasignación:
+
+```typescript
+readonly count = signal(0);
+
+// ✅ válido — mutás el valor interno del signal
+this.count.set(5);
+this.count.update(n => n + 1);
+
+// ❌ error de compilación — reasignación de la referencia
+this.count = signal(10);
+```
+
+**¿Para qué sirve entonces?**
+
+Protege contra que alguien reemplace el signal por otro desde afuera de la clase:
+
+```typescript
+readonly filter = signal<string>('all');
+
+this.filter = signal('otro');  // ❌ Error — readonly protege esto
+this.filter.set('income');     // ✅ Sigue siendo válido — es la API del signal
+```
+
+**Cuando querés que nadie externo pueda mutar el valor — `asReadonly()`:**
+
+Si necesitás exponer un signal que no permita `.set()` ni `.update()` desde afuera, usás `asReadonly()`:
+
+```typescript
+// En el servicio
+private _count = signal(0);
+
+// Lo que exponés al exterior — nadie puede llamar .set() sobre esto
+readonly count = this._count.asReadonly();
+
+// Internamente el servicio sí puede mutar el valor original
+increment() {
+  this._count.update(n => n + 1);  // ✅ sobre el privado, no el readonly expuesto
+}
+```
+
+**Resumen:**
+
+| Declaración | Reasignación (`this.x = ...`) | `.set()` / `.update()` |
+|---|---|---|
+| `count = signal(0)` | ✅ Permitida | ✅ Permitida |
+| `readonly count = signal(0)` | ❌ Error | ✅ Permitida |
+| `readonly count = signal(0).asReadonly()` | ❌ Error | ❌ Error |
+
+---
 
 -----------------------
 Listed directory knowledge
