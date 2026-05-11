@@ -1,8 +1,4 @@
-import { Injectable, inject } from '@angular/core';
-import { Observable, map, switchMap } from 'rxjs';
-import { SheetsApiService } from '@core/services/sheets-api.service';
 import { ICategory } from '@models/category.model';
-import { AppendResponse } from '@features/transactions/services/transaction.service';
 import { APP_COLORS } from '@core/constants/colors.constants';
 
 // CATEGORIES schema (A:K — 11 columnas)
@@ -40,53 +36,4 @@ export function categoryToRow(cat: ICategory): unknown[] {
     cat.createdAt,
     cat.workspaceId,
   ];
-}
-
-@Injectable({ providedIn: 'root' })
-export class CategoryService {
-  private readonly sheetsApi = inject(SheetsApiService);
-
-  loadCategories(defaultWsId = ''): Observable<{ categories: ICategory[]; rowMap: Record<string, number> }> {
-    return this.sheetsApi.getRange('CATEGORIES!A:K').pipe(
-      map(response => {
-        if (!response?.values || response.values.length < 2) {
-          return { categories: [], rowMap: {} };
-        }
-        const allRows = response.values.slice(1);
-        const rowMap: Record<string, number> = {};
-        allRows.forEach((row, i) => {
-          const id = String(row[0] ?? '');
-          if (id) rowMap[id] = i + 2;
-        });
-        const categories = allRows
-          .filter(row => row[0])
-          .map(row => rowToCategory(row, defaultWsId));
-        return { categories, rowMap };
-      }),
-    );
-  }
-
-  saveCategory(category: ICategory): Observable<AppendResponse> {
-    return this.sheetsApi.appendRow('CATEGORIES!A1', [categoryToRow(category)]) as Observable<AppendResponse>;
-  }
-
-  updateCategory(category: ICategory, rowNumber: number): Observable<unknown> {
-    return this.sheetsApi.updateRow(
-      `CATEGORIES!A${rowNumber}:K${rowNumber}`,
-      [categoryToRow(category)],
-    );
-  }
-
-  /** Soft delete: marca is_active = false. Nunca borra la fila (protege FKs). */
-  softDeleteCategory(categoryId: string, rowNumber: number): Observable<unknown> {
-    return this.sheetsApi.getRange(`CATEGORIES!A${rowNumber}:K${rowNumber}`).pipe(
-      switchMap(response => {
-        const row = response?.values?.[0];
-        if (!row) throw new Error(`Row ${rowNumber} not found in CATEGORIES`);
-        const updated = [...row];
-        updated[8] = false; // col I: is_active
-        return this.sheetsApi.updateRow(`CATEGORIES!A${rowNumber}:K${rowNumber}`, [updated]);
-      }),
-    );
-  }
 }

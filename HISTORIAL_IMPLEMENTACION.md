@@ -4,6 +4,22 @@ Journal de cambios realizados en el proyecto. Insertar siempre al principio.
 
 ---
 
+### Qué hemos completado hasta ahora (Refactor State–Services Separation):
+*Fase actual:* Arquitectura — separación de capas core/state vs features/services
+*Estado actual:* Completado
+
+- ✔️ **ConceptsService movido a core/services/:** `features/transactions/services/concepts.service.ts` eliminado; nuevo `core/services/concepts.service.ts` con imports actualizados.
+- ✔️ **4 feature services reducidos a funciones puras:** `transaction.service.ts`, `budget.service.ts`, `wallet.service.ts`, `category.service.ts` — eliminados `@Injectable`, `inject()` y todos los métodos de persistencia; solo quedan `rowToX`, `xToRow`, `calculateStatus`, `processRecurring`.
+- ✔️ **4 state services absorben SheetsApiService directo:** `budgets.state.ts`, `wallets.state.ts`, `categories.state.ts`, `transactions.state.ts` — ya no importan feature services para operaciones CRUD; llaman a `sheetsApi.getRange/appendRow/updateRow/deleteRow` inline.
+- ✔️ **Soft-delete inlineado en categories.state.ts:** patrón `switchMap` (getRange → updateRow) ahora vive en el state.
+- ✔️ **6 archivos de tests actualizados:** mocks de feature services reemplazados por mocks de `SheetsApiService`; imports de `ConceptsService` actualizados al nuevo path.
+- ✔️ **ng build limpio:** 9.5s, sin errores TS.
+
+*Deuda técnica documentada:* El test `load_shouldHandleRecurringTransactions` no verifica el count exacto de ocurrencias generadas (depende de `new Date()`); requiere fake timers si se quiere precisar.
+*Próximos pasos:* sdd-verify → sdd-archive.
+
+---
+
 ### Qué hemos completado hasta ahora (Refactor input+output → model() en PeriodSelector y AutocompleteInput):
 *Fase actual:* Refactor puntual — two-way binding con model() de Angular
 *Estado actual:* Completado ✅ | 2026-05-10

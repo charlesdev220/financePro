@@ -4,6 +4,13 @@ Registro de lecciones técnicas extraídas de cada iteración del proyecto. Appe
 
 ---
 
+### Qué hemos aprendido en el desarrollo de esta iteración (Refactor State–Services Separation):
+*Qué se aprendió:* La diferencia entre "importar un feature service para inyectarlo" vs "importar funciones puras de un archivo de features" es la clave de la separación de capas. El primero crea una dependencia de DI (core depende del árbol de providers de features); el segundo es solo una importación de módulo TypeScript sin dependencia en runtime. Los state services pueden importar funciones puras de `@features/` sin violar la regla — lo que no pueden hacer es `inject(FeatureService)`.
+*Por qué se aprendió:* Al analizar el grafo de dependencias del proyecto se detectó que `core/state/*.ts` inyectaban servicios de `features/*/services/`, creando el ciclo `core → features → core` que dificultaba razonar el flujo de datos. El refactor eliminó todos los `inject()` hacia features, conservando solo imports de funciones puras.
+*Dónde se aprendió:* `core/state/transactions.state.ts`, `budgets.state.ts`, `wallets.state.ts`, `categories.state.ts` — analizado en `docs/hexagonal.md` y formalizado en el SDD `refactor-state-services-separation`.
+
+---
+
 ### Qué hemos aprendido en el desarrollo de esta iteración (Refactor input+output → model() en components):
 *Qué se aprendió:* `model<T>()` es el reemplazo directo del par `input<T>` + `output<T>` cuando ambos representan el **mismo dato** y el padre necesita sincronizarlo en las dos direcciones. El output derivado se llama `{nombre}Change` automáticamente y habilita la sintaxis `[(nombre)]` en el padre. La regla de decisión es simple: si el output lleva el mismo tipo que el input y su único propósito es notificar un cambio de estado (no una acción), es candidato a `model()`. Cuando el output tiene semántica de acción independiente (`selected` en autocomplete, `switched` en workspace), se mantiene como `output()` separado. El `linkedSignal` como espejo local sigue siendo válido dentro del componente que usa `model()` para separar el estado visual del estado sincronizado con el padre.
 *Por qué se aprendió:* Al explorar dónde aplicar `model()` en el proyecto, `PeriodSelectorComponent` resultó el caso textbook: input y output del mismo tipo, output con sufijo `Change` casi por convención, y el padre solo necesitaba sincronizar el tab activo. `AutocompleteInputComponent` fue el caso con matiz: `value`+`inputChange` → `model()`, pero `selected` queda como `output()` porque su semántica es distinta (ítem confirmado del dropdown vs. tecleo libre).

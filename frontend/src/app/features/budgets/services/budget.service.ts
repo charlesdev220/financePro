@@ -1,7 +1,3 @@
-import { Injectable, inject } from '@angular/core';
-import { Observable, map } from 'rxjs';
-import { SheetsApiService } from '@core/services/sheets-api.service';
-import { AuthService } from '@core/services/auth.service';
 import { IBudget } from '@models/budget.model';
 import { BUDGET_MODES, BudgetMode } from '@core/constants/workspace.constants';
 
@@ -59,47 +55,4 @@ export function calculateStatus(
   if (ratio >= 1) return 'exceeded';
   if (ratio >= 0.8) return 'warning';
   return 'ok';
-}
-
-@Injectable({ providedIn: 'root' })
-export class BudgetService {
-  private readonly sheetsApi   = inject(SheetsApiService);
-  private readonly authService = inject(AuthService);
-
-  loadBudgets(defaultWsId = ''): Observable<{ budgets: IBudget[]; rowMap: Record<string, number> }> {
-    return this.sheetsApi.getRange('BUDGETS!A:L').pipe(
-      map(response => {
-        if (!response?.values || response.values.length < 2) {
-          return { budgets: [], rowMap: {} };
-        }
-        const allRows  = response.values.slice(1);
-        const userId   = this.authService.getUser()?.sub ?? '';
-        const rowMap: Record<string, number> = {};
-        allRows.forEach((row, i) => {
-          const id  = String(row[0] ?? '');
-          const uid = String(row[1] ?? '');
-          if (id && uid === userId) rowMap[id] = i + 2;
-        });
-        const budgets = allRows
-          .filter(row => row[0] && String(row[1] ?? '') === userId)
-          .map(row => rowToBudget(row, defaultWsId));
-        return { budgets, rowMap };
-      }),
-    );
-  }
-
-  saveBudget(b: IBudget): Observable<unknown> {
-    return this.sheetsApi.appendRow('BUDGETS!A1', [budgetToRow(b)]);
-  }
-
-  updateBudget(b: IBudget, rowNumber: number): Observable<unknown> {
-    return this.sheetsApi.updateRow(
-      `BUDGETS!A${rowNumber}:L${rowNumber}`,
-      [budgetToRow(b)],
-    );
-  }
-
-  deleteBudget(rowNumber: number): Observable<unknown> {
-    return this.sheetsApi.deleteRow(`BUDGETS!A${rowNumber}:L${rowNumber}`);
-  }
 }

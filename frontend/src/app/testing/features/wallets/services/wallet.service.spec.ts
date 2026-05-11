@@ -1,57 +1,49 @@
-import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
-import { of, firstValueFrom } from 'rxjs';
+import { rowToWallet, walletToRow } from '@features/wallets/services/wallet.service';
 
-import { WalletService } from '@features/wallets/services/wallet.service';
-import { SheetsApiService } from '@core/services/sheets-api.service';
-import { AuthService } from '@core/services/auth.service';
-import { MOCK_WALLETS } from '../../../fixtures';
+describe('wallet.service pure functions', () => {
+  describe('rowToWallet / walletToRow', () => {
+    it('round-trips a wallet through row format', () => {
+      const row = ['wal_1', 'usr_1', 'Efectivo', 'EUR', '0', '#5BAD8F', '💳', 'true', '2024-01-01T00:00:00.000Z', 'ws_1'];
+      const wallet = rowToWallet(row, 'ws_default');
+      expect(wallet.walletId).toBe('wal_1');
+      expect(wallet.name).toBe('Efectivo');
+      expect(wallet.currency).toBe('EUR');
+      expect(wallet.isDefault).toBe(true);
+      const backToRow = walletToRow(wallet);
+      expect(backToRow[0]).toBe('wal_1');
+      expect(backToRow[3]).toBe('EUR');
+    });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// WalletService — REQ-06
-// ─────────────────────────────────────────────────────────────────────────────
-describe('WalletService', () => {
-  let spectator: SpectatorService<WalletService>;
-  const createService = createServiceFactory({
-    service: WalletService,
-    mocks: [SheetsApiService, AuthService],
-  });
+    it('uses defaultWsId when workspaceId column is undefined', () => {
+      const row = ['wal_2', 'usr_1', 'Tarjeta', 'USD', '0', '#E57373', '💳', 'false', '2024-01-01T00:00:00.000Z', undefined];
+      const wallet = rowToWallet(row, 'ws_default');
+      expect(wallet.workspaceId).toBe('ws_default');
+    });
 
-  const MOCK_USER = { sub: 'usr_001', email: 'user@test.com', name: 'Test' };
+    it('maps isDefault false when row[7] is "false"', () => {
+      const row = ['wal_3', 'usr_1', 'Ahorro', 'USD', '0', '#5BAD8F', '💰', 'false', '2024-01-01T00:00:00.000Z', 'ws_1'];
+      const wallet = rowToWallet(row);
+      expect(wallet.isDefault).toBe(false);
+    });
 
-  const SHEETS_ROWS = [
-    ['wallet_id', 'user_id', 'name', 'currency', 'balance', 'color', 'icon', 'is_default', 'created_at'],
-    [MOCK_WALLETS[0].walletId, 'usr_001', 'Efectivo', 'EUR', '0', '#1976D2', '💵', 'true', '2026-04-01T00:00:00.000Z'],
-    [MOCK_WALLETS[1].walletId, 'usr_001', 'BBVA', 'EUR', '0', '#D32F2F', '🏦', 'false', '2026-04-01T00:00:00.000Z'],
-    ['other-wal-001', 'other-user', 'Other', 'USD', '0', '#000000', '💳', 'false', '2026-04-01T00:00:00.000Z'],
-  ];
+    it('maps all wallet fields correctly', () => {
+      const row = ['wal_4', 'usr_2', 'Cuenta', 'ARS', '0', '#E57373', '🏦', 'true', '2025-06-01T00:00:00.000Z', 'ws_2'];
+      const wallet = rowToWallet(row);
+      expect(wallet.walletId).toBe('wal_4');
+      expect(wallet.userId).toBe('usr_2');
+      expect(wallet.name).toBe('Cuenta');
+      expect(wallet.currency).toBe('ARS');
+      expect(wallet.color).toBe('#E57373');
+      expect(wallet.icon).toBe('🏦');
+      expect(wallet.createdAt).toBe('2025-06-01T00:00:00.000Z');
+      expect(wallet.workspaceId).toBe('ws_2');
+    });
 
-  beforeEach(() => {
-    spectator = createService();
-    spectator.inject(AuthService).getUser.mockReturnValue(MOCK_USER);
-    spectator.inject(SheetsApiService).getRange.mockReturnValue(
-      of({ range: 'WALLETS!A:I', majorDimension: 'ROWS' as const, values: SHEETS_ROWS }),
-    );
-    spectator.inject(SheetsApiService).deleteRow.mockReturnValue(of(undefined));
-  });
-
-  // REQ-06 sc1 — loadWallets() devuelve solo carteras del usuario, rowMap correcto
-  it('loadWallets_shouldReturnOnlyCurrentUserWallets_withCorrectRowMap', async () => {
-    const { wallets, rowMap } = await firstValueFrom(spectator.service.loadWallets());
-
-    expect(wallets.every(w => w.userId === 'usr_001')).toBe(true);
-    expect(wallets.some(w => w.userId === 'other-user')).toBe(false);
-    expect(rowMap[MOCK_WALLETS[0].walletId]).toBe(2);
-    expect(rowMap[MOCK_WALLETS[1].walletId]).toBe(3);
-  });
-
-  // REQ-06 sc2 — deleteWallet() llama a SheetsApiService con el rowNumber correcto
-  it('deleteWallet_shouldCallSheetsApiWithCorrectRowNumber', async () => {
-    const targetRow = 3;
-
-    await firstValueFrom(spectator.service.deleteWallet(targetRow));
-
-    const lastCall = spectator.inject(SheetsApiService).deleteRow.mock.calls[spectator.inject(SheetsApiService).deleteRow.mock.calls.length - 1];
-    const [range] = lastCall;
-    expect(range).toContain(`A${targetRow}`);
+    it('walletToRow always writes 0 for balance column', () => {
+      const row = ['wal_5', 'usr_1', 'Test', 'EUR', '0', '#5BAD8F', '💳', 'true', '2024-01-01T00:00:00.000Z', 'ws_1'];
+      const wallet = rowToWallet(row);
+      const backToRow = walletToRow(wallet);
+      expect(backToRow[4]).toBe(0); // balance deprecated
+    });
   });
 });

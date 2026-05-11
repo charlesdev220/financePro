@@ -1,11 +1,4 @@
-import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
-import { of } from 'rxjs';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { TransactionService, rowToTransaction, transactionToRow } from '@features/transactions/services/transaction.service';
-import { CurrencyApiService } from '@core/services/currency-api.service';
-import { SheetsApiService } from '@core/services/sheets-api.service';
-import { AuthService } from '@core/services/auth.service';
+import { rowToTransaction, transactionToRow, processRecurring } from '@features/transactions/services/transaction.service';
 import { ITransaction } from '@models/transaction.model';
 
 // toISOString() da UTC — en timezones adelantados puede devolver el día anterior.
@@ -34,96 +27,110 @@ const mockTx = (overrides: Partial<ITransaction> = {}): ITransaction => ({
   ...overrides,
 });
 
-describe('TransactionService', () => {
-  let spectator: SpectatorService<TransactionService>;
-  const createService = createServiceFactory({
-    service: TransactionService,
-    mocks: [CurrencyApiService, SheetsApiService, AuthService],
-    providers: [
-      provideHttpClient(),
-      provideHttpClientTesting(),
-    ],
+describe('transaction.service pure functions', () => {
+  describe('rowToTransaction / transactionToRow', () => {
+    it('round-trips a transaction through row format', () => {
+      const now = '2024-01-15T10:00:00.000Z';
+      const row = ['tx_1', 'usr_1', 'wal_1', 'cat_1', '50', 'EUR', '50', 'Café', '2024-01-15', 'expense', 'false', '', '', now, now, 'ws_1'];
+      const tx = rowToTransaction(row, 'ws_default');
+      expect(tx.txId).toBe('tx_1');
+      expect(tx.amount).toBe(50);
+      expect(tx.type).toBe('expense');
+      expect(tx.isRecurring).toBe(false);
+      const backToRow = transactionToRow(tx);
+      expect(backToRow[0]).toBe('tx_1');
+      expect(backToRow[4]).toBe(50);
+      expect(backToRow[10]).toBe(false);
+    });
+
+    it('maps null/empty optional fields to empty string in transactionToRow', () => {
+      const row = ['tx_2', 'usr_1', 'wal_1', 'cat_1', '100', 'EUR', '100', 'Salario', '2024-01-15', 'income', 'false', '', '', '2024-01-15T00:00:00.000Z', '2024-01-15T00:00:00.000Z', 'ws_1'];
+      const tx = rowToTransaction(row);
+      const backToRow = transactionToRow(tx);
+      expect(backToRow[11]).toBe(''); // recurrenceRule null → ''
+      expect(backToRow[12]).toBe(''); // notes null → ''
+    });
+
+    it('should round-trip a transaction with all fields', () => {
+      const tx = mockTx();
+      const row = transactionToRow(tx);
+      const restored = rowToTransaction(row);
+
+      expect(restored.txId).toBe(tx.txId);
+      expect(restored.amount).toBe(tx.amount);
+      expect(restored.amountBase).toBe(tx.amountBase);
+      expect(restored.type).toBe(tx.type);
+      expect(restored.isRecurring).toBe(tx.isRecurring);
+      expect(restored.recurrenceRule).toBeNull();
+    });
+
+    it('uses defaultWsId when workspaceId column is undefined', () => {
+      const row = ['tx_3', 'usr_1', 'wal_1', 'cat_1', '25', 'USD', '23', 'Taxi', '2024-02-01', 'expense', 'false', '', '', '2024-02-01T00:00:00.000Z', '2024-02-01T00:00:00.000Z', undefined];
+      const tx = rowToTransaction(row, 'ws_default');
+      expect(tx.workspaceId).toBe('ws_default');
+    });
+
+    it('maps isRecurring true when row[10] is "true"', () => {
+      const row = ['tx_4', 'usr_1', 'wal_1', 'cat_1', '100', 'EUR', '100', 'Alquiler', '2024-01-01', 'expense', 'true', 'monthly', '', '2024-01-01T00:00:00.000Z', '2024-01-01T00:00:00.000Z', 'ws_1'];
+      const tx = rowToTransaction(row);
+      expect(tx.isRecurring).toBe(true);
+      expect(tx.recurrenceRule).toBe('monthly');
+    });
+
+    it('maps all transaction fields correctly', () => {
+      const row = ['tx_5', 'usr_2', 'wal_2', 'cat_2', '200', 'USD', '185', 'Supermercado', '2025-03-15', 'expense', 'false', '', 'nota test', '2025-03-15T08:00:00.000Z', '2025-03-15T08:00:00.000Z', 'ws_3'];
+      const tx = rowToTransaction(row);
+      expect(tx.userId).toBe('usr_2');
+      expect(tx.walletId).toBe('wal_2');
+      expect(tx.categoryId).toBe('cat_2');
+      expect(tx.currency).toBe('USD');
+      expect(tx.amountBase).toBe(185);
+      expect(tx.concept).toBe('Supermercado');
+      expect(tx.date).toBe('2025-03-15');
+      expect(tx.notes).toBe('nota test');
+    });
   });
 
-  beforeEach(() => {
-    spectator = createService();
-    spectator.inject(AuthService).isAuthenticated.mockReturnValue(true);
-    spectator.inject(AuthService).getUser.mockReturnValue({ sub: 'user-001', email: 'test@test.com', name: 'Tester' });
-  });
+  describe('processRecurring', () => {
+    it('returns empty array when no recurring transactions exist', () => {
+      const txs = [mockTx({ isRecurring: false })];
+      expect(processRecurring(txs)).toHaveLength(0);
+    });
 
-  // REQ-03 sc1: transacción en divisa diferente a la base
-  it('should calculate amountBase using currency rate', async () => {
-    spectator.inject(CurrencyApiService).getRate.mockReturnValue(of(0.92));
-    const draft = {
-      userId: 'user-001', walletId: 'wal-001', categoryId: 'cat-001',
-      amount: 100, currency: 'USD', concept: 'Test', date: '2026-04-01',
-      type: 'expense' as const, isRecurring: false, recurrenceRule: null, notes: null,
-    };
+    it('returns empty array when recurring transaction has no recurrenceRule', () => {
+      const txs = [mockTx({ isRecurring: true, recurrenceRule: null })];
+      expect(processRecurring(txs)).toHaveLength(0);
+    });
 
-    const tx = await spectator.service.createTransaction(draft, 'tx-001', 'ws_test', 'EUR');
+    // REQ-07 sc1: recurrente mensual vencida → genera nueva transacción
+    it('generates new transaction for overdue monthly recurring', () => {
+      const lastMonth = new Date();
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+      const lastMonthStr = localDateStr(lastMonth);
 
-    expect(tx.amountBase).toBeCloseTo(92, 1);
-    expect(tx.txId).toBe('tx-001');
-    expect(spectator.inject(CurrencyApiService).getRate).toHaveBeenCalledWith('USD', 'EUR');
-  });
+      const recurring = mockTx({ isRecurring: true, recurrenceRule: 'monthly', date: lastMonthStr });
+      const result = processRecurring([recurring]);
 
-  // REQ-03 sc2: transacción en divisa base — amountBase = amount
-  it('should set amountBase = amount when currency equals base', async () => {
-    spectator.inject(CurrencyApiService).getRate.mockReturnValue(of(1));
-    const draft = {
-      userId: 'user-001', walletId: 'wal-001', categoryId: 'cat-001',
-      amount: 50, currency: 'EUR', concept: '', date: '2026-04-01',
-      type: 'expense' as const, isRecurring: false, recurrenceRule: null, notes: null,
-    };
+      expect(result.length).toBe(1);
+      expect(result[0].txId).not.toBe(recurring.txId);
+      expect(result[0].isRecurring).toBe(true);
+    });
 
-    const tx = await spectator.service.createTransaction(draft, 'tx-002', 'ws_test', 'EUR');
+    // REQ-07 sc2: recurrente al día — no duplica si ya existe en período
+    it('does not duplicate recurring if already generated this period', () => {
+      const lastMonth = new Date();
+      lastMonth.setMonth(lastMonth.getMonth() - 1);
+      const lastMonthStr = localDateStr(lastMonth);
 
-    expect(tx.amountBase).toBe(50);
-  });
+      const thisMonth = new Date();
+      thisMonth.setDate(1);
+      const thisMonthStr = localDateStr(thisMonth);
 
-  // REQ-07 sc1: recurrente mensual vencida → genera nueva transacción
-  it('should generate new transaction for overdue monthly recurring', () => {
-    const lastMonth = new Date();
-    lastMonth.setMonth(lastMonth.getMonth() - 1);
-    const lastMonthStr = localDateStr(lastMonth);
+      const original = mockTx({ isRecurring: true, recurrenceRule: 'monthly', date: lastMonthStr });
+      const alreadyGenerated = mockTx({ txId: 'tx-002', isRecurring: true, recurrenceRule: 'monthly', date: thisMonthStr });
+      const result = processRecurring([original, alreadyGenerated]);
 
-    const recurring = mockTx({ isRecurring: true, recurrenceRule: 'monthly', date: lastMonthStr });
-    const result = spectator.service.processRecurring([recurring]);
-
-    expect(result.length).toBe(1);
-    expect(result[0].txId).not.toBe(recurring.txId);
-    expect(result[0].isRecurring).toBe(true);
-  });
-
-  // REQ-07 sc2: recurrente al día — no duplica si ya existe en período
-  it('should not duplicate recurring if already generated this period', () => {
-    const lastMonth = new Date();
-    lastMonth.setMonth(lastMonth.getMonth() - 1);
-    const lastMonthStr = localDateStr(lastMonth);
-
-    const thisMonth = new Date();
-    thisMonth.setDate(1);
-    const thisMonthStr = localDateStr(thisMonth);
-
-    const original = mockTx({ isRecurring: true, recurrenceRule: 'monthly', date: lastMonthStr });
-    const alreadyGenerated = mockTx({ txId: 'tx-002', isRecurring: true, recurrenceRule: 'monthly', date: thisMonthStr });
-    const result = spectator.service.processRecurring([original, alreadyGenerated]);
-
-    expect(result.length).toBe(0);
-  });
-});
-
-describe('rowToTransaction / transactionToRow', () => {
-  it('should round-trip a transaction through row conversion', () => {
-    const tx = mockTx();
-    const row = transactionToRow(tx);
-    const restored = rowToTransaction(row);
-
-    expect(restored.txId).toBe(tx.txId);
-    expect(restored.amount).toBe(tx.amount);
-    expect(restored.amountBase).toBe(tx.amountBase);
-    expect(restored.type).toBe(tx.type);
-    expect(restored.isRecurring).toBe(tx.isRecurring);
-    expect(restored.recurrenceRule).toBeNull();
+      expect(result.length).toBe(0);
+    });
   });
 });

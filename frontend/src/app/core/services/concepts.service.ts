@@ -1,12 +1,3 @@
-/**
- * Excepción arquitectónica: este service llama directamente a SheetsApiService.
- * Regla ngrx.md: "SheetsApiService solo en Effects".
- * Motivo: ConceptsService mantiene el upsert de conceptos únicos por usuario (vocabulario
- * autocompletado) — es una operación auxiliar que se ejecuta como efecto secundario al
- * confirmar una transacción, sin estado NgRx propio. Moverlo a un effect requeriría
- * un feature store dedicado para un dato de UI efímero.
- * Decisión aprobada en CLAUDE.md como excepción documentada de servicio auxiliar.
- */
 import { Injectable, inject } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { firstValueFrom } from 'rxjs';

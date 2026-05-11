@@ -9,7 +9,7 @@ import { TransactionsStateService } from '@core/state/transactions.state';
 import { WalletsStateService } from '@core/state/wallets.state';
 import { CategoriesStateService } from '@core/state/categories.state';
 import { BudgetsStateService } from '@core/state/budgets.state';
-import { ConceptsService } from '@features/transactions/services/concepts.service';
+import { ConceptsService } from '@core/services/concepts.service';
 import { IBudget } from '@models/budget.model';
 import { ITransaction } from '@models/transaction.model';
 import { IWallet } from '@models/wallet.model';

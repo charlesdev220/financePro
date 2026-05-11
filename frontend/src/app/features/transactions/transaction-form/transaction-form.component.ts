@@ -15,7 +15,7 @@ import { TransactionsStateService } from '@core/state/transactions.state';
 import { WalletsStateService } from '@core/state/wallets.state';
 import { CategoriesStateService } from '@core/state/categories.state';
 import { BudgetsStateService } from '@core/state/budgets.state';
-import { ConceptsService } from '@features/transactions/services/concepts.service';
+import { ConceptsService } from '@core/services/concepts.service';
 import { ITransaction } from '@models/transaction.model';
 import { IBudget } from '@models/budget.model';
 import { IConcept } from '@models/concept.model';
@@ -236,7 +236,7 @@ export class TransactionFormComponent implements OnInit {
       this.amountString.set(tx.amount.toString());
     }
 
-    this.form = this.fb.group({
+    this.form = this.fb.group({ /** VALIDACIONES DE FORMULARIO */
       type: [initialType, Validators.required],
       amount: [tx?.amount ?? null, [Validators.required, Validators.min(-999999), Validators.max(999999)]],
       currency: [tx?.currency ?? this.userBaseCurrency() ?? 'EUR', Validators.required],

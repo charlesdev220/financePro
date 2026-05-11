@@ -1,13 +1,16 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, map, Observable } from 'rxjs';
 import { IWallet } from '@models/wallet.model';
-import { WalletService } from '@features/wallets/services/wallet.service';
+import { rowToWallet, walletToRow } from '@features/wallets/services/wallet.service';
 import { AppendResponse } from '@features/transactions/services/transaction.service';
+import { SheetsApiService } from '@core/services/sheets-api.service';
+import { AuthService } from '@core/services/auth.service';
 import { WorkspacesStateService } from '@core/state/workspaces.state';
 
 @Injectable({ providedIn: 'root' })
 export class WalletsStateService {
-  private readonly walletService   = inject(WalletService);
+  private readonly sheetsApi = inject(SheetsApiService);
+  private readonly authService = inject(AuthService);
   private readonly workspacesState = inject(WorkspacesStateService);
 
   private readonly _allItems = signal<IWallet[]>([]);
@@ -31,9 +34,28 @@ export class WalletsStateService {
 
   load(force = false): Promise<void> {
     if (this._loaded() && !force) return Promise.resolve();
+    const defaultWsId = this.workspacesState.defaultWorkspaceId();
     this._loading.set(true);
     this._error.set(null);
-    return firstValueFrom(this.walletService.loadWallets(this.workspacesState.defaultWorkspaceId()))
+    return firstValueFrom(
+      this.sheetsApi.getRange('WALLETS!A:J').pipe(
+        map(response => {
+          if (!response?.values || response.values.length < 2) return { wallets: [], rowMap: {} };
+          const allRows = response.values.slice(1);
+          const userId = this.authService.getUser()?.sub ?? '';
+          const rowMap: Record<string, number> = {};
+          allRows.forEach((row, i) => {
+            const id = String(row[0] ?? '');
+            const uid = String(row[1] ?? '');
+            if (id && uid === userId) rowMap[id] = i + 2;
+          });
+          const wallets = allRows
+            .filter(row => row[0] && String(row[1] ?? '') === userId)
+            .map(row => rowToWallet(row, defaultWsId));
+          return { wallets, rowMap };
+        }),
+      ),
+    )
       .then(({ wallets, rowMap }) => {
         this._allItems.set(wallets);
         this._rowMap.set(rowMap);
@@ -46,7 +68,7 @@ export class WalletsStateService {
   add(wallet: IWallet): void {
     const prevItems = this._allItems();
     this._allItems.update(items => [...items, wallet]);
-    firstValueFrom(this.walletService.saveWallet(wallet))
+    firstValueFrom(this.sheetsApi.appendRow('WALLETS!A1', [walletToRow(wallet)]) as Observable<AppendResponse>)
       .then((response: AppendResponse) => {
         const rowNumber = this._parseRowNumber(response?.updates?.updatedRange);
         if (rowNumber) {
@@ -70,7 +92,7 @@ export class WalletsStateService {
   update(wallet: IWallet, rowNumber: number): void {
     const prevItems = this._allItems();
     this._allItems.update(items => items.map(w => w.walletId === wallet.walletId ? wallet : w));
-    firstValueFrom(this.walletService.updateWallet(wallet, rowNumber))
+    firstValueFrom(this.sheetsApi.updateRow(`WALLETS!A${rowNumber}:J${rowNumber}`, [walletToRow(wallet)]))
       .catch(err => {
         this._allItems.set(prevItems);
         this._error.set(String(err));
@@ -80,7 +102,7 @@ export class WalletsStateService {
   delete(walletId: string, rowNumber: number): void {
     const prevItems = this._allItems();
     this._allItems.update(items => items.filter(w => w.walletId !== walletId));
-    firstValueFrom(this.walletService.deleteWallet(rowNumber))
+    firstValueFrom(this.sheetsApi.deleteRow(`WALLETS!A${rowNumber}:J${rowNumber}`))
       .catch(err => {
         this._allItems.set(prevItems);
         this._error.set(String(err));

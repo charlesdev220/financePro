@@ -1,15 +1,18 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, map } from 'rxjs';
 import { IBudget } from '@models/budget.model';
 import { ITransaction } from '@models/transaction.model';
-import { BudgetService, calculateStatus } from '@features/budgets/services/budget.service';
+import { rowToBudget, budgetToRow, calculateStatus } from '@features/budgets/services/budget.service';
+import { SheetsApiService } from '@core/services/sheets-api.service';
+import { AuthService } from '@core/services/auth.service';
 import { WorkspacesStateService } from '@core/state/workspaces.state';
 import { TRANSACTION_TYPES } from '@core/constants/transaction.constants';
 import { BUDGET_MODES } from '@core/constants/workspace.constants';
 
 @Injectable({ providedIn: 'root' })
 export class BudgetsStateService {
-  private readonly budgetService = inject(BudgetService);
+  private readonly sheetsApi = inject(SheetsApiService);
+  private readonly authService = inject(AuthService);
   private readonly workspacesState = inject(WorkspacesStateService);
 
   private readonly _allItems = signal<IBudget[]>([]);
@@ -27,9 +30,28 @@ export class BudgetsStateService {
   readonly rowMap = this._rowMap.asReadonly();
 
   load(): void {
+    const defaultWsId = this.workspacesState.defaultWorkspaceId();
     this._loading.set(true);
     this._error.set(null);
-    firstValueFrom(this.budgetService.loadBudgets(this.workspacesState.defaultWorkspaceId()))
+    firstValueFrom(
+      this.sheetsApi.getRange('BUDGETS!A:L').pipe(
+        map(response => {
+          if (!response?.values || response.values.length < 2) return { budgets: [], rowMap: {} };
+          const allRows = response.values.slice(1);
+          const userId = this.authService.getUser()?.sub ?? '';
+          const rowMap: Record<string, number> = {};
+          allRows.forEach((row, i) => {
+            const id = String(row[0] ?? '');
+            const uid = String(row[1] ?? '');
+            if (id && uid === userId) rowMap[id] = i + 2;
+          });
+          const budgets = allRows
+            .filter(row => row[0] && String(row[1] ?? '') === userId)
+            .map(row => rowToBudget(row, defaultWsId));
+          return { budgets, rowMap };
+        }),
+      ),
+    )
       .then(({ budgets, rowMap }) => {
         this._allItems.set(budgets);
         this._rowMap.set(rowMap);
@@ -41,7 +63,7 @@ export class BudgetsStateService {
   save(budget: IBudget): void {
     const prevItems = this._allItems();
     this._allItems.update(items => [...items, budget]);
-    firstValueFrom(this.budgetService.saveBudget(budget))
+    firstValueFrom(this.sheetsApi.appendRow('BUDGETS!A1', [budgetToRow(budget)]))
       .catch(err => {
         this._allItems.set(prevItems);
         this._error.set(String(err));
@@ -51,7 +73,7 @@ export class BudgetsStateService {
   update(budget: IBudget, rowNumber: number): void {
     const prevItems = this._allItems();
     this._allItems.update(items => items.map(b => b.budgetId === budget.budgetId ? budget : b));
-    firstValueFrom(this.budgetService.updateBudget(budget, rowNumber))
+    firstValueFrom(this.sheetsApi.updateRow(`BUDGETS!A${rowNumber}:L${rowNumber}`, [budgetToRow(budget)]))
       .catch(err => {
         this._allItems.set(prevItems);
         this._error.set(String(err));
@@ -61,7 +83,7 @@ export class BudgetsStateService {
   delete(budgetId: string, rowNumber: number): void {
     const prevItems = this._allItems();
     this._allItems.update(items => items.filter(b => b.budgetId !== budgetId));
-    firstValueFrom(this.budgetService.deleteBudget(rowNumber))
+    firstValueFrom(this.sheetsApi.deleteRow(`BUDGETS!A${rowNumber}:L${rowNumber}`))
       .catch(err => {
         this._allItems.set(prevItems);
         this._error.set(String(err));
@@ -87,7 +109,7 @@ export class BudgetsStateService {
     };
 
     this._allItems.update(items => items.map(b => b.budgetId === updated.budgetId ? updated : b));
-    firstValueFrom(this.budgetService.updateBudget(updated, rowNumber))
+    firstValueFrom(this.sheetsApi.updateRow(`BUDGETS!A${rowNumber}:L${rowNumber}`, [budgetToRow(updated)]))
       .catch(err => this._error.set(String(err)));
   }
 
@@ -115,7 +137,7 @@ export class BudgetsStateService {
       const status = calculateStatus(spentAmount, existing.budgetAmount);
       const updated: IBudget = { ...existing, spentAmount, status, lastUpdated: new Date().toISOString() };
       this._allItems.update(items => items.map(b => b.budgetId === existing.budgetId ? updated : b));
-      firstValueFrom(this.budgetService.updateBudget(updated, rowNumber))
+      firstValueFrom(this.sheetsApi.updateRow(`BUDGETS!A${rowNumber}:L${rowNumber}`, [budgetToRow(updated)]))
         .catch(err => this._error.set(String(err)));
     } else {
       // No existe → crear con el amount por defecto de la categoría

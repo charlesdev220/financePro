@@ -1,6 +1,6 @@
 import { createServiceFactory, SpectatorService } from '@ngneat/spectator/jest';
 import { of } from 'rxjs';
-import { ConceptsService } from '@features/transactions/services/concepts.service';
+import { ConceptsService } from '@core/services/concepts.service';
 import { SheetsApiService } from '@core/services/sheets-api.service';
 import { IConcept } from '@models/concept.model';
 import { ITransaction } from '@models/transaction.model';

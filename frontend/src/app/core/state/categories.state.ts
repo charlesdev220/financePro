@@ -1,13 +1,14 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, map, switchMap, Observable } from 'rxjs';
 import { ICategory } from '@models/category.model';
-import { CategoryService } from '@features/categories/services/category.service';
+import { rowToCategory, categoryToRow } from '@features/categories/services/category.service';
 import { AppendResponse } from '@features/transactions/services/transaction.service';
+import { SheetsApiService } from '@core/services/sheets-api.service';
 import { WorkspacesStateService } from '@core/state/workspaces.state';
 
 @Injectable({ providedIn: 'root' })
 export class CategoriesStateService {
-  private readonly categoryService = inject(CategoryService);
+  private readonly sheetsApi = inject(SheetsApiService);
   private readonly workspacesState = inject(WorkspacesStateService);
 
   private readonly _allItems = signal<ICategory[]>([]);
@@ -29,9 +30,24 @@ export class CategoriesStateService {
 
   load(force = false): Promise<void> {
     if (this._loaded() && !force) return Promise.resolve();
+    const defaultWsId = this.workspacesState.defaultWorkspaceId();
     this._loading.set(true);
     this._error.set(null);
-    return firstValueFrom(this.categoryService.loadCategories(this.workspacesState.defaultWorkspaceId()))
+    return firstValueFrom(
+      this.sheetsApi.getRange('CATEGORIES!A:K').pipe(
+        map(response => {
+          if (!response?.values || response.values.length < 2) return { categories: [], rowMap: {} };
+          const allRows = response.values.slice(1);
+          const rowMap: Record<string, number> = {};
+          allRows.forEach((row, i) => {
+            const id = String(row[0] ?? '');
+            if (id) rowMap[id] = i + 2;
+          });
+          const categories = allRows.filter(row => row[0]).map(row => rowToCategory(row, defaultWsId));
+          return { categories, rowMap };
+        }),
+      ),
+    )
       .then(({ categories, rowMap }) => {
         this._allItems.set(categories);
         this._rowMap.set(rowMap);
@@ -44,7 +60,7 @@ export class CategoriesStateService {
   add(category: ICategory): void {
     const prevItems = this._allItems();
     this._allItems.update(items => [...items, category]);
-    firstValueFrom(this.categoryService.saveCategory(category))
+    firstValueFrom(this.sheetsApi.appendRow('CATEGORIES!A1', [categoryToRow(category)]) as Observable<AppendResponse>)
       .then((response: AppendResponse) => {
         const rowNumber = this._parseRowNumber(response?.updates?.updatedRange);
         if (rowNumber) {
@@ -68,7 +84,7 @@ export class CategoriesStateService {
   update(category: ICategory, rowNumber: number): void {
     const prevItems = this._allItems();
     this._allItems.update(items => items.map(c => c.categoryId === category.categoryId ? category : c));
-    firstValueFrom(this.categoryService.updateCategory(category, rowNumber))
+    firstValueFrom(this.sheetsApi.updateRow(`CATEGORIES!A${rowNumber}:K${rowNumber}`, [categoryToRow(category)]))
       .catch(err => {
         this._allItems.set(prevItems);
         this._error.set(String(err));
@@ -79,7 +95,18 @@ export class CategoriesStateService {
   delete(categoryId: string, rowNumber: number): void {
     const prevItems = this._allItems();
     this._allItems.update(items => items.filter(c => c.categoryId !== categoryId));
-    firstValueFrom(this.categoryService.softDeleteCategory(categoryId, rowNumber))
+    const rowRange = `CATEGORIES!A${rowNumber}:K${rowNumber}`;
+    firstValueFrom(
+      this.sheetsApi.getRange(rowRange).pipe(
+        switchMap(response => {
+          const row = response?.values?.[0];
+          if (!row) throw new Error(`Row ${rowNumber} not found in CATEGORIES`);
+          const updated = [...row];
+          updated[8] = false;
+          return this.sheetsApi.updateRow(rowRange, [updated]);
+        }),
+      ),
+    )
       .catch(err => {
         this._allItems.set(prevItems);
         this._error.set(String(err));
