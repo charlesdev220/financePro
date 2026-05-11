@@ -23,7 +23,7 @@ Leer **obligatoriamente**:
 ## Qué verificar
 
 1. **Completeness:** Todas las tareas en `tasks.md` marcadas `[x]`.
-2. **Correctness:** Para cada requirement en `spec.md`, buscar evidencia en el código.
+2. **Correctness:** Para cada requirement en `spec.md`, buscar evidencia en el código. comprobar que la logica modificada no cambia el comportamiento del metodo modificado y sigue siendo coherente.
 3. **Testing:** Verificar que existen tests para los scenarios críticos del spec.
 4. **Architecture compliance:** El código cumple las reglas de `.claude/rules/`.
 5. Guardar resultado en `.sdd/changes/{change-name}/verify-report.md`.

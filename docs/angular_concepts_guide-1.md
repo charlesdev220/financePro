@@ -590,6 +590,121 @@ async procesarCompra() {
    }
 }
 ```
+En Angular 20, las Promise se pueden reemplazar principalmente por dos razones:
+                 
+  1. Signals + resource() / httpResource()
+
+  Angular 20 introduce resource() y httpResource() que manejan datos asíncronos de forma reactiva sin Promises:
+
+  // ❌ Promise clásica
+  async loadUser() {
+    const user = await fetch('/api/user').then(r => r.json());
+    this.user = user;
+  }
+
+  // ✅ Angular 20 — httpResource
+  readonly user = httpResource<User>(() => '/api/user');
+  // user.value(), user.isLoading(), user.error() son signals directamente
+
+  2. Observables + toSignal()
+
+  Para flujos ya existentes con RxJS, toSignal() convierte el Observable en un Signal sin necesidad de async/await:
+
+  // ❌ Promise con firstValueFrom
+  async cargarTransacciones() {
+    const txs = await firstValueFrom(this.sheetsApi.getTransactions());
+    this.transactions.set(txs);
+  }
+
+  // ✅ toSignal directo
+  readonly transactions = toSignal(
+    this.sheetsApi.getTransactions(),
+    { initialValue: [] }
+  );
+
+  ---
+  Por qué el cambio es importante
+
+  ┌─────────────────────────────────────────────────┬─────────────────────────────────────────────────────┐
+  │              Problema con Promise               │                Solución con Signals                 │
+  ├─────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ Rompe OnPush — Angular no detecta el cambio     │ Signals notifican automáticamente al grafo reactivo │
+  ├─────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ Estado intermedio (loading, error) manual       │ resource() lo expone como signals listas            │
+  ├─────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ No cancelable (race conditions en navegación)   │ switchMap / resource() cancela la petición anterior │
+  ├─────────────────────────────────────────────────┼─────────────────────────────────────────────────────┤
+  │ async/await en componentes mezcla lógica con UI │ La lógica queda en efectos o servicios              │
+  └─────────────────────────────────────────────────┴─────────────────────────────────────────────────────┘
+
+  En el contexto de MyFinance, firstValueFrom() en efectos NgRx está bien porque el effect vive fuera del componente, pero dentro de un componente la regla es:
+  signal o toSignal, nunca Promise ni subscribe manual.
+
+pero luego tienes: 
+
+  <ion-button (click)="save()" [disabled]="form.invalid" strong="true" style="text-transform: none;">
+    Guardar
+  </ion-button>
+
+  async save(): Promise<void> {      
+    
+  }
+
+save() y cancel() — el async/await es una mentira acá
+
+  async save(): Promise<void> {      // línea 286
+    if (this.form.invalid) return;
+    // ...lógica síncrona...
+    this.txState.add(draft, ...);    // síncrono
+    this.dismiss.emit();             // síncrono
+  }
+
+  async cancel(): Promise<void> {   // línea 331
+    this.dismiss.emit();             // síncrono
+  }
+
+  El problema: ninguno de los dos métodos tiene un await adentro. Son funciones 100% síncronas disfrazadas de async. El async no aporta nada — Angular convierte
+  cualquier valor de retorno en una Promise que nadie consume.
+
+  La corrección correcta
+
+  // ✅ síncrono — refleja lo que realmente hace
+  onSave(): void {
+    if (this.form.invalid) return;
+    if (Number(this.form.get('amount')?.value) === 0) return;
+
+    const value = this.form.getRawValue();
+    // ...build draft...
+
+    const tx = this.transaction();
+    const rn = this.rowNumber();
+
+    if (tx) {
+      if (!rn) { this.dismiss.emit(); return; }
+      const updated: ITransaction = { ...tx, ...draft, updatedAt: new Date().toISOString() };
+      this.txState.update(updated, rn, this.userBaseCurrency());
+    } else {
+      this.txState.add(draft, this.userBaseCurrency());
+    }
+
+    this.dismiss.emit();
+  }
+
+  onCancel(): void {
+    this.dismiss.emit();
+  }
+
+  Excepción válida — cuando async/await SÍ tiene sentido
+
+  Los métodos openWalletPicker(), openCategoryPicker(), openCurrencyPicker() (líneas 342-413) sí justifican el async/await porque esperan el resultado del modal:
+
+  async openWalletPicker(): Promise<void> {
+    const modal = await this.modalCtrl.create({...});  // ← await real
+    await modal.present();                              // ← await real
+    const { data, role } = await modal.onWillDismiss(); // ← await real
+  }
+
+  Ahí el async está bien usado. El problema es solo en save() y cancel().  
 
 ---
 
