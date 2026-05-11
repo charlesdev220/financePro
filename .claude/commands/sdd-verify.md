@@ -1,80 +1,140 @@
-# SDD Verify — MyFinance
+# SDD Verify — Paso 5
 
-Valida que la implementación cumple con las specs.
+Verifica la implementación, cierra los tres depósitos de memoria y archiva.  
 Recibís: **$ARGUMENTS** (nombre del cambio).
 
 ## Agentes responsables
 
-Esta fase se divide entre dos agentes:
-
-- **`qa-automation`** — revisa el código implementado, corre los tests unitarios **Karma/Jasmine**, valida compliance arquitectónico contra `spec.md` y `tasks.md`.
-- **`playwright-inspector`** — corre los tests **E2E Playwright**, inspecciona visualmente el resultado en browser real e incluye el output en el reporte.
-
-Ambos emiten su resultado en `verify-report.md`. Si los tests E2E fallan, `playwright-inspector` los incluye bajo "Issues Encontrados".
-**Verifica si lo especificado en `explore.md` se cumple**
+- **`qa-automation`** — compliance arquitectónico + tests unitarios Karma/Jasmine + completeness.
+- **`playwright-inspector`** — tests E2E Playwright + inspección visual en browser real.
 
 ## Pre-requisitos
 
-Leer **obligatoriamente**:
-- `.sdd/changes/{change-name}/spec.md`
-- `.sdd/changes/{change-name}/tasks.md`
-- El código implementado en los archivos afectados
+Leer obligatoriamente:
+- `.sdd/changes/{change-name}/1-init.md`
+- `.sdd/changes/{change-name}/2-spec.md`
+- `.sdd/changes/{change-name}/3-task.md`
+- `.sdd/changes/{change-name}/4-impl-log.md`
+- El código implementado en los archivos de `4-impl-log.md`
 
-## Qué verificar
+## A. Completeness
 
-1. **Completeness:** Todas las tareas en `tasks.md` marcadas `[x]`.
-2. **Correctness:** Para cada requirement en `spec.md`, buscar evidencia en el código. comprobar que la logica modificada no cambia el comportamiento del metodo modificado y sigue siendo coherente.
-3. **Testing:** Verificar que existen tests para los scenarios críticos del spec.
-4. **Architecture compliance:** El código cumple las reglas de `.claude/rules/`.
-5. Guardar resultado en `.sdd/changes/{change-name}/verify-report.md`.
-6. Actualizar `state.md` → fase: `verify`.
+- Todas las tareas en `3-task.md` marcadas `[x]`.
+- El propósito declarado en `1-init.md` puede declararse como cumplido.
 
-## Compliance checklist — MyFinance
+## B. Spec compliance
 
-| Regla | Qué verificar |
-|---|---|
-| Standalone components | `standalone: true` en todos los componentes nuevos |
-| OnPush | `ChangeDetectionStrategy.OnPush` en todos los componentes |
-| Functional effects | Effects exportan `const`, no clases `@Injectable` |
-| Signal-based inputs | `input()` / `output()` — sin `@Input()` / `@Output()` legacy |
-| No inline templates | Ningún `.ts` contiene `template:` — solo `templateUrl:` |
-| inject() | Sin constructor injection |
+- Para cada UC en `2-spec.md`, existe evidencia en el código **y** un test que lo verifica.
+- UCs de error path tienen su correspondiente manejo en effects/componentes.
+
+## C. Architecture compliance
+
+| Regla | Verificación |
+|-------|-------------|
+| `standalone: true` | Todos los componentes nuevos |
+| `OnPush` | `ChangeDetectionStrategy.OnPush` en todos los componentes |
+| Effects funcionales | `{ functional: true }`, sin clases `@Injectable` |
+| `input()` / `output()` modernos | Sin `@Input()` / `@Output()` legacy |
+| No inline templates | Ningún `.ts` contiene `template:` |
+| `inject()` | Sin constructor injection |
 | Control flow moderno | `@if` / `@for` — sin `*ngIf` / `*ngFor` |
-| JSDoc en toSignal/computed | Cada `toSignal()` y `computed()` tiene su línea JSDoc |
-| Constantes tipadas | Sin string literals de comparación (`'income'`, `'expense'`) |
-| Cero TODO/FIXME | Grep confirma ausencia en archivos modificados |
-| SheetsApiService solo en Effects | Ningún componente ni service llama directamente |
-| SPREADSHEET_ID en env | No hardcodeado en ningún archivo de código |
+| JSDoc en `toSignal()` / `computed()` | Línea JSDoc obligatoria |
+| Constantes tipadas | Sin string literals de comparación |
+| Cero TODO/FIXME | Grep en archivos modificados |
+| SheetsApiService solo en Effects | Ningún componente llama directo |
+| SPREADSHEET_ID en env | No hardcodeado |
 
-## Formato de `verify-report.md`
+## D. Actualizar `HISTORIAL_APRENDIZAJE.md`
+
+Solo si el veredicto es PASS o PASS WITH WARNINGS. Formato grep-friendly:
 
 ```markdown
-## Verification Report: {change-name}
+### [APREND-{NNN}] {Título breve}
+**Contexto:** `{archivo}` · {clase/servicio} · {método si aplica}
+**Patrón:** {bug | decision | warning | performance}
+**Síntoma:** {qué se observó}
+**Causa:** {por qué ocurrió}
+**Fix:** {qué lo resolvió}
+**Promovido a rule:** `{archivo:línea}` / No
+```
 
-### Completeness
+## E. Actualizar `HISTORIAL_IMPLEMENTACION.md`
+
+Solo si el veredicto es PASS o PASS WITH WARNINGS:
+
+```markdown
+### Qué hemos completado hasta ahora ({Título}):
+*Fase actual:* Fase X: ...
+*Estado actual:* Completado
+- ✔️ **{Nombre}:** {Descripción técnica en 1 línea}
+*Archivos modificados:* `{archivo1}`, `{archivo2}`
+*Deuda técnica documentada:* {...}
+*Próximos pasos:* {...}
+```
+
+## F. Detección de patrones → promoción a rules
+
+Cuando verify encuentra un WARNING o CRITICAL, preguntar:  
+**¿Este patrón ya apareció en `HISTORIAL_APRENDIZAJE.md` antes?**
+
+```
+Si el mismo patrón aparece 2+ veces en el historial:
+→ Promover a .claude/rules/{capa}.md como regla explícita
+→ Actualizar la entrada del historial: "Promovido a rule: sheets-api.md línea XX"
+→ Registrar en 5-verify-report.md bajo "Reglas promovidas"
+```
+
+## G. Actualizar `project-map.json`
+
+Siempre, si el veredicto es PASS o PASS WITH WARNINGS.  
+Solo se actualizan los nodos tocados por el cambio (listados en `4-impl-log.md`):
+
+```bash
+npx tsx frontend/tools/generate-project-map.ts --files archivo1.ts,archivo2.ts
+```
+
+Si el script falla → el archive no está completo.
+
+## H. Archive
+
+Mover `.sdd/changes/{change-name}/` a `.sdd/changes/archive/{change-name}/`.  
+Actualizar `state.md` → `Estado: Completado`.
+
+## Estructura de `5-verify-report.md`
+
+```markdown
+# Verify Report: {change-name}
+
+## Completeness
 | Métrica | Valor |
 |---------|-------|
-| Total tareas | {N} |
-| Completas [x] | {N} |
+| Tareas totales | {N} |
+| Completadas [x] | {N} |
 | Pendientes [ ] | {N} |
 
-### Spec Compliance Matrix
-| Requirement | Scenario | Evidencia (archivo:línea) | Estado |
-|-------------|----------|--------------------------|--------|
-| REQ-01 | {scenario} | `src/app/store/transactions/transactions.effects.ts:12` | ✅ COMPLIANT |
-| REQ-02 | {scenario} | (no se encontró) | ❌ UNTESTED |
+## Spec Compliance
+| UC | Título | Evidencia | Test | Estado |
+|----|--------|-----------|------|--------|
+| UC-01 | {título} | `archivo:línea` | `spec:línea` | ✅ |
+| UC-02 | {título} | — | — | ❌ |
 
-### Architecture Compliance
+## Architecture Compliance
 | Regla | Estado | Notas |
 |-------|--------|-------|
-| Standalone components | ✅/❌ | |
-| OnPush en todos los componentes | ✅/❌ | |
+| Standalone | ✅/❌ | |
+| OnPush | ✅/❌ | |
 | Effects funcionales | ✅/❌ | |
 | input()/output() modernos | ✅/❌ | |
 | No inline templates | ✅/❌ | |
+| inject() | ✅/❌ | |
+| Control flow moderno | ✅/❌ | |
 | JSDoc en toSignal/computed | ✅/❌ | |
+| Constantes tipadas | ✅/❌ | |
+| Cero TODO/FIXME | ✅/❌ | |
+| SheetsApiService solo en Effects | ✅/❌ | |
+| SPREADSHEET_ID en env | ✅/❌ | |
 
-### Issues Encontrados
+## Issues
 
 **CRITICAL** (bloquean archive):
 Ninguno / lista
@@ -82,16 +142,19 @@ Ninguno / lista
 **WARNING** (recomendado corregir):
 Ninguno / lista
 
-**SUGGESTION**:
-Ninguno / lista
+## Reglas promovidas (F)
+| Patrón | Historial | Rule actualizada |
+|--------|-----------|-----------------|
+| {descripción} | APREND-{NNN} | `{archivo}.md:{línea}` |
 
-### Veredicto
+## Veredicto
 {PASS / PASS WITH WARNINGS / FAIL}
 ```
 
 ## Reglas
 
-- Issues CRITICAL bloquean el paso a `sdd-archive`.
-- No corregir issues en esta fase — solo reportar. El usuario decide qué hacer.
-- Un scenario es COMPLIANT solo si hay código que lo implementa **y** existe un test que lo verifica.
-- Si los tests E2E fallan, incluir el output en el reporte bajo "Issues Encontrados".
+- Issues CRITICAL bloquean el archive.
+- No corregir issues en esta fase — solo reportar. El usuario decide.
+- Los historiales se actualizan **solo** si el veredicto es PASS o PASS WITH WARNINGS.
+- `project-map.json` se regenera siempre antes del archive.
+- Archive es la última acción de este paso — no un paso separado.

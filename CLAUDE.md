@@ -196,29 +196,24 @@ El diseño visual se centraliza en tres archivos clave que deben mantenerse sinc
 |--------|--------------|
 | `develop-expert` | Implementar cualquier artefacto Angular/Ionic (page, component, effect, reducer…) |
 
-### SDD Workflow — artefactos en `.sdd/changes/{change-name}/`
-| Comando | Cuándo usarlo |
-|---------|--------------|
-| `/sdd-explore` | Investigar alternativas antes de proponer |
-| `/sdd-propose` | Proponer diseño — pausa para aprobación |
-| `/sdd-spec` | Escribir especificaciones BDD |
-| `/sdd-design` | Diseño técnico y ADRs |
-| `/sdd-tasks` | Mapa de tareas atómicas — pausa para aprobación |
-| `/sdd-apply` | Implementar las tareas |
-| `/sdd-verify` | Validar implementación contra specs |
-| `/sdd-archive` | Cerrar el cambio, actualizar historial |
+### SDD Workflow v2 — artefactos en `.sdd/changes/{change-name}/`
+
+| Comando | Paso | Cuándo usarlo |
+|---------|------|--------------|
+| `/sdd-init <cambio>` | 1 | Consultar memoria + localizar archivos + proponer — pausa |
+| `/sdd-spec <cambio>` | 2 | Casos de uso como tests de integración por flujo — pausa |
+| `/sdd-task <cambio>` | 3 | Tareas atómicas por flujo de datos — pausa |
+| `/sdd-impl <cambio>` | 4 | Implementar código + tests inline — pausa |
+| `/sdd-verify <cambio>` | 5 | Verificar + actualizar memoria + archive |
 
 **Flujo:**
 ```
-explore → propose → spec → tasks → apply → verify → archive
-                 ↑
-               design
+1-init → [PAUSA] → 2-spec → [PAUSA] → 3-task → [PAUSA] → 4-impl → [PAUSA] → 5-verify
 ```
 
-**Meta-comandos inline:**
-- `/sdd-new <cambio>` → explore + propose, pausar.
-- `/sdd-continue <cambio>` → leer `state.md`, ejecutar siguiente fase.
-- `/sdd-ff <cambio>` → propose → spec → design → tasks (con pausas).
+**Meta-comandos:**
+- `/sdd-new <cambio>` → paso 1, pausar.
+- `/sdd-continue <cambio>` → leer `state.md`, ejecutar siguiente paso, pausar.
 
 ### Datos y Workflows
 | Comando | Cuándo usarlo |

@@ -1,74 +1,100 @@
-# SDD Init
+# SDD Init — Paso 1
 
-Inicializa el contexto Spec-Driven Development en el proyecto.  
-Recibís: **$ARGUMENTS** (opcional: nombre del proyecto).
+Consulta los depósitos de memoria, localiza los archivos afectados y propone el cambio.  
+Recibís: **$ARGUMENTS** (nombre del cambio).
+
+## Agente responsable
+
+Orchestrator (inline) — sin delegar.
+
+## Protocolo de consulta de memoria
+
+Antes de proponer, en este orden:
+
+1. Leer `project-map.json` → clave `_index` (~100 tokens) para mapear términos del dominio a archivos.
+2. Grep `HISTORIAL_APRENDIZAJE.md` por los servicios/archivos que el cambio menciona → lecciones relevantes.
+3. Identificar las rules de `.claude/rules/` de las capas que el cambio toca.
+4. Con esa información, proponer el cambio sin exploración amplia — máx. 5 archivos leídos.
 
 ## Qué hacer
 
-### 1. Detectar el stack del proyecto
-- Leer `backend/pom.xml` → Java 21 + Spring Boot.
-- Leer `frontend/package.json` → Angular 17+.
-- Leer `contracts/openapi.yaml` → Contract-First.
-- Leer `CLAUDE.md` → reglas y convenciones del proyecto.
+1. Crear carpeta `.sdd/changes/{change-name}/` si no existe.
+2. Crear `state.md` con estado inicial (ver formato más abajo).
+3. Consultar los tres depósitos de memoria (ver protocolo arriba).
+4. Leer máx. 5 archivos de código (los que el cambio toca directamente).
+5. Generar `1-init.md` con la estructura requerida.
+6. Actualizar `state.md` → paso 1 completado, esperando aprobación.
+7. **PARAR**. No avanzar sin aprobación del usuario.
 
-### 2. Crear estructura base si no existe
-
-```
-.sdd/
-├── changes/       ← Cambios activos
-│   └── archive/   ← Cambios completados
-```
-
-### 3. Generar config del proyecto
-
-Crear `.sdd/config.md`:
+## Estructura de `1-init.md`
 
 ```markdown
-## Contexto del Proyecto: PropTech
+# Init: {change-name}
 
-**Stack:**
-- Backend: Java 21 + Spring Boot 3 + Arquitectura Hexagonal
-- Frontend: Angular 17+ Standalone + Signals + Tailwind CSS
-- Base de datos: PostgreSQL + PostGIS + LOB Storage
-- Contrato API: contracts/openapi.yaml (fuente única de verdad)
+## Propósito
+{Una frase: qué problema resuelve este cambio y para quién.}
 
-**Convenciones:**
-- Contract-First: modificar openapi.yaml antes de cualquier código
-- Sin NgModules. Sin @Autowired field injection.
-- Colecciones paginadas con Pageable. Nunca List<Entity> en endpoints.
-- FetchType.LAZY por defecto. @EntityGraph para colecciones anidadas.
+## Archivos afectados
+| Archivo | Motivo |
+|---------|--------|
+| `src/...` | {por qué se toca} |
 
-**Testing:**
-- Backend: JUnit 5 + Mockito (Given-When-Then)
-- Frontend: Cypress para flujos críticos E2E
+## Lecciones previas relevantes
+| Lección | Historial | Aplicación en este cambio |
+|---------|-----------|--------------------------|
+| {descripción} | APREND-{NNN} | {cómo aplica} |
 
-**Skills disponibles:**
-- /generate-liquibase — tras modificar @Entity
-- /generate-api-client — tras modificar openapi.yaml
-- /mock-data-seeder — datos de prueba realistas
-- /api-test-generator — tests de integración desde OpenAPI
+## Cambio propuesto
+{Descripción técnica: qué se agrega, modifica o elimina. Sin código.}
+
+## Alternativas descartadas
+- {Alternativa} → {Motivo de descarte}
+
+## Riesgos identificados
+- {Riesgo} → {Mitigación}
+
+## Dependencias
+- Requiere que {X} esté implementado primero / Sin dependencias externas.
 ```
 
-### 4. Reportar
+## Formato de `state.md`
 
 ```markdown
-## SDD Inicializado
+# State: {change-name}
 
-**Proyecto:** PropTech
-**Stack:** Java 21 + Spring Boot / Angular 17+ / PostgreSQL
-**Persistencia:** .sdd/changes/
+**Creado:** {fecha}
+**Última actualización:** {fecha}
 
-### Estructura creada
-- .sdd/config.md ← Contexto del proyecto
-- .sdd/changes/  ← Listo para cambios
+## Estado actual
+**Paso:** 1-init
+**Estado:** Esperando aprobación
 
-### Próximos pasos
-Usá `/sdd-new <nombre-del-cambio>` para iniciar un cambio.
-O `/sdd-continue <nombre>` si ya tenés un cambio en progreso.
+## Progreso
+- [x] 1-init   — Completado {fecha} · archivos afectados: {N} · riesgos: {N}
+- [ ] 2-spec   — Pendiente
+- [ ] 3-task   — Pendiente
+- [ ] 4-impl   — Pendiente
+- [ ] 5-verify — Pendiente
+
+## Artefactos generados
+| Archivo | Paso | Estado |
+|---------|------|--------|
+| `1-init.md` | 1 | ✅ |
+| `2-spec.md` | 2 | pendiente |
+| `3-task.md` | 3 | pendiente |
+| `4-impl-log.md` | 4 | pendiente |
+| `5-verify-report.md` | 5 | pendiente |
+
+## Historial de decisiones
+- {fecha} · Paso 1: {decisión tomada}
 ```
 
 ## Reglas
 
-- Si `.sdd/` ya existe, reportar qué cambios activos hay y no sobreescribir.
-- No crear archivos de spec ni de propuesta — esos los generan las fases correspondientes.
-- Detectar el stack real, no asumir.
+- Consultar `project-map.json` primero — no explorar el proyecto manualmente.
+- Grep `HISTORIAL_APRENDIZAJE.md` por los servicios afectados antes de proponer.
+- Leer máx. 5 archivos de código.
+- Si el cambio tiene más de 5 archivos afectados → señalarlo bajo "Riesgos" y sugerir split.
+- Si el propósito no cabe en una frase → el cambio es demasiado grande, sugerir split.
+- `1-init.md` reemplaza tanto `explore.md` como `proposal.md` del SDD legacy.
+- **PARAR** al terminar. No avanzar sin aprobación del usuario.

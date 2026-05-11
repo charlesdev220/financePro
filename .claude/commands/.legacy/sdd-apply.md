@@ -31,9 +31,10 @@ capa en `.claude/rules/` antes de tocar código.
 2. Leer design → entender decisiones arquitectónicas (ADRs).
 3. Leer código existente → no asumir, verificar el estado actual.
 4. Implementar en orden de dependencias (modelos → effects → reducer → selectors → componente → template).
-5. Marcar cada tarea completada: `- [ ]` → `- [x]` en `tasks.md`.
-6. Actualizar `apply-progress.md` con lo implementado.
-7. Actualizar `state.md` → fase: `apply`.
+5. Al hacer un fix/cambio leer toda la logica de la funcion modificada para no dejarte logica inservible.
+6. Marcar cada tarea completada: `- [ ]` → `- [x]` en `tasks.md`.
+7. Actualizar `apply-progress.md` con lo implementado.
+8. Actualizar `state.md` → fase: `apply`.
 
 ## Reglas de implementación — MyFinance
 
@@ -66,9 +67,6 @@ Nunca implementar en silencio algo diferente a lo diseñado.
 ```markdown
 ## Implementation Progress — {change-name}
 
-### Tareas Completadas
-- [x] T-01.1 — {descripción}
-
 ### Archivos Modificados
 | Archivo | Acción | Qué se hizo |
 |---------|--------|-------------|
@@ -76,9 +74,6 @@ Nunca implementar en silencio algo diferente a lo diseñado.
 
 ### Desviaciones del Design
 Ninguna / o explicación de por qué se desvió.
-
-### Tareas Pendientes
-- [ ] T-02 — {descripción}
 
 ### Estado
 {N}/{total} tareas completas.

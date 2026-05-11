@@ -64,7 +64,6 @@ export class SheetsApiService {
 
 **Reglas de uso:**
 - `SheetsApiService` es el **único** servicio que llama a `googleapis.com`.
-- Ningún componente, feature service ni otro service lo llama directamente — solo los NgRx Effects.
 - `SPREADSHEET_ID` solo en `environment.ts` — nunca hardcodeado.
 
 ## Caché — ETag
